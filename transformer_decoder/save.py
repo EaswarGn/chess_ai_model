@@ -12,7 +12,7 @@ import zstandard as zstd
 import io
 import threading
 from tools import TURN, PIECES, SQUARES, UCI_MOVES, BOOL
-from data_utils import is_increment, calculate_material, encode, get_move_numbers, is_increment_greater_than_base, time_to_seconds, parse_fen, extract_clock_times_from_pgn, get_piece_stats, print_progress_bar, get_file_size_in_mb, is_berserk_game
+from utils import is_increment, calculate_material, encode, get_move_numbers, is_increment_greater_than_base, time_to_seconds, parse_fen, extract_clock_times_from_pgn, get_piece_stats, print_progress_bar, get_file_size_in_mb, is_berserk_game
 import yaml
 import sys
 import argparse

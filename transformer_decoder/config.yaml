@@ -1,0 +1,53 @@
+name: "CT-EFT-85"  # name and identifier for this configuration
+
+dataloading:
+  dataset: ChessDataset 
+  batch_size: 16  # batch size #512
+  buffer_size: 1e4
+  num_workers: 8  # number of workers to use for dataloading
+  prefetch_factor: 2  # number of batches to prefetch per worker
+  pin_memory: false  # pin to GPU memory when dataloading?
+  train_split_ratio: 0.925 # 92.5% of the data will be used for training and the rest for validation
+
+model:
+  #Constants from tools.py
+  vocab_sizes:
+    moves: 1971   #length of UCI_MOVES
+    turn: 2   #length of TURN
+    white_kingside_castling_rights: 2   #length of BOOL
+    white_queenside_castling_rights: 2  #length of BOOL
+    black_kingside_castling_rights: 2   #length of BOOL
+    black_queenside_castling_rights: 2  #length of BOOL
+    board_position: 14   #length of PIECES
+  d_model: 512  # size of vectors throughout the transformer model
+  n_heads: 8  # number of heads in the multi-head attention
+  d_queries: 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
+  d_values: 64  # size of value vectors in the multi-head attention
+  d_inner: 2048  # an intermediate size in the position-wise FC, 768*4
+  n_layers: 6  # number of layers in the Encoder and Decoder
+  dropout: 0.1  # dropout probability
+  n_moves: 10 # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
+  disable_compilation: false  # disable model compilation?
+  compilation_mode: "default"  # mode of model compilation (see torch.compile())
+  dynamic_compilation: true  # expect tensors with dynamic shapes?
+  sampling_k: 1  # k in top-k sampling model predictions during play
+  model: ChessTransformer  # custom PyTorch model to train
+
+training:
+  steps_per_epoch: 1000
+  batches_per_step: 4  # perform a training step, i.e. update parameters, once every so many batches
+  print_frequency: 1  # print status once every so many steps
+  n_steps: 500000  # number of training steps
+  warmup_steps: 8000  # number of warmup steps where learning rate is increased linearly
+  step: 1  # the step number, start from 1 to prevent math error in the 'LR' line
+  lr_schedule: "vaswani"  # the learning rate schedule; see utils.py for learning rate schedule
+  lr_decay: None  # the decay rate for 'exp_decay' schedule
+  start_epoch: 0  # start at this epoch
+  epsilon: 1e-9  # epsilon term in the Adam optimizer
+  label_smoothing: 0.1  # label smoothing co-efficient in the Cross Entropy loss
+  board_status_length: 70  # total length of input sequence
+  use_amp: true  # use automatic mixed precision training?
+  criterion: LabelSmoothedCE  # training criterion (loss)
+  optimizer: torch.optim.Adam  # optimizer
+  betas: [0.9, 0.98]
+  n_moves: 10  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
