@@ -1,0 +1,28 @@
+# Ignore .DS_Store files (macOS system files)
+*.DS_Store
+
+# Ignore numpy binary files
+*.npy
+
+# Ignore CSV files
+*.csv
+
+# Ignore bz2 compressed files
+*.bz2
+
+# Ignore large pgn files
+*.pgn
+
+# Ignore large h5 files
+*.h5
+
+__pycache__
+
+# stopped tracking parquet files
+*.parquet.gz
+*.parquet
+
+/pytorch/logs
+/pytorch/lstm/logs
+logs
+*.pt
