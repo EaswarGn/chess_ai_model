@@ -142,8 +142,8 @@ def train_model(CONFIG):
             train_data_folder = f'../data/epoch_{data_epoch}/train_data'
             val_data_folder = f'../data/epoch_{data_epoch}/val_data'
         else:
-            train_data_folder = f'../../../../drive/My Drive/data/epoch_{data_epoch}/train_data'
-            val_data_folder = f'../../../../drive/My Drive/data/epoch_{data_epoch}/val_data'
+            train_data_folder = f'../../drive/My Drive/data/epoch_{data_epoch}/train_data'
+            val_data_folder = f'../../drive/My Drive/data/epoch_{data_epoch}/val_data'
             
         
         train_loader = DataLoader(
@@ -212,7 +212,7 @@ def train_model(CONFIG):
             model_file = 'checkpoints/CT-EFT-85/CT-EFT-85.pt'
 
             # Destination path in Google Drive (choose your own folder and filename)
-            destination = f'../../../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
+            destination = f'../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
             shutil.copy(model_file, destination)
 
 

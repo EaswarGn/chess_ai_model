@@ -383,82 +383,85 @@ class BoardEncoder(nn.Module):
         self.dropout = dropout
 
         # Existing Embeddings
-        self.turn_embeddings = nn.Embedding(vocab_sizes["turn"], d_model)
+        self.turn_embeddings = nn.Embedding(vocab_sizes["turn"], d_model, dtype=torch.float)
         self.white_kingside_castling_rights_embeddings = nn.Embedding(
-            vocab_sizes["white_kingside_castling_rights"], d_model
+            vocab_sizes["white_kingside_castling_rights"], d_model, dtype=torch.float
         )
         self.white_queenside_castling_rights_embeddings = nn.Embedding(
-            vocab_sizes["white_queenside_castling_rights"], d_model
+            vocab_sizes["white_queenside_castling_rights"], d_model, dtype=torch.float
         )
         self.black_kingside_castling_rights_embeddings = nn.Embedding(
-            vocab_sizes["black_kingside_castling_rights"], d_model
+            vocab_sizes["black_kingside_castling_rights"], d_model, dtype=torch.float
         )
         self.black_queenside_castling_rights_embeddings = nn.Embedding(
-            vocab_sizes["black_queenside_castling_rights"], d_model
+            vocab_sizes["black_queenside_castling_rights"], d_model, dtype=torch.float
         )
         self.board_position_embeddings = nn.Embedding(
-            vocab_sizes["board_position"], d_model
+            vocab_sizes["board_position"], d_model, dtype=torch.float
         )
-        self.positional_embeddings = nn.Embedding(79, d_model)
+        self.positional_embeddings = nn.Embedding(80, d_model, dtype=torch.float)
 
         # New Temporal and Contextual Embeddings
-        # Time Control Embedding (combined base_time and increment)
-        self.time_control_embeddings = nn.Embedding(vocab_sizes.get("time_control", 458), d_model)
+        self.time_control_embeddings = nn.Embedding(
+            vocab_sizes.get("time_control", 458), d_model, dtype=torch.float
+        )
         
-        # Continuous Feature Projections (using linear layers for continuous features)
+        # Continuous Feature Projections (ensure output remains float)
         self.move_number_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.num_legal_moves_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.white_remaining_time_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.black_remaining_time_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
 
         # Phase and Rating Embeddings
-        self.phase_embeddings = nn.Embedding(vocab_sizes.get("phase", 3), d_model)
+        self.phase_embeddings = nn.Embedding(
+            vocab_sizes.get("phase", 3), d_model, dtype=torch.float
+        )
         self.white_rating_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         self.black_rating_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.white_material_value_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.black_material_value_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
         
         self.material_difference_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
-            nn.Linear(d_model // 2, d_model)
+            nn.Linear(d_model // 2, d_model),
         )
 
         # Encoder layers
@@ -542,17 +545,17 @@ class BoardEncoder(nn.Module):
         embeddings = torch.cat(
             [
                 # New features (ensure they are float as well)
-                self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)),
-                self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
-                self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
-                self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
+                self.move_number_projection(move_number.unsqueeze(-1)).to(torch.float32),
+                self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1)).to(torch.float32),
+                self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1)).to(torch.float32),
+                self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1)).to(torch.float32),
                 self.time_control_embeddings(time_control).to(torch.float32),
-                #self.phase_embeddings(phase).to(torch.float32),
-                self.white_rating_embeddings(white_rating).to(torch.float32),
-                self.black_rating_embeddings(black_rating).to(torch.float32),
-                self.white_material_value_embeddings(white_material_value).to(torch.float32),
-                self.black_material_value_embeddings(black_material_value).to(torch.float32),
-                self.material_difference_embeddings(material_difference).to(torch.float32),
+                self.phase_embeddings(phase),
+                self.white_rating_embeddings(white_rating.unsqueeze(-1)).to(torch.float32),
+                self.black_rating_embeddings(black_rating.unsqueeze(-1)).to(torch.float32),
+                self.white_material_value_embeddings(white_material_value.unsqueeze(-1)),
+                self.black_material_value_embeddings(black_material_value.unsqueeze(-1)),
+                self.material_difference_embeddings(material_difference.unsqueeze(-1)),
                 
                 self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
                 self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
@@ -578,7 +581,7 @@ class BoardEncoder(nn.Module):
             boards = encoder_layer[0](
                 query_sequences=boards,
                 key_value_sequences=boards,
-                key_value_sequence_lengths=torch.LongTensor([79] * batch_size).to(boards.device),
+                key_value_sequence_lengths=torch.LongTensor([80] * batch_size).to(boards.device),
             )
             boards = encoder_layer[1](sequences=boards)
 

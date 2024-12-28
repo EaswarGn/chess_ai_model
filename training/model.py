@@ -824,10 +824,10 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # From/To square predictions (unchanged)
         from_squares = (
-            self.from_squares(boards[:, 15:, :]).squeeze(2).unsqueeze(1)
+            self.from_squares(boards[:, 16:, :]).squeeze(2).unsqueeze(1)
         )  # (N, 1, 64)
         to_squares = (
-            self.to_squares(boards[:, 15:, :]).squeeze(2).unsqueeze(1)
+            self.to_squares(boards[:, 16:, :]).squeeze(2).unsqueeze(1)
         )  # (N, 1, 64)
 
         # Apply attention pooling for each prediction head
