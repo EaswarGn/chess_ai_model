@@ -1,0 +1,14 @@
+numpy==1.26.4
+pandas==2.2.2
+tensorflow==2.17.0
+transformers==4.44.0
+scikit-learn==1.4.2
+tf-keras==2.17.0
+spektral==1.2.0
+chess==1.10.0
+openpyxl==3.1.2
+pgn2data==0.0.9
+zstandard==0.22.0
+pydot==3.0.2
+py7zr==0.22.0
+triton==3.1.0
