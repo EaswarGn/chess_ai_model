@@ -540,6 +540,11 @@ class BoardEncoder(nn.Module):
             torch.FloatTensor: Encoded board representation
         """
         batch_size = turns.size(0)
+        material_difference = material_difference.to(torch.float32)
+
+        print("hello")
+        print(material_difference.unsqueeze(-1))
+        print(self.material_difference_embeddings(material_difference.unsqueeze(-1)))
 
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
@@ -555,7 +560,9 @@ class BoardEncoder(nn.Module):
                 self.black_rating_embeddings(black_rating.unsqueeze(-1)).to(torch.float32),
                 self.white_material_value_embeddings(white_material_value.unsqueeze(-1)),
                 self.black_material_value_embeddings(black_material_value.unsqueeze(-1)),
-                self.material_difference_embeddings(material_difference.unsqueeze(-1)),
+                self.material_difference_embeddings(material_difference.unsqueeze(-1)).to(torch.float32),
+
+                
                 
                 self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
                 self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
