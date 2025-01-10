@@ -240,12 +240,13 @@ def train_epoch(
     move_time_losses = AverageMeter()
     move_losses = AverageMeter()
     moves_until_end_losses = AverageMeter()
+    categorical_game_result_losses = AverageMeter()
 
     # Starting time
     start_data_time = time.time()
     start_step_time = time.time()
     
-    mse_loss = nn.MSELoss()
+    crossentropy_loss = nn.CrossEntropyLoss(reduction='mean')
     
     criterion = MultiTaskChessLoss(
         move_weight=1.0, 
@@ -300,7 +301,11 @@ def train_epoch(
                 move_time_loss = loss_details['time_loss']
                 move_loss = loss_details['move_loss']
                 moves_until_end_loss = loss_details['moves_until_end_loss']
-
+                categorical_game_result_loss = crossentropy_loss(
+                    predictions['categorical_game_result'].float(),
+                    batch['categorical_result'].float()
+                )
+                
                 """# Loss
                 loss = criterion(
                     predicted=predictions['from_squares'],
@@ -325,6 +330,7 @@ def train_epoch(
             move_time_loss = move_time_loss / CONFIG.BATCHES_PER_STEP
             move_loss = move_loss / CONFIG.BATCHES_PER_STEP
             moves_until_end_loss = moves_until_end_loss / CONFIG.BATCHES_PER_STEP
+            categorical_game_result_loss = categorical_game_result_loss / CONFIG.BATCHES_PER_STEP
 
         if math.isnan(loss):
             sys.exit()
@@ -347,6 +353,9 @@ def train_epoch(
         )
         moves_until_end_losses.update(
             moves_until_end_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+        )
+        categorical_game_result_losses.update(
+            categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
         )
 
         # Keep track of accuracy (Direct) Move prediction models
@@ -410,6 +419,7 @@ def train_epoch(
                     "Game result loss {result_losses.val:.4f} ({result_losses.avg:.4f})---"
                     "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
                     "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
+                    "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
                     "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
                     "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
                     "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
@@ -426,6 +436,7 @@ def train_epoch(
                         result_losses=result_losses,
                         move_time_losses=move_time_losses,
                         moves_until_end_losses=moves_until_end_losses,
+                        categorical_game_result_losses=categorical_game_result_losses,
                         top1s=top1_accuracies,
                         top3s=top3_accuracies,
                         top5s=top5_accuracies,
@@ -447,6 +458,9 @@ def train_epoch(
             )
             writer.add_scalar(
                 tag="train/moves_until_end_loss", scalar_value=moves_until_end_losses.val, global_step=step
+            )
+            writer.add_scalar(
+                tag="train/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step
             )
             writer.add_scalar(
                 tag="train/lr",

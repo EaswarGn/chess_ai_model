@@ -33,6 +33,14 @@ class ChessDatasetFT(Dataset):
         #self.split = split
         
         self.first_index = 0
+        
+    def convert_to_one_hot(result):
+        if result == 1:  # white win
+            return [0, 0, 1]
+        elif result == 0:  # draw
+            return [0, 1, 0]
+        else:  # black win
+            return [1, 0, 0]
 
     def __getitem__(self, i):
         turns = torch.IntTensor([self.encoded_table[self.first_index + i]["turn"]])
@@ -65,6 +73,10 @@ class ChessDatasetFT(Dataset):
         )
         result = torch.IntTensor(
             [self.encoded_table[i]['result']]
+        )
+        
+        categorical_result = torch.IntTensor(
+            [self.convert_to_one_hot(result)]
         )
         
         try:
@@ -160,7 +172,8 @@ class ChessDatasetFT(Dataset):
             "white_material_value": white_material_value,
             "black_material_value": black_material_value,
             "material_difference": material_difference,
-            "moves_until_end": moves_until_end
+            "moves_until_end": moves_until_end,
+            "categorical_result": categorical_result
         }
 
     def __len__(self):

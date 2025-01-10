@@ -173,6 +173,27 @@ class ChessTemporalTransformerEncoder(nn.Module):
             nn.Linear(self.d_model // 8, 1),
         )
         
+        # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
+        self.categorical_game_result_head = nn.Sequential(
+            # Initial dimensionality reduction
+            nn.Linear(self.d_model, self.d_model // 2),
+            nn.ReLU(),
+            nn.Dropout(self.dropout),
+            
+            # Residual blocks
+            ResidualBlock(self.d_model // 2, dropout=self.dropout),
+            ResidualBlock(self.d_model // 2, dropout=self.dropout),
+            ResidualBlock(self.d_model // 2, dropout=self.dropout),
+            
+            # Final layers
+            nn.Linear(self.d_model // 2, self.d_model // 8),
+            nn.ReLU(),
+            nn.Dropout(self.dropout),
+            
+            nn.Linear(self.d_model // 8, 3),  # Changed to output 3 values
+            nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
+        )
+        
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
@@ -260,13 +281,15 @@ class ChessTemporalTransformerEncoder(nn.Module):
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1)  # Second CLS token
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Fourth CLS token
+        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
         
         predictions = {
             'from_squares': from_squares,
             'to_squares': to_squares,
             'game_result': game_result,
             'move_time': move_time * 100,  # Scaled for data compatibility
-            'moves_until_end': moves_until_end
+            'moves_until_end': moves_until_end,
+            'categorical_game_result': categorical_game_result
         }
 
         return predictions
