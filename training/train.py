@@ -18,7 +18,7 @@ from configs import import_config
 from criteria import MultiTaskChessLoss
 #from d import ChessDataset, ChessDatasetFT
 from datasets import ChessDatasetFT
-from model import ChessTransformer, ChessTransformerEncoderFT, ChessTemporalTransformerEncoder
+from model import ChessTemporalTransformerEncoder
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
