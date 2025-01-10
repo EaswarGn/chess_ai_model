@@ -261,6 +261,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Fourth CLS token
         
+        print(batch)
+        sys.exit()
+        
         predictions = {
             'from_squares': from_squares,
             'to_squares': to_squares,
