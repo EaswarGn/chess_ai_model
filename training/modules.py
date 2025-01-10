@@ -356,6 +356,7 @@ class BoardEncoder(nn.Module):
         d_inner,
         n_layers,
         dropout,
+        num_cls_tokens
     ):
         """
         Initialize the Enhanced Board Encoder.
@@ -399,7 +400,7 @@ class BoardEncoder(nn.Module):
         self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
-        self.positional_embeddings = nn.Embedding(80, d_model, dtype=torch.float)
+        self.positional_embeddings = nn.Embedding(80 + num_cls_tokens, d_model, dtype=torch.float)
 
         # New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
@@ -520,7 +521,8 @@ class BoardEncoder(nn.Module):
         black_rating,
         white_material_value,
         black_material_value,
-        material_difference
+        material_difference,
+        cls_tokens
     ):
         """
         Forward pass with enhanced temporal feature integration.
@@ -569,6 +571,9 @@ class BoardEncoder(nn.Module):
             ],
             dim=1
         )
+        
+        # Prepend CLS tokens
+        embeddings = torch.cat([cls_tokens, embeddings], dim=1)
 
         # Positional embeddings and scaling
         boards = embeddings + self.positional_embeddings.weight.unsqueeze(0)
@@ -576,13 +581,15 @@ class BoardEncoder(nn.Module):
 
         # Dropout
         boards = self.apply_dropout(boards)
+        
+        seq_length = 80 + cls_tokens.size(1)
 
         # Encoder layers
         for encoder_layer in self.encoder_layers:
             boards = encoder_layer[0](
                 query_sequences=boards,
                 key_value_sequences=boards,
-                key_value_sequence_lengths=torch.LongTensor([80] * batch_size).to(boards.device),
+                key_value_sequence_lengths=torch.LongTensor([seq_length] * batch_size).to(boards.device),
             )
             boards = encoder_layer[1](sequences=boards)
 

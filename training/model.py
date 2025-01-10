@@ -665,6 +665,8 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.d_inner = CONFIG.D_INNER
         self.n_layers = CONFIG.N_LAYERS
         self.dropout = CONFIG.DROPOUT
+        
+        self.num_cls_tokens = 3
 
         # Encoder remains the same
         self.board_encoder = BoardEncoder(
@@ -676,28 +678,13 @@ class ChessTemporalTransformerEncoder(nn.Module):
             d_inner=self.d_inner,
             n_layers=self.n_layers,
             dropout=self.dropout,
+            num_cls_tokens=self.num_cls_tokens
         )
 
         # Prediction Heads
         # 1. From/To square prediction heads (existing)
         self.from_squares = nn.Linear(self.d_model, 1)
         self.to_squares = nn.Linear(self.d_model, 1)
-
-        # Pooling layers for global context
-        self.game_result_pool = nn.Sequential(
-            nn.Linear(self.d_model, 1),  # Attention weights
-            nn.Softmax(dim=1)  # Normalize weights across sequence length
-        )
-        
-        self.move_time_pool = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Softmax(dim=1)
-        )
-        
-        self.game_length_pool = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Softmax(dim=1)
-        )
 
         # 2. Game Result Prediction Head (outputs value between -1 and 1)
         self.game_result_head = nn.Sequential(
@@ -760,6 +747,11 @@ class ChessTemporalTransformerEncoder(nn.Module):
             
             nn.Linear(self.d_model // 8, 1),
         )
+        
+        # Create task-specific CLS tokens
+        self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
 
         # Initialize weights
         self.init_weights()
@@ -801,6 +793,15 @@ class ChessTemporalTransformerEncoder(nn.Module):
         Returns:
             dict: Dictionary containing all predictions
         """
+        
+        batch_size = batch["turns"].size(0)
+        # Expand CLS tokens for the batch
+        cls_tokens = torch.cat([
+            self.moves_remaining_cls_token.expand(batch_size, 1, self.d_model),
+            self.game_result_cls_token.expand(batch_size, 1, self.d_model),
+            self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
+        ], dim=1)
+        
         # Encoder
         boards = self.board_encoder(
             batch["turns"],
@@ -820,31 +821,20 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["white_material_value"],
             batch["black_material_value"],
             batch["material_difference"],
+            cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
 
         # From/To square predictions (unchanged)
         from_squares = (
-            self.from_squares(boards[:, 16:, :]).squeeze(2).unsqueeze(1)
+            self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
         )  # (N, 1, 64)
         to_squares = (
-            self.to_squares(boards[:, 16:, :]).squeeze(2).unsqueeze(1)
+            self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
         )  # (N, 1, 64)
 
-        # Apply attention pooling for each prediction head
-        # Game result prediction
-        game_weights = self.game_result_pool(boards).unsqueeze(-1)  # (N, seq_len, 1)
-        game_context = (boards * game_weights).sum(dim=1)  # (N, d_model)
-        game_result = self.game_result_head(game_context)  # (N, 1)
-
-        # Move time prediction
-        time_weights = self.move_time_pool(boards).unsqueeze(-1)  # (N, seq_len, 1)
-        time_context = (boards * time_weights).sum(dim=1)  # (N, d_model)
-        move_time = self.move_time_head(time_context)  # (N, 1)
-        
-        # Game length prediction
-        length_weights = self.game_length_pool(boards).unsqueeze(-1)  # (N, seq_len, 1)
-        length_context = (boards * length_weights).sum(dim=1)  # (N, d_model)
-        moves_until_end = self.game_length_head(length_context)  # (N, 1)
+        moves_until_end = self.game_length_head(boards[:, 0:1, :])  # Second CLS token
+        game_result = self.game_result_head(boards[:, 1:2, :])  # Third CLS token
+        move_time = self.move_time_head(boards[:, 2:3, :])  # Fourth CLS token
         
         predictions = {
             'from_squares': from_squares,
