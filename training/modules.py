@@ -569,8 +569,6 @@ class BoardEncoder(nn.Module):
             ],
             dim=1
         )
-        
-        print("embeddings successfully concatenated")
 
         # Positional embeddings and scaling
         boards = embeddings + self.positional_embeddings.weight.unsqueeze(0)
