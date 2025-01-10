@@ -36,34 +36,6 @@ def train_model(CONFIG):
     """
     writer = SummaryWriter(log_dir='logs')
 
-    """# Initialize data-loaders
-    train_loader = DataLoader(
-        dataset=ChessDatasetFT(
-            data_folder=f'../../../../drive/My Drive/data',
-            h5_file='LE22ct.h5',
-            split="train",
-            n_moves=CONFIG.N_MOVES,
-        ),
-        batch_size=CONFIG.BATCH_SIZE,
-        num_workers=CONFIG.NUM_WORKERS,
-        pin_memory=CONFIG.PIN_MEMORY,
-        prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        shuffle=True,
-    )
-    val_loader = DataLoader(
-        dataset=ChessDatasetFT(
-            data_folder=f'../../../../drive/My Drive/data',
-            h5_file='LE22ct.h5',
-            split="val",
-            n_moves=CONFIG.N_MOVES,
-        ),
-        batch_size=CONFIG.BATCH_SIZE,
-        num_workers=CONFIG.NUM_WORKERS,
-        pin_memory=CONFIG.PIN_MEMORY,
-        prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        shuffle=False,
-    )"""
-
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG).to(DEVICE)
     
