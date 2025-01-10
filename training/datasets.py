@@ -229,7 +229,7 @@ class ChessDatasetFT(Dataset):
             "black_remaining_time": black_remaining_time,
             "white_rating": white_rating,
             "black_rating": black_rating,
-            "time_spent_on_move": time_spent_on_move,
+            "move_time": time_spent_on_move,
             "move_number": move_number,
             "num_legal_moves": num_legal_moves,
             "white_material_value": white_material_value,

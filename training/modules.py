@@ -540,30 +540,24 @@ class BoardEncoder(nn.Module):
             torch.FloatTensor: Encoded board representation
         """
         batch_size = turns.size(0)
-        material_difference = material_difference.to(torch.float32)
-
-        print("hello")
-        print(material_difference.unsqueeze(-1))
-        print(self.material_difference_embeddings(material_difference.unsqueeze(-1)))
 
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
                 # New features (ensure they are float as well)
-                self.move_number_projection(move_number.unsqueeze(-1)).to(torch.float32),
-                self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1)).to(torch.float32),
-                self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1)).to(torch.float32),
-                self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1)).to(torch.float32),
-                self.time_control_embeddings(time_control).to(torch.float32),
-                self.phase_embeddings(phase),
-                self.white_rating_embeddings(white_rating.unsqueeze(-1)).to(torch.float32),
-                self.black_rating_embeddings(black_rating.unsqueeze(-1)).to(torch.float32),
-                self.white_material_value_embeddings(white_material_value.unsqueeze(-1)),
-                self.black_material_value_embeddings(black_material_value.unsqueeze(-1)),
-                self.material_difference_embeddings(material_difference.unsqueeze(-1)).to(torch.float32),
+                #Input to linear layers must be float dtype
+                self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)),
+                self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
+                self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
+                self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
+                self.time_control_embeddings(time_control.to(torch.float32)),
+                self.phase_embeddings(phase.to(torch.float32)),
+                self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
+                self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
+                self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
+                self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
+                self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
-                
-                
                 self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
                 self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
                 self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights).to(torch.float32),
