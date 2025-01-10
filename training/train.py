@@ -283,6 +283,7 @@ def train_epoch(
         temperature=1.0,
         criterion = criterion
     )
+    criterion = criterion.to(DEVICE)
 
     # Batches
     for i, batch in enumerate(train_loader):

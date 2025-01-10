@@ -136,7 +136,7 @@ class ChessDatasetFT(Dataset):
         
        #new features
         phase = torch.IntTensor(
-            [self.encoded_table[i]['phase']]
+            [self.encoded_table[i]['phase']-2]
         )
         result = torch.IntTensor(
             [self.encoded_table[i]['result']]
@@ -165,10 +165,10 @@ class ChessDatasetFT(Dataset):
         black_remaining_time = torch.FloatTensor(
             [self.encoded_table[i]['black_remaining_time']]
         )"""
-        white_remaining_time = torch.IntTensor(
+        white_remaining_time = torch.FloatTensor(
             [self.human_table[i]['white_remaining_time']]
         )
-        black_remaining_time = torch.IntTensor(
+        black_remaining_time = torch.FloatTensor(
             [self.human_table[i]['black_remaining_time']]
         )
         """white_rating = torch.IntTensor(
@@ -186,7 +186,7 @@ class ChessDatasetFT(Dataset):
         """time_spent_on_move = torch.FloatTensor(
             [self.encoded_table[i]['time_spent_on_move']]
         )"""
-        time_spent_on_move = torch.IntTensor(
+        time_spent_on_move = torch.FloatTensor(
             [self.human_table[i]['time_spent_on_move']]
         )
         move_number = torch.IntTensor(
