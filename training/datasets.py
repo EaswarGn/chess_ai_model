@@ -9,81 +9,6 @@ from configs import import_config
 from time_controls import time_controls_encoded
 
 
-class ChessDataset(Dataset):
-    def __init__(self, data_folder, h5_file, split, n_moves=None, **unused):
-        """
-        Init.
-
-        Args:
-
-            datasets (list): A list of tuples, each containing:
-
-                (dict): A data configuration representing the
-                dataset.
-
-                (str): The data split. One of "train", "val", or
-                None, which means that all datapoints will be
-                included.
-
-            n_moves (int, optional): Number of moves into the future to
-            return. Defaults to None, which means that all moves in the
-            H5 data column will be returned.
-        """
-        if n_moves is not None:
-            assert n_moves > 0
-
-        # Open table in H5 file
-        #self.h5_file = tb.open_file(os.path.join(data_folder, h5_file), mode="r")
-        #self.encoded_table = self.h5_file.root.encoded_data
-        self.h5_file = os.path.join(data_folder, h5_file)
-        self.encoded_table = self.h5_file.root.encoded_data
-        
-        self.n_moves = n_moves
-        self.m = 0
-
-    def __getitem__(self, i):
-        turns = torch.IntTensor([self.encoded_table[i]["turn"]])
-        white_kingside_castling_rights = torch.IntTensor(
-            [self.encoded_table[i]["white_kingside_castling_rights"]]
-        )  # (1)
-        white_queenside_castling_rights = torch.IntTensor(
-            [self.encoded_table[i]["white_queenside_castling_rights"]]
-        )  # (1)
-        black_kingside_castling_rights = torch.IntTensor(
-            [self.encoded_table[i]["black_kingside_castling_rights"]]
-        )  # (1)
-        black_queenside_castling_rights = torch.IntTensor(
-            [self.encoded_table[i]["black_queenside_castling_rights"]]
-        )  # (1)
-        board_position = torch.IntTensor(
-            self.encoded_table[i]["board_position"]
-        )  # (64)
-        moves = torch.LongTensor(
-            self.encoded_table[i]["moves"][: self.n_moves + 1]
-        )  # (n_moves + 1)
-        length = torch.LongTensor(
-            [self.encoded_table[i]["length"]]
-        ).clamp(
-            max=self.n_moves
-        )  # (1), value <= n_moves
-        
-
-        return {
-            "turns": turns,
-            "white_kingside_castling_rights": white_kingside_castling_rights,
-            "white_queenside_castling_rights": white_queenside_castling_rights,
-            "black_kingside_castling_rights": black_kingside_castling_rights,
-            "black_queenside_castling_rights": black_queenside_castling_rights,
-            "board_positions": board_position,
-            "moves": moves,
-            "lengths": length,
-
-        }
-
-    def __len__(self):
-        return self.encoded_table.nrows
-
-
 class ChessDatasetFT(Dataset):
     def __init__(self, data_folder, h5_file, split, **unused):
         """
@@ -166,10 +91,10 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['black_remaining_time']]
         )"""
         white_remaining_time = torch.FloatTensor(
-            [self.human_table[i]['white_remaining_time']]
+            [self.encoded_table[i]['white_remaining_time']]
         )
         black_remaining_time = torch.FloatTensor(
-            [self.human_table[i]['black_remaining_time']]
+            [self.encoded_table[i]['black_remaining_time']]
         )
         """white_rating = torch.IntTensor(
             [self.encoded_table[i]['white_rating']-1]
@@ -178,16 +103,16 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['black_rating']-1]
         )"""
         white_rating = torch.IntTensor(
-            [self.human_table[i]['white_rating']-1]
+            [self.encoded_table[i]['white_rating']-1]
         )
         black_rating = torch.IntTensor(
-            [self.human_table[i]['black_rating']-1]
+            [self.encoded_table[i]['black_rating']-1]
         )
         """time_spent_on_move = torch.FloatTensor(
             [self.encoded_table[i]['time_spent_on_move']]
         )"""
         time_spent_on_move = torch.FloatTensor(
-            [self.human_table[i]['time_spent_on_move']]
+            [self.encoded_table[i]['time_spent_on_move']]
         )
         move_number = torch.IntTensor(
             [self.encoded_table[i]['move_number']]
