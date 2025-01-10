@@ -104,9 +104,9 @@ class MultiTaskChessLoss(nn.Module):
         """
         super().__init__()
         self.move_loss = criterion  # for from/to squares
-        self.time_loss = nn.MSELoss()  # for move time prediction
-        self.result_loss = nn.MSELoss()  # for game result prediction
-        self.moves_until_end_loss = nn.MSELoss()
+        self.time_loss = nn.L1Loss()  # for move time prediction
+        self.result_loss = nn.L1Loss()  # for game result prediction
+        self.moves_until_end_loss = nn.L1Loss()
         
         # Option to use log-space parametrization for more stable learning
         self.log_space = log_space
