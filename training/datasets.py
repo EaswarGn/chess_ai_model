@@ -34,7 +34,7 @@ class ChessDatasetFT(Dataset):
         
         self.first_index = 0
         
-    def convert_to_one_hot(result):
+    def convert_to_one_hot(self, result):
         if result == 1:  # white win
             return [0, 0, 1]
         elif result == 0:  # draw
@@ -76,7 +76,7 @@ class ChessDatasetFT(Dataset):
         )
         
         categorical_result = torch.IntTensor(
-            [self.convert_to_one_hot(result)]
+            [self.convert_to_one_hot(self.encoded_table[i]['result'])]
         )
         
         try:
