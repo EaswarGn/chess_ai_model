@@ -223,7 +223,7 @@ class ChessDatasetFT(Dataset):
             "to_squares": to_square,
             "lengths": length,
             "phase": phase,
-            "result": result,
+            "game_result": result,
             "time_control": time_control,
             "white_remaining_time": white_remaining_time,
             "black_remaining_time": black_remaining_time,
