@@ -265,7 +265,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             'from_squares': from_squares,
             'to_squares': to_squares,
             'game_result': game_result,
-            'move_time': move_time * 100,  # Scaled for data compatibility
+            'move_time': move_time,
             'moves_until_end': moves_until_end
         }
 
