@@ -218,9 +218,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
             self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
         )  # (N, 1, 64)
 
-        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1)  # Second CLS token
-        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
-        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Fourth CLS token
+        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1)  # First CLS token
+        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Second CLS token
+        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Third CLS token
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
         categorical_game_result = categorical_game_result.squeeze(1)
         

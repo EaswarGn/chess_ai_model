@@ -254,7 +254,7 @@ def train_epoch(
     start_data_time = time.time()
     start_step_time = time.time()
     
-    crossentropy_loss = nn.CrossEntropyLoss(reduction='mean')
+    crossentropy_loss = nn.CrossEntropyLoss()
     
     criterion = MultiTaskChessLoss(
         move_weight=1.0, 
@@ -315,21 +315,6 @@ def train_epoch(
                     predictions['categorical_game_result'].float(),
                     batch['categorical_result']
                 )
-                
-                """# Loss
-                loss = criterion(
-                    predicted=predictions['from_squares'],
-                    targets=batch["from_squares"],
-                    lengths=batch["lengths"],
-                ) + criterion(
-                    predicted=predictions['to_squares'],
-                    targets=batch["to_squares"],
-                    lengths=batch["lengths"],
-                )  # scalar
-                result_loss = mse_loss(predictions['game_result'].float(), batch['result'].float())
-                move_time_loss = mse_loss(predictions['move_time'].float(), batch['time_spent_on_move'].float())"""
-
-                #loss = 0.9*loss + 0.2*result_loss + 0.2*move_time_loss
 
             # Other models
             else:
@@ -557,6 +542,10 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
     move_time_losses = AverageMeter()
     move_losses = AverageMeter()
     moves_until_end_losses = AverageMeter()
+    categorical_game_result_losses = AverageMeter()
+    categorical_game_result_accuracies = AverageMeter()
+    
+    crossentropy_loss = nn.CrossEntropyLoss()
     
     criterion = MultiTaskChessLoss(
         move_weight=1.0, 
@@ -566,13 +555,10 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
         temperature=1.0,
         criterion = criterion
     )
+    criterion = criterion.to(DEVICE)
 
     # Prohibit gradient computation explicitly
     with torch.no_grad():
-        """losses = AverageMeter()
-        top1_accuracies = AverageMeter()  # top-1 accuracy of first move
-        top3_accuracies = AverageMeter()  # top-3 accuracy of first move
-        top5_accuracies = AverageMeter()  # top-5 accuracy of first move"""
         # Batches
         for i, batch in tqdm(
             enumerate(val_loader), desc="Validating", total=len(val_loader)
@@ -614,24 +600,12 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     move_time_loss = loss_details['time_loss']
                     move_loss = loss_details['move_loss']
                     moves_until_end_loss = loss_details['moves_until_end_loss']
-                    """predictions = model(
-                        batch
-                    )  # (N, 1, 64), (N, 1, 64)
-
-                    # Loss
-                    loss = criterion(
-                        predicted=predictions['from_squares'],
-                        targets=batch["from_squares"],
-                        lengths=batch["lengths"],
-                    ) + criterion(
-                        predicted=predictions['to_squares'],
-                        targets=batch["to_squares"],
-                        lengths=batch["lengths"],
-                    )  # scalar
-                    result_loss = mse_loss(predictions['game_result'].float(), batch['result'].float())
-                    move_time_loss = mse_loss(predictions['move_time'].float(), batch['time_spent_on_move'].float())
-
-                    loss = 0.7*loss + 0.5*result_loss + 0.5*move_time_loss"""
+                    
+                    batch['categorical_result'] = batch['categorical_result'].squeeze(1)
+                    categorical_game_result_loss = crossentropy_loss(
+                        predictions['categorical_game_result'].float(),
+                        batch['categorical_result']
+                    )
 
                 # Other models
                 else:
@@ -651,6 +625,9 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             )
             moves_until_end_losses.update(
                 moves_until_end_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+            )
+            categorical_game_result_losses.update(
+                categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
             )
 
             # Keep track of accuracy (Direct) Move prediction models
@@ -675,6 +652,8 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
             top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
             top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+            categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                    batch['categorical_result']), batch["lengths"].shape[0])
 
         # Log to tensorboard
         writer.add_scalar(
@@ -688,6 +667,12 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
         )
         writer.add_scalar(
             tag="val/moves_until_end_loss", scalar_value=moves_until_end_losses.avg, global_step=epoch + 1
+        )
+        writer.add_scalar(
+                tag="val/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step
+            )
+        writer.add_scalar(
+            tag="val/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=step
         )
         writer.add_scalar(
             tag="val/top1_accuracy",
@@ -709,6 +694,8 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
         print("\nValidation result loss: %.3f" % result_losses.avg)
         print("\nValidation move time loss: %.3f" % move_time_losses.avg)
         print("\nValidation moves until end loss: %.3f" % moves_until_end_losses.avg)
+        print("\nValidation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
+        print("\nValidation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
         print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
         print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
         print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)
