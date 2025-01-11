@@ -417,7 +417,7 @@ def train_epoch(
                     "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
                     "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
                     "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
-                    "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
+                    "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_accuracies.avg:.4f})---"
                     "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
                     "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
                     "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
