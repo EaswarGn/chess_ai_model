@@ -660,6 +660,9 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             tag="val/loss", scalar_value=losses.avg, global_step=epoch + 1
         )
         writer.add_scalar(
+            tag="val/move_loss", scalar_value=move_losses.avg, global_step=epoch + 1
+        )
+        writer.add_scalar(
             tag="val/result_loss", scalar_value=result_losses.avg, global_step=epoch + 1
         )
         writer.add_scalar(
@@ -669,10 +672,10 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             tag="val/moves_until_end_loss", scalar_value=moves_until_end_losses.avg, global_step=epoch + 1
         )
         writer.add_scalar(
-                tag="val/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step
+                tag="val/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=epoch+1
             )
         writer.add_scalar(
-            tag="val/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=step
+            tag="val/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=epoch+1
         )
         writer.add_scalar(
             tag="val/top1_accuracy",
@@ -691,6 +694,7 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
         )
 
         print("\nValidation loss: %.3f" % losses.avg)
+        print("\nValidation move loss: %.3f" % move_losses.avg)
         print("\nValidation result loss: %.3f" % result_losses.avg)
         print("\nValidation move time loss: %.3f" % move_time_losses.avg)
         print("\nValidation moves until end loss: %.3f" % moves_until_end_losses.avg)
