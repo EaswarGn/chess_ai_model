@@ -612,22 +612,22 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     raise NotImplementedError
 
             losses.update(
-                loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                loss.item(), batch["lengths"].sum().item()
             )
             result_losses.update(
-                result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                result_loss.item(), batch["lengths"].sum().item()
             )
             move_time_losses.update(
-                move_time_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                move_time_loss.item(), batch["lengths"].sum().item()
             )
             move_losses.update(
-                move_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                move_loss.item(), batch["lengths"].sum().item()
             )
             moves_until_end_losses.update(
-                moves_until_end_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                moves_until_end_loss.item(), batch["lengths"].sum().item()
             )
             categorical_game_result_losses.update(
-                categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
+                categorical_game_result_loss.item(), batch["lengths"].sum().item()
             )
 
             # Keep track of accuracy (Direct) Move prediction models
