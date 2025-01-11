@@ -34,13 +34,13 @@ class ChessDatasetFT(Dataset):
         
         self.first_index = 0
         
-    def convert_to_one_hot(self, result):
+    def convert_to_indices(self, result):
         if result == 1:  # white win
-            return [0, 0, 1]
+            return 2
         elif result == 0:  # draw
-            return [0, 1, 0]
+            return 1
         else:  # black win
-            return [1, 0, 0]
+            return 0
 
     def __getitem__(self, i):
         turns = torch.IntTensor([self.encoded_table[self.first_index + i]["turn"]])
@@ -75,10 +75,8 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['result']]
         )
         
-        categorical_result = self.convert_to_one_hot(self.encoded_table[i]['result'])
-        categorical_result = torch.argmax(categorical_result, dim=1)
-        categorical_result = torch.IntTensor(
-            categorical_result
+        categorical_result = torch.LongTensor(
+            [self.convert_to_indices(self.encoded_table[i]['result'])]
         )
         
         try:

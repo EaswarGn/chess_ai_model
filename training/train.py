@@ -301,9 +301,11 @@ def train_epoch(
                 move_time_loss = loss_details['time_loss']
                 move_loss = loss_details['move_loss']
                 moves_until_end_loss = loss_details['moves_until_end_loss']
+                
+                batch['categorical_result'] = batch['categorical_result'].squeeze(1)
                 categorical_game_result_loss = crossentropy_loss(
                     predictions['categorical_game_result'].float(),
-                    batch['categorical_result'].float()
+                    batch['categorical_result']
                 )
                 
                 """# Loss
