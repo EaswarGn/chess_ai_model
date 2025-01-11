@@ -76,7 +76,7 @@ class ChessDatasetFT(Dataset):
         )
         
         categorical_result = torch.IntTensor(
-            [self.convert_to_one_hot(self.encoded_table[i]['result'])]
+            self.convert_to_one_hot(self.encoded_table[i]['result'])
         )
         
         try:
