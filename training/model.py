@@ -113,84 +113,22 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # 2. Game Result Prediction Head (outputs value between -1 and 1)
         self.game_result_head = nn.Sequential(
-            # Initial dimensionality reduction
-            nn.Linear(self.d_model, self.d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            # Residual blocks
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            
-            # Final layers
-            nn.Linear(self.d_model // 2, self.d_model // 8),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            nn.Linear(self.d_model // 8, 1),
+            nn.Linear(self.d_model, 1),
             nn.Tanh()  # Ensures output is between -1 and 1
         )
 
         # 3. Move Time Prediction Head (outputs value between 0 and 1)
         self.move_time_head = nn.Sequential(
-            # Initial dimensionality reduction
-            nn.Linear(self.d_model, self.d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            # Residual blocks
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            
-            # Final layers
-            nn.Linear(self.d_model // 2, self.d_model // 8),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            nn.Linear(self.d_model // 8, 1),
+            nn.Linear(self.d_model, 1),
             nn.Sigmoid()  # Ensures output is between 0 and 1
         )
         
         # 4. Predicts number of full moves left in the game
-        self.game_length_head = nn.Sequential(
-            # Initial dimensionality reduction
-            nn.Linear(self.d_model, self.d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            # Residual blocks
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            
-            # Final layers
-            nn.Linear(self.d_model // 2, self.d_model // 8),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            nn.Linear(self.d_model // 8, 1),
-        )
+        self.game_length_head = nn.Linear(self.d_model, 1)
         
         # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
         self.categorical_game_result_head = nn.Sequential(
-            # Initial dimensionality reduction
-            nn.Linear(self.d_model, self.d_model // 2),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            # Residual blocks
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            ResidualBlock(self.d_model // 2, dropout=self.dropout),
-            
-            # Final layers
-            nn.Linear(self.d_model // 2, self.d_model // 8),
-            nn.ReLU(),
-            nn.Dropout(self.dropout),
-            
-            nn.Linear(self.d_model // 8, 3),  # Changed to output 3 values
+            nn.Linear(self.d_model, 1),
             nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
         )
         
