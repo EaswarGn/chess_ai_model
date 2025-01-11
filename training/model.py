@@ -130,7 +130,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
         # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
         self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
+            nn.Linear(self.d_model, 3),
             nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
         )
         
