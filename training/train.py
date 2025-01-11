@@ -186,6 +186,13 @@ def train_model(CONFIG):
             # Destination path in Google Drive (choose your own folder and filename)
             destination = f'../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
             shutil.copy(model_file, destination)
+            
+def calculate_accuracy(predictions, targets):
+    predicted_classes = torch.argmax(predictions, dim=1)
+    correct = torch.eq(predicted_classes, targets).sum().item()
+    accuracy = correct / targets.size(0)
+    return accuracy
+
 
 
 def train_epoch(
@@ -241,6 +248,7 @@ def train_epoch(
     move_losses = AverageMeter()
     moves_until_end_losses = AverageMeter()
     categorical_game_result_losses = AverageMeter()
+    categorical_game_result_accuracies = AverageMeter()
 
     # Starting time
     start_data_time = time.time()
@@ -382,6 +390,8 @@ def train_epoch(
         top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
         top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
         top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+        categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                    batch['categorical_result']), batch["lengths"].shape[0])
 
         # Update model (i.e. perform a training step) only after
         # gradients are accumulated from batches_per_step batches
@@ -422,6 +432,7 @@ def train_epoch(
                     "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
                     "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
                     "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
+                    "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
                     "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
                     "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
                     "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
@@ -439,6 +450,7 @@ def train_epoch(
                         move_time_losses=move_time_losses,
                         moves_until_end_losses=moves_until_end_losses,
                         categorical_game_result_losses=categorical_game_result_losses,
+                        categorical_game_result_accuracies=categorical_game_result_accuracies,
                         top1s=top1_accuracies,
                         top3s=top3_accuracies,
                         top5s=top5_accuracies,
@@ -463,6 +475,9 @@ def train_epoch(
             )
             writer.add_scalar(
                 tag="train/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step
+            )
+            writer.add_scalar(
+                tag="train/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=step
             )
             writer.add_scalar(
                 tag="train/lr",
