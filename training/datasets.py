@@ -146,7 +146,7 @@ class ChessDatasetFT(Dataset):
         )
         
         moves_until_end = torch.FloatTensor(
-            [self.encoded_table[i]['moves_until_end']]/100
+            [self.encoded_table[i]['moves_until_end']/100]
         )
         
         return {

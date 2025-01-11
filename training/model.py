@@ -124,7 +124,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
         )
         
         # 4. Predicts number of full moves left in the game
-        self.game_length_head = nn.Linear(self.d_model, 1)
+        self.game_length_head = nn.Sequential(
+            nn.Linear(self.d_model, 1)
+        )
         
         # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
         self.categorical_game_result_head = nn.Sequential(
