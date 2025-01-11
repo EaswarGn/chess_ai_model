@@ -124,7 +124,7 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['time_spent_on_move']]
         )"""
         time_spent_on_move = torch.FloatTensor(
-            [self.encoded_table[i]['time_spent_on_move']]
+            [self.encoded_table[i]['time_spent_on_move']]/100
         )
         move_number = torch.IntTensor(
             [self.encoded_table[i]['move_number']]
@@ -145,8 +145,8 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['material_difference']]
         )
         
-        moves_until_end = torch.IntTensor(
-            [self.encoded_table[i]['moves_until_end']]
+        moves_until_end = torch.FloatTensor(
+            [self.encoded_table[i]['moves_until_end']]/100
         )
         
         return {

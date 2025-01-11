@@ -120,7 +120,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         # 3. Move Time Prediction Head (outputs value between 0 and 1)
         self.move_time_head = nn.Sequential(
             nn.Linear(self.d_model, 1),
-            nn.Sigmoid()  # Ensures output is between 0 and 1
+            #nn.Sigmoid()  # Ensures output is between 0 and 1
         )
         
         # 4. Predicts number of full moves left in the game
@@ -226,7 +226,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             'from_squares': from_squares,
             'to_squares': to_squares,
             'game_result': game_result,
-            'move_time': move_time * 100,  # Scaled for data compatibility
+            'move_time': move_time, #* 100,  # Scaled for data compatibility
             'moves_until_end': moves_until_end,
             'categorical_game_result': categorical_game_result
         }
