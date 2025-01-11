@@ -75,8 +75,10 @@ class ChessDatasetFT(Dataset):
             [self.encoded_table[i]['result']]
         )
         
+        categorical_result = self.convert_to_one_hot(self.encoded_table[i]['result'])
+        categorical_result = torch.argmax(categorical_result, dim=1)
         categorical_result = torch.IntTensor(
-            self.convert_to_one_hot(self.encoded_table[i]['result'])
+            categorical_result
         )
         
         try:
