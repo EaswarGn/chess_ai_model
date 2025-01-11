@@ -150,7 +150,7 @@ def train_model(CONFIG):
         # Step
         step = epoch * len(train_loader) // CONFIG.BATCHES_PER_STEP
 
-        """# One epoch's training
+        # One epoch's training
         train_epoch(
             train_loader=train_loader,
             model=compiled_model,
@@ -162,7 +162,7 @@ def train_model(CONFIG):
             step=step,
             writer=writer,
             CONFIG=CONFIG,
-        )"""
+        )
 
         # One epoch's validation
         validate_epoch(
