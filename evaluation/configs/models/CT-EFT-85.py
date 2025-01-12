@@ -10,9 +10,9 @@ from chess_transformers.transformers.criteria import LabelSmoothedCE
 from chess_transformers.data.levels import TURN, PIECES, UCI_MOVES, BOOL
 from chess_transformers.transformers.models import ChessTransformerEncoderFT"""
 from .levels import TURN, PIECES, UCI_MOVES, BOOL
-from utils import get_lr
-from criteria import LabelSmoothedCE
-from time_controls import time_controls_encoded
+from .utils import get_lr
+from .criteria import LabelSmoothedCE
+from .time_controls import time_controls_encoded
 
 
 ###############################
