@@ -10,61 +10,7 @@ from modules import BoardEncoder, MoveDecoder, OGBoardEncoder
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
-    
-class ResidualBlock(nn.Module):
-    def __init__(self, in_features, dropout=0.1):
-        super(ResidualBlock, self).__init__()
-        self.block = nn.Sequential(
-            nn.Linear(in_features, in_features),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_features, in_features),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        )
-        
-    def forward(self, x):
-        return x + self.block(x)
-    
-class ChessTemporalTransformerEncoder(nn.Module):
-    """
-    Extended Chess Transformer Encoder with additional prediction heads:
-    1. From and To square prediction
-    2. Game result prediction (white win/black win)
-    3. Move time prediction
-    """
 
-    def __init__(
-        self,
-        CONFIG,
-    ):
-        super(ChessTemporalTransformerEncoder, self).__init__()
-
-        self.code = "EFT-Extended"
-
-        # Existing configuration parameters
-        self.vocab_sizes = CONFIG.VOCAB_SIZES
-        self.d_model = CONFIG.D_MODEL
-        self.n_heads = CONFIG.N_HEADS
-        self.d_queries = CONFIG.D_QUERIES
-        self.d_values = CONFIG.D_VALUES
-        self.d_inner = CONFIG.D_INNER
-        self.n_layers = CONFIG.N_LAYERS
-        self.dropout = CONFIG.DROPOUT
-
-        # Encoder remains the same
-        self.board_encoder = BoardEncoder(
-            vocab_sizes=self.vocab_sizes,
-            d_model=self.d_model,
-            n_heads=self.n_heads,
-            d_queries=self.d_queries,
-            d_values=self.d_values,
-            d_inner=self.d_inner,
-            n_layers=self.n_layers,
-            dropout=self.dropout,
-        )
-
-        # Prediction Heads
 class ChessTemporalTransformerEncoder(nn.Module):
     """
     Extended Chess Transformer Encoder with additional prediction heads:
