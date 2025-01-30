@@ -10,9 +10,10 @@ import tables as tb
 import chess
 import random
 
-with open('config.yaml', 'r') as file:
+"""with open('../../../config.yaml', 'r') as file:
     cfg = yaml.safe_load(file)
-max_move_sequence_length = cfg['model']['n_moves']
+max_move_sequence_length = cfg['model']['n_moves']"""
+max_move_sequence_length=10
 
 phase_encoder = {
     'opening': 0,
@@ -58,35 +59,58 @@ def process_pgn(pgn_file_path=None,
         pgn_file_path (str): Path to the PGN file to process.
         h5_file_path (str): Path to the H5 file to write to.
     """
-    # Open the PGN file
     with open(pgn_file_path, 'r') as pgn_file:
-        # Initialize tqdm for progress tracking
         game_count = sum(1 for _ in open(pgn_file_path, 'r') if _.startswith("[Event "))
-        pgn_file.seek(0)  # Reset the file pointer to the start
-        pbar = tqdm(total=game_count, desc=f"Processing games from {pgn_file_path}")
+        pgn_file.seek(0) 
+        pbar = tqdm(total=game_count, position=0, desc=f"Processing games from {pgn_file_path}")
         
-        lines_processed = 0
-        games_processed = 0
         
-        while True:
-            # Read one game at a time
-            game = chess.pgn.read_game(pgn_file)
-            if game is None:
-                h5_file.close()
-                print(f"{lines_processed} datapoints saved to disk. {games_processed} games processed.")
-                break
-            else:
-                games_processed += 1
-            
-            h5_file = tb.open_file(
+        h5_file = tb.open_file(
                 h5_file_path, mode="w", title=f"data file"
             )
             
-            encoded_table = h5_file.create_table(
-                "/", "encoded_data", EncodedChessTable, expectedrows=1e8
-            )
-            
-            encoded_row = encoded_table.row
+        encoded_table = h5_file.create_table(
+            "/", "encoded_data", EncodedChessTable, expectedrows=1e8
+        )
+        
+        encoded_row = encoded_table.row
+        
+        lines_processed = 0
+        games_processed = 0
+        games_removed = 0
+        start_time = time.time()
+        
+        while True:
+            game = chess.pgn.read_game(pgn_file)
+            if game is None:
+                elapsed_time = time.time() - start_time
+                h5_file.close()
+                print()
+                print(f"{lines_processed} datapoints saved to disk. {games_processed} games processed.")
+                print(f"Processed in {elapsed_time:.4f}s")
+                print(f"Removed {games_removed} games")
+                print()
+                break
+            else:
+                is_games_removed = False
+                #loop to find a valid game
+                while (game.headers.get("Event") == 'Rated Correspondence game' or
+                        game.headers.get("WhiteElo") == '?' or 
+                        game.headers.get("BlackElo") == '?' or
+                        game.headers.get("TimeControl") == '-' or
+                        game.headers.get("Termination") == 'Abandoned' or
+                        is_berserk_game(game)
+                    ):
+                    game = chess.pgn.read_game(pgn_file)
+                    games_removed+=1
+                    is_games_removed = True
+                    game_count -= 1
+                if is_games_removed==True:
+                    pbar.total = game_count
+                    pbar.refresh()
+                else:
+                    games_processed += 1
+                is_games_removed = False
             
             white_rating = game.headers.get("WhiteElo")
             black_rating = game.headers.get("BlackElo")
@@ -108,30 +132,29 @@ def process_pgn(pgn_file_path=None,
                 move = node.variations[0].move
                 moves.append(move)
                 node = node.variations[0]
-
-            num_moves = len(moves)
             
-            board = chess.Board()
-            fens = []
-            fens.append(board.fen())
+            board = game.board()
+            fens = [board.fen()]  # Initialize with the starting position
             moves = []
-            node = game
-            while node.variations:
-                move = node.variations[0].move
-                moves.append(move.uci())
-                node = node.variations[0]
+
+            # Iterate through the mainline moves
+            for move in game.mainline_moves():
                 board.push(move)
                 fens.append(board.fen())
+                moves.append(move.uci())
             white_clock_times, black_clock_times, white_elapsed_times, black_elapsed_times = extract_clock_times_from_pgn(game)
             move_numbers = get_move_numbers(game)
             
-            #start_index = 0 if result == "1-0" else 1
             start_index = 0
             
-            for k in range(start_index, len(moves)):
+            total_moves = len(moves)
+            last_move_number = move_numbers[-1]
+            board = chess.Board()
+            for k in range(start_index, total_moves):
                 lines_processed += 1
+                board.push(chess.Move.from_uci(moves[k]))
                 
-                piece_stats = get_piece_stats(chess.Board(fens[k]))
+                piece_stats = get_piece_stats(board)
                                 
                 if piece_stats['total_pieces'] >= 26:
                     encoded_row['phase'] = phase_encoder['opening']
@@ -144,7 +167,7 @@ def process_pgn(pgn_file_path=None,
                 ms = (
                     ["<move>"]
                     + moves[k : k + max_move_sequence_length]
-                    + ["<pad>"] * ((k + max_move_sequence_length) - len(moves))
+                    + ["<pad>"] * ((k + max_move_sequence_length) - total_moves)
                 )
                 msl = len([m for m in ms if m != "<pad>"]) - 1
                 
@@ -173,6 +196,7 @@ def process_pgn(pgn_file_path=None,
                 encoded_row["length"] = msl
                 encoded_row["from_square"] = encode(ms[1][:2], SQUARES)
                 encoded_row["to_square"] = encode(ms[1][2:4], SQUARES)
+                
                 if result=='1-0':
                     encoded_row["result"] = 1
                 elif result=='0-1':
@@ -181,59 +205,62 @@ def process_pgn(pgn_file_path=None,
                     encoded_row["result"] = 0
                 encoded_row['base_time'] = base_time
                 encoded_row['increment_time'] = increment_time
-                
-                if t=='w':
-                    encoded_row['white_remaining_time'] = white_clock_times[move_numbers[k]]
-                    encoded_row['black_remaining_time'] = black_clock_times[min(move_numbers[k], len(black_clock_times)-1)]
-                    if white_elapsed_times[move_numbers[k]]==0:
-                        white_elapsed_times[move_numbers[k]] = random.uniform(0.1, 0.5)
-                    
-                    if encoded_row['white_remaining_time'] == 0:
-                        encoded_row['time_spent_on_move'] = 0.005
-                    else:
-                        encoded_row['time_spent_on_move'] = white_elapsed_times[move_numbers[k]]/encoded_row['white_remaining_time']
-                if t=='b':
-                    encoded_row['white_remaining_time'] = white_clock_times[move_numbers[k]]
-                    encoded_row['black_remaining_time'] = black_clock_times[min(move_numbers[k], len(black_clock_times)-1)]
-                    
-                    if black_elapsed_times[move_numbers[k]]==0:
-                        black_elapsed_times[move_numbers[k]] = random.uniform(0.1, 0.5)
+
+                try:
+                    if t=='w':
+                        encoded_row['white_remaining_time'] = white_clock_times[move_numbers[k]]
+                        encoded_row['black_remaining_time'] = black_clock_times[min(move_numbers[k], len(black_clock_times)-1)]
+                        if white_elapsed_times[move_numbers[k]]==0:
+                            white_elapsed_times[move_numbers[k]] = random.uniform(0.1, 0.5)
                         
-                    if encoded_row['black_remaining_time'] == 0:
-                        encoded_row['time_spent_on_move'] = 0.005
-                    else:
-                        encoded_row['time_spent_on_move'] = black_elapsed_times[move_numbers[k]]/encoded_row['black_remaining_time']           
-            
+                        if encoded_row['white_remaining_time'] == 0:
+                            encoded_row['time_spent_on_move'] = 0.005
+                        else:
+                            encoded_row['time_spent_on_move'] = white_elapsed_times[move_numbers[k]]/encoded_row['white_remaining_time']
+                    if t=='b':
+                        encoded_row['white_remaining_time'] = white_clock_times[move_numbers[k]]
+                        encoded_row['black_remaining_time'] = black_clock_times[min(move_numbers[k], len(black_clock_times)-1)]
+                        
+                        if black_elapsed_times[move_numbers[k]]==0:
+                            black_elapsed_times[move_numbers[k]] = random.uniform(0.1, 0.5)
+                            
+                        if encoded_row['black_remaining_time'] == 0:
+                            encoded_row['time_spent_on_move'] = 0.005
+                        else:
+                            encoded_row['time_spent_on_move'] = black_elapsed_times[move_numbers[k]]/encoded_row['black_remaining_time']           
+                except IndexError:
+                    print("game:",game)
+                    print("move numbers:",move_numbers)
+                    print("k:",k)
+                    print("white clock times:",white_clock_times)
+                    print("white elapsed times:",white_elapsed_times)
+                    print("black clock times:",black_clock_times)
+                    print("black elapsed times:",black_elapsed_times)        
+
                 encoded_row['white_rating'] = white_rating
                 encoded_row['black_rating'] = black_rating
                 encoded_row['move_number'] = move_numbers[k]
-                
-                legal_moves_board = chess.Board(fens[k])
-                num_legal_moves = len(list(legal_moves_board.legal_moves))
+
+                num_legal_moves = len(list(board.legal_moves))
                 encoded_row['num_legal_moves'] = num_legal_moves
-                encoded_row['white_material_value'] = calculate_material(fens[k], 'white')
-                encoded_row['black_material_value'] = calculate_material(fens[k], 'black')
+                material_white, material_black = calculate_material(fens[k])
+                encoded_row['white_material_value'] = material_white
+                encoded_row['black_material_value'] = material_black
                 
                 if t=='w':
-                    encoded_row['material_difference'] = calculate_material(fens[k], 'white') - calculate_material(fens[k], 'black')
+                    encoded_row['material_difference'] = material_white - material_black
                 if t=='b':
-                    encoded_row['material_difference'] = calculate_material(fens[k], 'black') - calculate_material(fens[k], 'white')
+                    encoded_row['material_difference'] = material_black - material_white
 
-                encoded_row['moves_until_end'] = move_numbers[len(move_numbers)-1] - move_numbers[k]
+                encoded_row['moves_until_end'] = last_move_number - move_numbers[k]
                 
                 encoded_row.append()
             
-            # Update tqdm
             pbar.update(1)
         
-        # Close the progress bar
         pbar.close()
 
 def main():
-    """
-    The main function that runs the PGN processing script.
-    """
-    # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Process a PGN file.")
     parser.add_argument(
         "pgn_file_path",
@@ -247,10 +274,8 @@ def main():
     )
     args = parser.parse_args()
 
-    # Call the processing function with the provided file path
     process_pgn(pgn_file_path=args.pgn_file_path,
                 h5_file_path=args.h5_file_path)
 
-# Execute the main function
 if __name__ == "__main__":
     main()

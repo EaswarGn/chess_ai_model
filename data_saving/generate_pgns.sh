@@ -1,4 +1,4 @@
-#!/bin/bash
+: '#!/bin/bash
 
 #Read the raw pgns from lichess and filter out the elo ranges we care about
 
@@ -22,7 +22,7 @@ wait
 echo "python commands finished!"
 
 echo "data/pgns_ranged_filtered folder is finished!"
-exit 0
+exit 0'
 
 # You have to wait for the screens to finish to do this
 # We use pgn-extract to normalize the games and prepare for preprocessing
@@ -40,14 +40,62 @@ for i in {1000..2000..100}; do
         mkdir $y
         cd $y
         #first folder: /data/pgns_ranged_blocks/1000/2017
-        screen -S "${i}-${y}" -dm bash -c "source ~/.bashrc; zstd -d \"../../../pgns_ranged_filtered/${i}/lichess_db_standard_rated_${y}\"* | ../../../../pgn-extract.exe -7 -C -N  -#200000"
+        #screen -S "${i}-${y}" -dm bash -c "source ~/.bashrc; zstd -d \"../../../pgns_ranged_filtered/${i}/lichess_db_standard_rated_${y}\"* | ../../../../pgn-extract.exe -7 -C -N  -#200000"
+        for zst_file in ../../../pgns_ranged_filtered/${i}/lichess_db_standard_rated_${y}-*.pgn.zst; do
+            echo "Decompressing $zst_file"
+            base_name=$(basename "$zst_file" .zst)
+            zstd -d "$zst_file" -o "./$base_name" &
+        done
+        wait 
+        echo "zst files for $y have been decompressed"
+
+        if [ ! -d "logs" ]; then
+            mkdir logs
+        fi
+
+        start_index=1
+        for pgn_file in lichess_db_standard_rated_${y}-*.pgn; do
+            echo "processing $pgn_file with pgn-extract"
+            { pgn-extract -llogs/log.txt -N --commented -#"200000,$start_index" "$pgn_file" && rm -f "$pgn_file"; } &
+            start_index=$((start_index + 10))     
+        done
+        echo "waiting for pgn-extract to finish"
+        wait
+        echo "pgn-extract finished!"
+
         cd ..
     done
-    echo "waiting for screens to finish"
+    echo "waiting for any background processes to finish"
     wait
-    echo "screens finished!"
+    echo "All background processes finished!"
+    
     cd $cw
 done
 
+echo "waiting for python commands to finish"
+wait
+echo "python commands finished!"
+
 #Now we have all the pgns in blocks we can randomly sample and create testing and training sets of 60 and 3 blocks respectively
 python3 move_training_set.py
+
+mkdir data/h5s_ranged_training
+for i in {1200..1800..200}; do
+    echo $i
+    cw=`pwd`
+    outputdir="data/h5_ranged_training/${i}"
+    mkdir $outputdir
+    cd $outputdir
+
+    for pgn_file in ../../pgns_ranged_training/${i}/*.pgn; do
+        base_name=$(basename "$pgn_file" .pgn)
+        echo "processing ${pgn_file}"
+        python3 pgn_to_h5.py "$pgn_file" "${base_name}.h5" &
+    done
+
+    echo "waiting for h5 files to finish"
+    wait
+    echo "h5 files finished!"
+
+done
+    

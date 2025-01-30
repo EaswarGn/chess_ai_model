@@ -22,7 +22,12 @@ def main():
         num_missing = 0
         count = 0
         for year in sorted(os.scandir(elo.path), key = lambda x : x.name):
-            targets = sorted(os.scandir(year.path), key = lambda x : int(x.name.split('.')[0]))[:-1]
+            targets = [
+                t for t in os.scandir(year.path)
+                if t.name.split('.')[0].isdigit() and t.is_file()
+            ]
+            targets = sorted(targets, key=lambda x: int(x.name.split('.')[0]))[:-1]
+            
             if year.name == '2019':
                 for i, t in enumerate(targets[-3:]):
                     shutil.copy(t.path, os.path.join(test_path, f"{i+1}.pgn"))

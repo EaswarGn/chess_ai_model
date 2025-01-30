@@ -7,17 +7,16 @@ import re
 
 from tools import RANKS, FILES
 
-import tensorflow as tf
+import random
 
 
 
-def calculate_material(fen, color):
+def calculate_material(fen):
     """
     Calculate the total material value of the pieces for the specified color.
 
     :param fen: The FEN string representing the chess board.
-    :param color: The color to calculate material for, either 'white' or 'black'.
-    :return: Total material value for the specified color.
+    :return: Total material value for both colors.
     """
     piece_values = {
         chess.PAWN: 1,
@@ -31,24 +30,21 @@ def calculate_material(fen, color):
     # Create a chess board from the FEN string
     board = chess.Board(fen)
     
-    # Ensure the color is valid
-    if color not in ['white', 'black']:
-        raise ValueError("Color must be either 'white' or 'black'")
-    
-    # Convert color argument to chess constants
-    color_enum = chess.WHITE if color == 'white' else chess.BLACK
-    
     # Initialize the total material value for the specified color
-    material_value = 0
+    material_white = 0
+    material_black = 0
     
     # Iterate over all the squares on the board
     for square in chess.SQUARES:
         piece = board.piece_at(square)
-        if piece and piece.color == color_enum:  # Check if the piece belongs to the specified color
+        if piece and piece.color == chess.WHITE:  # Check if the piece belongs to the specified color
             # Add the material value of the piece to the total
-            material_value += piece_values[piece.piece_type]
+            material_white += piece_values[piece.piece_type]
+        if piece and piece.color == chess.BLACK:  # Check if the piece belongs to the specified color
+            # Add the material value of the piece to the total
+            material_black += piece_values[piece.piece_type]
     
-    return material_value
+    return material_white, material_black
 
 # Function to check if increment time is greater than base time
 def is_increment(game):
@@ -126,74 +122,6 @@ def is_berserk_game(game):
             print(f"Invalid TimeControl format: {time_control}")
             return False
     return False
-
-def topk_accuracy2(logits, targets, other_logits=None, other_targets=None, k=[1, 3, 5]):
-    
-    """Compute "top-k" accuracies for multiple values of "k".
-
-    Optionally, a second set of logits and targets can be provided. In this case,
-    probabilities associated with both sets of logits are combined to arrive at the
-    best combinations of both predicted variables.
-
-    Args:
-        logits (tf.Tensor): Predicted logits, of size (N, vocab_size).
-        targets (tf.Tensor): Actual targets, of size (N).
-        other_logits (tf.Tensor, optional): Predicted logits for a second predicted variable,
-            if any, of size (N, other_vocab_size). Defaults to None.
-        other_targets (tf.Tensor, optional): Actual targets for a second predicted variable,
-            if any, of size (N). Defaults to None.
-        k (list, optional): Values of "k". Defaults to [1, 3, 5].
-
-    Returns:
-        list: "Top-k" accuracies."""
-    
-    batch_size = tf.shape(logits)[0]
-    #print("logits:",logits)
-    #print("targets:",targets)
-
-    if other_logits is not None:
-        # Get probabilities
-        probabilities = tf.nn.softmax(logits)  # (N, vocab_size)
-        other_probabilities = tf.nn.softmax(other_logits)  # (N, other_vocab_size)
-
-        # Combine probabilities
-        combined_probabilities = tf.matmul(probabilities, tf.expand_dims(other_probabilities, axis=1))  # (N, vocab_size, 1)
-        combined_probabilities = tf.reshape(combined_probabilities, (batch_size, -1))  # (N, vocab_size * other_vocab_size)
-
-        # Get top-k indices
-        flattened_indices = tf.argsort(combined_probabilities, direction='DESCENDING')[:, :max(k)]  # (N, max(k))
-
-        indices = flattened_indices // tf.shape(other_logits)[-1]  # (N, max(k))
-        other_indices = flattened_indices % tf.shape(other_logits)[-1]  # (N, max(k))
-
-        # Expand targets
-        targets_expanded = tf.expand_dims(targets, axis=1)  # (N, 1)
-        targets_expanded = tf.tile(targets_expanded, [1, max(k)])  # (N, max(k))
-
-        other_targets_expanded = tf.expand_dims(other_targets, axis=1)  # (N, 1)
-        other_targets_expanded = tf.tile(other_targets_expanded, [1, max(k)])  # (N, max(k))
-
-        # Get correct predictions
-        correct_predictions = tf.equal(indices, targets_expanded) & tf.equal(other_indices, other_targets_expanded)  # (N, max(k))
-
-    else:
-        # Get top-k indices
-        _, indices = tf.nn.top_k(logits, k=max(k))  # (N, max(k))
-        #print("indices:",indices)
-
-        # Expand targets
-        targets_expanded = tf.expand_dims(targets, axis=1)  # (N, 1)
-        targets_expanded = tf.tile(targets_expanded, [1, max(k)])  # (N, max(k))
-
-        # Get correct predictions
-        correct_predictions = tf.equal(indices, targets_expanded)  # (N, max(k))
-        #print("correct predictions:",correct_predictions)
-
-    # Calculate top-k accuracies
-    topk_accuracies = [tf.reduce_sum(tf.cast(correct_predictions[:, :k_value], tf.float32)).numpy() / tf.cast(batch_size, tf.float32) for k_value in k]
-    #print("top k accuracies", topk_accuracies)
-
-    return topk_accuracies
     
 def top_n_indices(arr, n):
     # Use np.argpartition to get the indices of the top n elements
@@ -216,6 +144,9 @@ def time_to_seconds(clock_time):
 def extract_clock_times_from_pgn(game):
     white_clock_times = []
     black_clock_times = []
+    
+    time_control = game.headers.get("TimeControl")
+    base_time, increment_time = map(int, time_control.split("+"))
 
     # Iterate through all the moves in the game
     for node in game.mainline():
@@ -250,12 +181,22 @@ def extract_clock_times_from_pgn(game):
                 # If this is White's move, calculate the elapsed time for White
                 if previous_white_time is not None:
                     elapsed_time = previous_white_time - clock_time
+                    
+                    if increment_time>0:
+                        if elapsed_time<0:
+                            elapsed_time += increment_time
+                    
                     white_elapsed_times.append(elapsed_time)
                 previous_white_time = clock_time  # Update the previous clock time for White
             else:
                 # If this is Black's move, calculate the elapsed time for Black
                 if previous_black_time is not None:
                     elapsed_time = previous_black_time - clock_time
+                    
+                    if increment_time>0:
+                        if elapsed_time<0:
+                            elapsed_time += increment_time
+                    
                     black_elapsed_times.append(elapsed_time)
                 previous_black_time = clock_time  # Update the previous clock time for Black
 
@@ -350,96 +291,6 @@ def get_file_size_in_mb(file_path):
     file_size_mb = file_size_bytes / (1024 ** 2)
     
     return file_size_mb
-
-    
-    
-def topk_accuracy(pred, targets, k=[1, 3, 5], moves_to_compare=5):
-    """
-    Compute "top-k" accuracies for multiple values of "k".
-
-    Optionally, a second set of logits and targets can be provided. In this case,
-    probabilities associated with both sets of logits are combined to arrive at the
-    best combinations of both predicted variables.
-
-    Args:
-        logits (tf.Tensor): Predicted logits, of size (N, vocab_size).
-        targets (tf.Tensor): Actual targets, of size (N).
-        other_logits (tf.Tensor, optional): Predicted logits for a second predicted variable,
-            if any, of size (N, other_vocab_size). Defaults to None.
-        other_targets (tf.Tensor, optional): Actual targets for a second predicted variable,
-            if any, of size (N). Defaults to None.
-        k (list, optional): Values of "k". Defaults to [1, 3, 5].
-
-    Returns:
-        list: "Top-k" accuracies.
-    """
-    batch_size = tf.shape(pred)[0]
-    topk_accuracies = {}
-    topk_accuracies_per_move = {}
-    
-    for i in range(1, moves_to_compare):
-        topk_accuracies_per_move[f'move_{i}'] = {}
-        for k_value in k:
-            topk_accuracies_per_move[f'move_{i}'][f'k_{k_value}'] = 0#AverageMeter()
-            
-    print("initialized topk_accuracies_per_move:", topk_accuracies_per_move)
-        
-    
-    correct = 0
-    total_moves = batch_size
-    
-    
-    for m, target in enumerate(targets):
-        for i in range(1, moves_to_compare):#len(target)):
-            print("target sequence:",target)
-            s=[]
-            for l in pred[m].numpy():
-                s.append(np.argmax(l))
-            s = tf.convert_to_tensor(s)
-            print("predicted sequence:",s)
-            for k_value in k:
-                correct_move = target[i].numpy()
-                if correct_move >= 1968:
-                    topk_accuracies[f'k_{k_value}'] = 0.00001
-                    break
-                pred_moves = top_n_indices(pred[m][i-1].numpy(), k_value)
-                
-                for pred_move in pred_moves:
-                    #print("pred", pred_move)
-                    #print("correct", correct_move)
-                    if pred_move==correct_move:
-                        correct+=1
-                print("total correct:",correct)
-                #topk_accuracies[f'k_{k_value}'] = correct#(correct/total_moves).numpy()
-                topk_accuracies_per_move[f'move_{i}'][f'k_{k_value}'] += correct
-                #topk_accuracies_per_move[f'move_{i}'][f'k_{k_value}'].update(correct, batch_size)
-                #print("top k accuracies:",topk_accuracies)
-                correct = 0
-            #topk_accuracies_per_move[f'move_{i}'] = topk_accuracies
-            #print("top k accuracies per move:",topk_accuracies_per_move)
-            #topk_accuracies = {}
-            
-    print("topk accuracies per move:",topk_accuracies_per_move)
-    for i in range(1, moves_to_compare):
-        for k_value in k:
-            topk_accuracies_per_move[f'move_{i}'][f'k_{k_value}'] /= total_moves
-
-    return topk_accuracies_per_move
-    
-
-
-def change_lr(optimizer, new_lr):
-    """
-    Change learning rate to a specified value.
-    
-    Args:
-        optimizer (tf.keras.optimizers.Optimizer): Optimizer whose learning rate
-        must be changed.
-        
-        new_lr (float): New learning rate.
-    """
-    # Create a new optimizer with the updated learning rate
-    optimizer.learning_rate.assign(new_lr)
 
 class AverageMeter(object):
     """
