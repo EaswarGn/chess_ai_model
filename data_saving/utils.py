@@ -1,9 +1,8 @@
 import os
 import regex
 import numpy as np
-from collections import Counter
 import chess
-import re
+import sys
 
 from tools import RANKS, FILES
 
@@ -46,46 +45,6 @@ def calculate_material(fen):
     
     return material_white, material_black
 
-# Function to check if increment time is greater than base time
-def is_increment(game):
-    # Extract the TimeControl header (e.g., "300+0" or "5+3")
-    time_control = game.headers.get("TimeControl", "")
-    
-    if time_control:
-        # Split the base time and increment time
-        try:
-            base_time, increment_time = time_control.split('+')
-            base_time = int(base_time)  # Convert base time to integer
-            increment_time = int(increment_time)  # Convert increment time to integer
-            
-            # Check if there is no increment
-            return increment_time != 0 or base_time<600
-        except ValueError:
-            # Handle the case where TimeControl is not in the expected format
-            print(f"Invalid TimeControl format: {time_control}")
-            return False
-    return False
-
-# Function to check if increment time is greater than base time
-def is_increment_greater_than_base(game):
-    # Extract the TimeControl header (e.g., "300+0" or "5+3")
-    time_control = game.headers.get("TimeControl", "")
-    
-    if time_control:
-        # Split the base time and increment time
-        try:
-            base_time, increment_time = time_control.split('+')
-            base_time = int(base_time)  # Convert base time to integer
-            increment_time = int(increment_time)  # Convert increment time to integer
-            
-            # Check if increment time is greater than base time
-            return increment_time > base_time
-        except ValueError:
-            # Handle the case where TimeControl is not in the expected format
-            print(f"Invalid TimeControl format: {time_control}")
-            return False
-    return False
-
 def is_berserk_game(game):
     time_control = game.headers.get("TimeControl", "")
     
@@ -122,23 +81,8 @@ def is_berserk_game(game):
             print(f"Invalid TimeControl format: {time_control}")
             return False
     return False
-    
-def top_n_indices(arr, n):
-    # Use np.argpartition to get the indices of the top n elements
-    indices = np.argpartition(arr, -n)[-n:]
-    # Sort the indices based on the values in arr
-    sorted_indices = indices[np.argsort(arr[indices])[::-1]]
-    return sorted_indices
 
 
-
-def time_to_seconds(clock_time):
-    # Split the time string into hours, minutes, and seconds
-    hours, minutes, seconds = map(int, clock_time.split(':'))
-
-    # Convert to total seconds
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    return total_seconds
 
 # Function to extract clock times from a PGN file
 def extract_clock_times_from_pgn(game):
@@ -258,39 +202,6 @@ def get_piece_stats(board):
         "white_value": white_value,
         "black_value": black_value
     }
-
-import sys
-def print_progress_bar(iteration, total, name=None, bar_length=50, bar_id=0):
-    # Move to the correct line for this progress bar
-    sys.stdout.write(f"\033[{bar_id+1}A")  # Move cursor up to the line bar_id
-    # Calculate the progress as a fraction
-    progress = (iteration / total)
-    # Calculate the number of blocks to represent the progress
-    block = int(round(bar_length * progress))
-    # Create the progress bar string
-    progress_bar = f"[{'#' * block}{'.' * (bar_length - block)}] {iteration}/{total} ({progress * 100:.1f}%) {name}"
-    
-    # Print the progress bar on the same line (using \r to return the cursor to the start)
-    sys.stdout.write('\r' + progress_bar)
-    sys.stdout.flush()
-    
-def get_file_size_in_mb(file_path):
-    """
-    Get the size of a file in MB.
-    
-    Parameters:
-    - file_path: The path to the file whose size you want to get.
-    
-    Returns:
-    - The size of the file in MB.
-    """
-    # Get the file size in bytes
-    file_size_bytes = os.path.getsize(file_path)
-    
-    # Convert bytes to MB
-    file_size_mb = file_size_bytes / (1024 ** 2)
-    
-    return file_size_mb
 
 class AverageMeter(object):
     """

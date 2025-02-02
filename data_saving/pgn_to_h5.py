@@ -2,7 +2,7 @@ import chess.pgn
 from tqdm import tqdm
 import argparse
 from tools import TURN, PIECES, SQUARES, UCI_MOVES, BOOL
-from utils import is_increment, calculate_material, encode, get_move_numbers, is_increment_greater_than_base, time_to_seconds, parse_fen, extract_clock_times_from_pgn, get_piece_stats, print_progress_bar, get_file_size_in_mb, is_berserk_game
+from utils import calculate_material, encode, get_move_numbers, parse_fen, extract_clock_times_from_pgn, get_piece_stats, is_berserk_game
 import yaml
 import sys
 import time
@@ -108,8 +108,8 @@ def process_pgn(pgn_file_path=None,
                 if is_games_removed==True:
                     pbar.total = game_count
                     pbar.refresh()
-                else:
-                    games_processed += 1
+                    
+                games_processed += 1
                 is_games_removed = False
             
             white_rating = game.headers.get("WhiteElo")
@@ -125,25 +125,35 @@ def process_pgn(pgn_file_path=None,
             black_rating = int(black_rating)
             base_time, increment_time = map(int, time_control.split("+"))
             
-            # Extracting moves
-            moves = []
-            node = game
-            while node.variations:
-                move = node.variations[0].move
-                moves.append(move)
-                node = node.variations[0]
-            
             board = game.board()
             fens = [board.fen()]  # Initialize with the starting position
             moves = []
 
             # Iterate through the mainline moves
-            for move in game.mainline_moves():
-                board.push(move)
-                fens.append(board.fen())
+            #print(game)
+            node = game
+            start = time.time()
+            while node.variations:
+                comment = node.variations[0].comment
+                comment = comment.replace("\n", "")
+                
+                move = node.variations[0].move
+
+                if "eval" in comment:
+                    fen = comment.split("] ")[2]
+                else:
+                    fen = comment.split("] ")[1]
+                    
+                if len(fen)>100:
+                    fen = fen.split(" ")
+                    fen = fen[0] + ' ' + fen[1] + ' ' + fen[2] + ' ' + fen[3] + ' ' + fen[4] + ' ' + fen[5] + ' '
+                
                 moves.append(move.uci())
+                fens.append(fen)
+                node = node.variations[0]
             white_clock_times, black_clock_times, white_elapsed_times, black_elapsed_times = extract_clock_times_from_pgn(game)
             move_numbers = get_move_numbers(game)
+            print(time.time()-start)
             
             start_index = 0
             

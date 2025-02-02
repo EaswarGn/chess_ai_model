@@ -83,7 +83,7 @@ mkdir data/h5s_ranged_training
 for i in {1200..1800..200}; do
     echo $i
     cw=`pwd`
-    outputdir="data/h5_ranged_training/${i}"
+    outputdir="data/h5s_ranged_training/${i}"
     mkdir $outputdir
     cd $outputdir
 
@@ -98,4 +98,31 @@ for i in {1200..1800..200}; do
     echo "h5 files finished!"
 
 done
+
+
+outputdir="data/h5s_ranged_training/1800"
+mkdir $outputdir
+
+cw=`pwd`
+cd data/pgns_ranged_training/1800
+mkdir logs
+for pgn_file in *.pgn; do
+    base_name=$(basename "$pgn_file" .pgn)
+    echo "processing ${pgn_file}"
+    pgn-extract -Wlalg -bl10 -llogs/log.txt -w10000 --fencomments --commentlines -N --commented -otemp.pgn "$pgn_file"
+    rm $pgn_file
+    mv temp.pgn "${base_name}.pgn"
+
+    cd $cw
+
+    cd data/h5s_ranged_training/1800
+    echo "writing to h5 file"
+    python3 ../../../pgn_to_h5.py "../../pgns_ranged_training/1800/${base_name}.pgn" "${base_name}.h5"
+
+    cd $cw
+    cd data/pgns_ranged_training/1800
+    
+done
+cd $cw
+
     

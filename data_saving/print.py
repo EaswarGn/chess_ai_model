@@ -2,14 +2,14 @@ import tables as tb
 import time
 from collections import defaultdict
 import sys
+import torch
 
-h5_file = tb.open_file('data/epoch_3/train_data/data.h5', mode="r")
+h5_file = tb.open_file('data.h5', mode="r")
 encoded_table = h5_file.root.encoded_data
-human_table = h5_file.root.data
 
 print("total rows:",encoded_table.nrows)
 
-unique_time_controls = defaultdict(int)
+"""unique_time_controls = defaultdict(int)
 for i in range(1):
     h5_file = tb.open_file(f'data/epoch_{i+1}/train_data/data.h5', mode="r")
     encoded_table = h5_file.root.encoded_data
@@ -19,7 +19,7 @@ for i in range(1):
         time_control = f'{base_time}+{increment_time}'
         unique_time_controls[time_control] += 1
 print(dict(unique_time_controls))
-sys.exit()
+sys.exit()"""
 
 
 """start = time.time()
@@ -40,12 +40,8 @@ print(f"table looped through in {(time.time()-start):.4f}s\n")"""
 
 table = encoded_table
 
-is_human_table = False
-if h5_file.root.data == table:
-    is_human_table = True
 
-
-row_data = table[42]
+row_data = table[35]
 print(f"board_position: {row_data['board_position']}")
 """if is_human_table:
     print(f"raw_fen: {row_data['raw_fen']}")"""
@@ -74,4 +70,115 @@ print(f"white_material_value: {row_data['white_material_value']}")
 print(f"black_material_value: {row_data['black_material_value']}")
 print(f"material_difference: {row_data['material_difference']}")
 print(f"moves_until_end: {row_data['moves_until_end']}")
+
+
+start = time.time()
+turns = torch.IntTensor([encoded_table[0]["turn"]])
+white_kingside_castling_rights = torch.IntTensor(
+    [encoded_table[0]["white_kingside_castling_rights"]]
+)  # (1)
+white_queenside_castling_rights = torch.IntTensor(
+    [encoded_table[0]["white_queenside_castling_rights"]]
+)  # (1)
+black_kingside_castling_rights = torch.IntTensor(
+    [encoded_table[0]["black_kingside_castling_rights"]]
+)  # (1)
+black_queenside_castling_rights = torch.IntTensor(
+    [encoded_table[0]["black_queenside_castling_rights"]]
+)  # (1)
+board_position = torch.IntTensor(
+   encoded_table[0]["board_position"]
+)  # (64)
+from_square = torch.LongTensor(
+    [encoded_table[0]["from_square"]]
+)  # (1)
+to_square = torch.LongTensor(
+    [encoded_table[0]["to_square"]]
+)  # (1)
+length = torch.LongTensor([1])
+
+#new features
+phase = torch.IntTensor(
+    [encoded_table[0]['phase']-2]
+)
+result = torch.IntTensor(
+    [encoded_table[0]['result']]
+)
+
+categorical_result = torch.LongTensor(
+    [encoded_table[0]['result']]
+)
+
+try:
+    base_time = encoded_table[0]['base_time']
+    increment_time = encoded_table[0]['increment_time']
+    time_control = f'{base_time}+{increment_time}'
+    
+    # Attempt to look up the time control encoding
+    time_control = torch.LongTensor([0])
+
+except KeyError as e:
+    # Handle the KeyError
+    print(f"KeyError: Missing key {e} in encoded_table or time_controls_encoded")
+    # You can either provide a default value or skip the iteration, etc.
+    base_time = None
+    increment_time = None
+    time_control = torch.LongTensor([0])  # Or whatever default you need
+
+
+"""white_remaining_time = torch.FloatTensor(
+    [self.encoded_table[i]['white_remaining_time']]
+)
+black_remaining_time = torch.FloatTensor(
+    [self.encoded_table[i]['black_remaining_time']]
+)"""
+white_remaining_time = torch.FloatTensor(
+    [encoded_table[0]['white_remaining_time']]
+)
+black_remaining_time = torch.FloatTensor(
+    [encoded_table[0]['black_remaining_time']]
+)
+"""white_rating = torch.IntTensor(
+    [self.encoded_table[i]['white_rating']-1]
+)
+black_rating = torch.IntTensor(
+    [self.encoded_table[i]['black_rating']-1]
+)"""
+white_rating = torch.IntTensor(
+    [encoded_table[0]['white_rating']-1]
+)
+black_rating = torch.IntTensor(
+    [encoded_table[0]['black_rating']-1]
+)
+"""time_spent_on_move = torch.FloatTensor(
+    [self.encoded_table[i]['time_spent_on_move']]
+)"""
+time_spent_on_move = torch.FloatTensor(
+    [encoded_table[0]['time_spent_on_move']/100]
+)
+move_number = torch.IntTensor(
+    [encoded_table[0]['move_number']]
+)
+num_legal_moves = torch.IntTensor(
+    [encoded_table[0]['num_legal_moves']]
+)
+
+white_material_value = torch.IntTensor(
+    [encoded_table[0]['white_material_value']]
+)
+
+black_material_value = torch.IntTensor(
+    [encoded_table[0]['black_material_value']]
+)
+
+material_difference = torch.IntTensor(
+    [encoded_table[0]['material_difference']]
+)
+
+moves_until_end = torch.FloatTensor(
+    [encoded_table[0]['moves_until_end']/100]
+)
+print(f"time taken to create tensors: {time.time() - start}s")
+
+
 h5_file.close()
