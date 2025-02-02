@@ -3,10 +3,12 @@ import json
 import torch
 import argparse
 import tables as tb
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+import time
 
 from configs import import_config
 from time_controls import time_controls_encoded
+import numpy as np
 
 
 class ChessDatasetFT(Dataset):
@@ -28,7 +30,7 @@ class ChessDatasetFT(Dataset):
         # Open table in H5 file
         self.h5_file = tb.open_file(os.path.join(data_folder, h5_file), mode="r")
         self.encoded_table = self.h5_file.root.encoded_data
-        self.human_table = self.h5_file.root.data
+        #self.human_table = self.h5_file.root.data
         self.len = self.encoded_table.nrows
         #self.split = split
         
@@ -89,7 +91,7 @@ class ChessDatasetFT(Dataset):
 
         except KeyError as e:
             # Handle the KeyError
-            print(f"KeyError: Missing key {e} in encoded_table or time_controls_encoded")
+            #print(f"KeyError: Missing key {e} in encoded_table or time_controls_encoded")
             # You can either provide a default value or skip the iteration, etc.
             base_time = None
             increment_time = None
@@ -178,6 +180,9 @@ class ChessDatasetFT(Dataset):
 
     def __len__(self):
         return self.len
+    
+
+
 
 
 
@@ -189,12 +194,34 @@ if __name__ == "__main__":
     CONFIG = import_config(args.config_name)
 
     # Dataset
-    dataset = CONFIG.DATASET(
-        data_folder=CONFIG.DATA_FOLDER,
-        h5_file=CONFIG.H5_FILE,
+    dataset = ChessDatasetFT(
+        data_folder='',
+        h5_file='data.h5',
         split="train",
-        n_moves=5,
     )
-    print(len(dataset))
-    print(dataset[17])
+    
+    train_loader = DataLoader(
+        dataset,
+        batch_size=512,
+        #num_workers=2,
+        #pin_memory=False,
+        #prefetch_factor=CONFIG.PREFETCH_FACTOR,
+        shuffle=True,
+    )
+    
+    
+    def cycle(iterable):
+        while True:
+            for x in iterable:
+                yield x
+                
+    dataiter = iter(cycle(train_loader))
+
+    start = time.time()
+    average = 0
+    n=0
+    for i, batch in enumerate(dataiter):
+        elapsed = time.time()-start
+        print(f"Taken {elapsed}s to load batch")
+        start = time.time()
     dataset.h5_file.close()
