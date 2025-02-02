@@ -116,129 +116,7 @@ start = time.time()
 torch_tensors = [torch.tensor(record) for record in loaded_records[0][0]]
 print(f"Time taken to create tensors: {time.time()-start}s")"""
 
-
-
-
-import multiprocessing as mp
-from multiprocessing import Manager
-from tqdm import tqdm
-import os
-import time
-import numpy as np
-import torch
-import zstandard as zstd
-import random
-from torch.utils.data import Dataset
-import sys
-
-def f(str):
-    print(str)
-    sys.stdout.flush()
-
-
-def fill_buffer_in_process(buffer, lock, start, data_file_paths, buffer_len, forever=False):
-    pbar = tqdm(total=buffer_len, position=0, desc="Loading buffer")
-    while True:
-        with lock:  # Acquire lock for atomic check
-            buffer_has_space = len(buffer) < buffer_len
-        if buffer_has_space:
-            #print("yes")
-            # Get filename and increment start under lock
-            with lock:
-                filename = data_file_paths[start.value]
-                start.value = (start.value + 1) % len(data_file_paths)
-            # Process file and append records
-            try:
-                loaded_records = read_records_from_file(filename, record_dtype)
-            except Exception as e:
-                print(f"Error reading {filename}: {e}")
-                continue
-            for record in loaded_records:
-                curr_record = record[0]
-                try:
-                    base_time = curr_record[12]
-                    increment_time = curr_record[13]
-                    time_control = f'{base_time}+{increment_time}'
-                    time_control = torch.LongTensor([time_controls_encoded[time_control]])
-                except KeyError:
-                    time_control = torch.LongTensor([0])
-
-                record_dict = {
-                    "turn": torch.tensor([curr_record[0]]),
-                    "white_kingside_castling_rights": torch.tensor([curr_record[1]]),
-                    "white_queenside_castling_rights": torch.tensor([curr_record[2]]),
-                    "black_kingside_castling_rights": torch.tensor([curr_record[3]]),
-                    "black_queenside_castling_rights": torch.tensor([curr_record[4]]),
-                    "board_position": torch.tensor(np.array(curr_record[5])),
-                    "from_square": torch.tensor([curr_record[6]]),
-                    "to_square": torch.tensor([curr_record[7]]),
-                    "length": torch.tensor([curr_record[8]]),
-                    "phase": torch.tensor([curr_record[9]]),
-                    "result": torch.tensor([curr_record[10]]),
-                    "categorical_result": torch.tensor([curr_record[11]]),
-                    "time_control": time_control,
-                    "white_remaining_time": torch.tensor([curr_record[14]]),
-                    "black_remaining_time": torch.tensor([curr_record[15]]),
-                    "white_rating": torch.tensor([curr_record[16]]),
-                    "black_rating": torch.tensor([curr_record[17]]),
-                    "time_spent_on_move": torch.tensor([curr_record[18]]),
-                    "move_number": torch.tensor([curr_record[19]]),
-                    "num_legal_moves": torch.tensor([curr_record[20]]),
-                    "white_material_value": torch.tensor([curr_record[21]]),
-                    "black_material_value": torch.tensor([curr_record[22]]),
-                    "material_difference": torch.tensor([curr_record[23]]),
-                    "moves_until_end": torch.tensor([curr_record[24]]),
-                }
-                with lock:
-                    buffer.append(record_dict)
-            pbar.update(len(loaded_records))
-        else:
-            if not forever:
-                pbar.close()
-                return
-            time.sleep(0.01)  # Reduce CPU usage
-    pbar.close()
-
-def read_records_from_file(filename, dtype):
-    records = []
-    decompressor = zstd.ZstdDecompressor()
-    with open(filename, 'rb') as f:
-        with decompressor.stream_reader(f) as zf:
-            while True:
-                record_bytes = zf.read(dtype.itemsize)
-                if not record_bytes:
-                    break  # End of file
-                record = np.frombuffer(record_bytes, dtype=dtype)
-                records.append(record)
-    return records
-
-class ChunkParser:
-    def __init__(self, data_folder=None, buffer_size=0, num_workers=4, **unused):
-        #self.buffer = deque()
-        manager = Manager()
-        self.buffer = manager.list()
-        self.buffer_len = buffer_size
-        self.data_folder = data_folder
-        self.start = manager.Value('i', 0)
-        self.data_file_paths = self.get_all_record_files(data_folder)
-        self.lock = manager.Lock()
-
-        print("Filling initial buffer...")
-        start_time = time.time()
-        self.fill_buffer(forever=False)
-        print(f"Took {time.time()-start_time}s to fill buffer")
-
-        self.processes = []
-        for _ in range(num_workers):
-            process = mp.Process(target=fill_buffer_in_process, args=(self.buffer, self.lock, self.start, self.data_file_paths, self.buffer_len, True))
-            #process = mp.Process(target=self.fill_buffer, args=(True, ))
-            process.daemon = True
-            process.start()
-            self.processes.append(process)
-            #process.join()
-        print("Automatic buffer filling started with multiple processes.")
-
-    def get_all_record_files(self, data_folder):
+def get_all_record_files(data_folder):
         file_paths = []
         for folder in sorted(os.listdir(data_folder)):
             folder_path = os.path.join(data_folder, folder)
@@ -248,129 +126,121 @@ class ChunkParser:
                         file_paths.append(os.path.join(folder_path, file))
         return file_paths
 
-    def fill_buffer(self, forever=False):
-        pbar = tqdm(total=self.buffer_len, position=0, desc="Loading buffer")
-        while True:
-            with self.lock:  # Acquire lock for atomic check
-                buffer_has_space = len(self.buffer) < self.buffer_len
-            if buffer_has_space:
-                # Get filename and increment start under lock
-                with self.lock:
-                    filename = self.data_file_paths[self.start.value]
-                    self.start.value = (self.start.value + 1) % len(self.data_file_paths)
-                # Process file and append records
-                try:
-                    loaded_records = read_records_from_file(filename, record_dtype)
-                except Exception as e:
-                    print(f"Error reading {filename}: {e}")
-                    continue
-                for record in loaded_records:
-                    curr_record = record[0]
-                    try:
-                        base_time = curr_record[12]
-                        increment_time = curr_record[13]
-                        time_control = f'{base_time}+{increment_time}'
-                        time_control = torch.LongTensor([time_controls_encoded[time_control]])
-                    except KeyError:
-                        time_control = torch.LongTensor([0])
 
-                    record_dict = {
-                        "turn": torch.tensor([curr_record[0]]),
-                        "white_kingside_castling_rights": torch.tensor([curr_record[1]]),
-                        "white_queenside_castling_rights": torch.tensor([curr_record[2]]),
-                        "black_kingside_castling_rights": torch.tensor([curr_record[3]]),
-                        "black_queenside_castling_rights": torch.tensor([curr_record[4]]),
-                        "board_position": torch.tensor(np.array(curr_record[5])),
-                        "from_square": torch.tensor([curr_record[6]]),
-                        "to_square": torch.tensor([curr_record[7]]),
-                        "length": torch.tensor([curr_record[8]]),
-                        "phase": torch.tensor([curr_record[9]]),
-                        "result": torch.tensor([curr_record[10]]),
-                        "categorical_result": torch.tensor([curr_record[11]]),
-                        "time_control": time_control,
-                        "white_remaining_time": torch.tensor([curr_record[14]]),
-                        "black_remaining_time": torch.tensor([curr_record[15]]),
-                        "white_rating": torch.tensor([curr_record[16]]),
-                        "black_rating": torch.tensor([curr_record[17]]),
-                        "time_spent_on_move": torch.tensor([curr_record[18]]),
-                        "move_number": torch.tensor([curr_record[19]]),
-                        "num_legal_moves": torch.tensor([curr_record[20]]),
-                        "white_material_value": torch.tensor([curr_record[21]]),
-                        "black_material_value": torch.tensor([curr_record[22]]),
-                        "material_difference": torch.tensor([curr_record[23]]),
-                        "moves_until_end": torch.tensor([curr_record[24]]),
-                    }
-                    with self.lock:
-                        self.buffer.append(record_dict)
-                pbar.update(len(loaded_records))
-            else:
-                if not forever:
-                    pbar.close()
-                    return
-                time.sleep(0.01) 
+
+import torch
+from torch.utils.data import IterableDataset, DataLoader, get_worker_info
+import numpy as np
+import zstandard as zstd
+
+class ZSTDIterableDataset(IterableDataset):
+    """
+    An IterableDataset that streams records from a list of Zstandard-compressed
+    binary files. It iterates over each file in the provided list, reads fixed-size
+    records from the decompressed stream, converts them into PyTorch tensors, and
+    partitions the work across multiple DataLoader workers.
+    """
+    def __init__(self, file_list, record_dtype):
+        """
+        Args:
+            file_list (list of str): List of paths to .zst files. If a file does not
+                                     end with '.zst', the extension will be appended.
+            record_dtype (np.dtype): Numpy structured dtype defining one record.
+        """
+        self.file_list = file_list
+        self.record_dtype = record_dtype
+        self.record_size = record_dtype.itemsize
+
+    def __iter__(self):
+        # Get worker information for multi-worker support.
+        worker_info = get_worker_info()
+        if worker_info is None:
+            worker_id = 0
+            num_workers = 1
+        else:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
             
-    def read_records_from_file(self, filename, dtype):
-        records = []
-        decompressor = zstd.ZstdDecompressor()
-        with open(filename, 'rb') as f:
-            with decompressor.stream_reader(f) as zf:
-                while True:
-                    record_bytes = zf.read(dtype.itemsize)
-                    if not record_bytes:
-                        break  # End of file
-                    record = np.frombuffer(record_bytes, dtype=dtype)
-                    records.append(record)
-        return records
+        global_idx = 0  # Global record counter across all files.
+        # Iterate over each file.
+        while True:
+            for filename in self.file_list:
+                # Ensure the file has the .zst extension.
+                decompressor = zstd.ZstdDecompressor()
+                with open(filename, 'rb') as f:
+                    with decompressor.stream_reader(f) as zf:
+                        while True:
+                            record_bytes = zf.read(self.record_dtype.itemsize)
+                            if not record_bytes:
+                                break  # End of file
+                            if global_idx % num_workers == worker_id:
+                                record = np.frombuffer(record_bytes, dtype=self.record_dtype)
+                                
+                                curr_record = record[0]
+                                try:
+                                    base_time = curr_record[12]
+                                    increment_time = curr_record[13]
+                                    time_control = f'{base_time}+{increment_time}'
+                                    time_control = torch.LongTensor([time_controls_encoded[time_control]])
+                                except KeyError:
+                                    time_control = torch.LongTensor([0])
+                                yield {
+                                    "turn": torch.tensor([curr_record[0]]),
+                                    "white_kingside_castling_rights": torch.tensor([curr_record[1]]),
+                                    "white_queenside_castling_rights": torch.tensor([curr_record[2]]),
+                                    "black_kingside_castling_rights": torch.tensor([curr_record[3]]),
+                                    "black_queenside_castling_rights": torch.tensor([curr_record[4]]),
+                                    "board_position": torch.tensor(np.array(curr_record[5])),
+                                    "from_square": torch.tensor([curr_record[6]]),
+                                    "to_square": torch.tensor([curr_record[7]]),
+                                    "length": torch.tensor([curr_record[8]]),
+                                    "phase": torch.tensor([curr_record[9]]),
+                                    "result": torch.tensor([curr_record[10]]),
+                                    "categorical_result": torch.tensor([curr_record[11]]),
+                                    "time_control": time_control,
+                                    "white_remaining_time": torch.tensor([curr_record[14]]),
+                                    "black_remaining_time": torch.tensor([curr_record[15]]),
+                                    "white_rating": torch.tensor([curr_record[16]]),
+                                    "black_rating": torch.tensor([curr_record[17]]),
+                                    "time_spent_on_move": torch.tensor([curr_record[18]]),
+                                    "move_number": torch.tensor([curr_record[19]]),
+                                    "num_legal_moves": torch.tensor([curr_record[20]]),
+                                    "white_material_value": torch.tensor([curr_record[21]]),
+                                    "black_material_value": torch.tensor([curr_record[22]]),
+                                    "material_difference": torch.tensor([curr_record[23]]),
+                                    "moves_until_end": torch.tensor([curr_record[24]]),
+                                }
+                            global_idx += 1
+                    
 
-    def __getitem__(self, i):
-        with self.lock:
-            return self.buffer.pop(i)
-
-    def __len__(self):
-        with self.lock:
-            return len(self.buffer)//4
-
-
+# Example usage:
+if __name__ == "__main__":
+    # List of file paths to be processed.
+    file_list = get_all_record_files('data_folder')
     
+    # Instantiate the dataset with the list of files.
+    dataset = ZSTDIterableDataset(file_list, record_dtype)
     
-if __name__ == '__main__':
-    buffer_size = 200
-    # Create ChunkParser instance (this will run fill_buffer() in the background)
-    parser = ChunkParser(data_folder='data_folder', buffer_size=buffer_size, num_workers=6)
-
-    train_loader = DataLoader(
-        dataset=parser,
-        batch_size=5,
-        #num_workers=2,
-        #pin_memory=False,
-        #prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        shuffle=True,
-    )
+    # Create a DataLoader with multiple workers.
+    loader = DataLoader(dataset, batch_size=512, num_workers=4)
     
     def cycle(iterable):
         while True:
             for x in iterable:
                 yield x
                 
-    dataiter = iter(cycle(train_loader))
-
+    dataiter = iter(cycle(loader))
+    
+    # Iterate over the DataLoader.
     start = time.time()
     average = 0
-    n=0
-    for i, batch in enumerate(dataiter):
+    n = 0
+    for batch in dataiter:
+        # Process your batch here.
         elapsed = time.time()-start
-        print("number of batches:",len(train_loader))
-        print(f"Taken {elapsed}s to load batch")
+        print(f"Time taken for one batch: {elapsed}s")
         start = time.time()
-        
-        #print(f"buffer length: {len(parser.buffer)}")
-        
         
         average += elapsed
         n+=1
-        
-        print(f"Average time taken: {average/n}s")
-    
-    # Continue with the rest of your script without waiting for the background task
-    print("Main script continues running.")
-    
+        print(f"Average time taken per batch: {average/n}s")
