@@ -23,31 +23,31 @@ phase_encoder = {
 
 # Create table description for HDF5 file
 class EncodedChessTable(tb.IsDescription):
-    board_position = tb.Int8Col(shape=(64))
-    turn = tb.Int8Col()
-    white_kingside_castling_rights = tb.Int8Col()
-    white_queenside_castling_rights = tb.Int8Col()
-    black_kingside_castling_rights = tb.Int8Col()
-    black_queenside_castling_rights = tb.Int8Col()
+    board_position = tb.Int8Col(shape=(64))#done
+    turn = tb.Int8Col() #done
+    white_kingside_castling_rights = tb.Int8Col()#done
+    white_queenside_castling_rights = tb.Int8Col()#done
+    black_kingside_castling_rights = tb.Int8Col()#done
+    black_queenside_castling_rights = tb.Int8Col()#done
     moves = tb.Int16Col(shape=(max_move_sequence_length + 1))
     length = tb.Int8Col()
-    from_square = tb.Int8Col()
-    to_square = tb.Int8Col()
-    phase = tb.Int8Col()
-    result = tb.Int8Col()
+    from_square = tb.Int8Col()#done
+    to_square = tb.Int8Col()#done
+    phase = tb.Int8Col()#done
+    result = tb.Int8Col()#done
     base_time = tb.Int16Col()
     increment_time = tb.Int16Col()
     white_remaining_time = tb.Float32Col()
     black_remaining_time = tb.Float32Col()
-    white_rating = tb.Float32Col()
-    black_rating = tb.Float32Col()
+    white_rating = tb.Float32Col()#done
+    black_rating = tb.Float32Col()#done
     time_spent_on_move = tb.Float32Col()
-    move_number = tb.Int16Col()
-    num_legal_moves = tb.Int16Col()
-    white_material_value = tb.Int16Col()
-    black_material_value = tb.Int16Col()
-    material_difference = tb.Int16Col()
-    moves_until_end = tb.Int16Col()
+    move_number = tb.Int16Col()#done
+    num_legal_moves = tb.Int16Col()#done
+    white_material_value = tb.Int16Col()#done
+    black_material_value = tb.Int16Col()#done
+    material_difference = tb.Int16Col()#done
+    moves_until_end = tb.Int16Col()#done
 
 
 def process_pgn(pgn_file_path=None, 

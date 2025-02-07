@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import struct
 import time
 from torch.utils.data import Dataset, DataLoader
 import asyncio
@@ -116,15 +117,9 @@ start = time.time()
 torch_tensors = [torch.tensor(record) for record in loaded_records[0][0]]
 print(f"Time taken to create tensors: {time.time()-start}s")"""
 
-def get_all_record_files(data_folder):
-        file_paths = []
-        for folder in sorted(os.listdir(data_folder)):
-            folder_path = os.path.join(data_folder, folder)
-            if os.path.isdir(folder_path):
-                for file in sorted(os.listdir(folder_path)):
-                    if file.startswith("records_") and file.endswith(".zst"):
-                        file_paths.append(os.path.join(folder_path, file))
-        return file_paths
+from pathlib import Path
+def get_all_record_files(directory: str):
+    return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
 
 
 
@@ -150,6 +145,8 @@ class ZSTDIterableDataset(IterableDataset):
         self.file_list = file_list
         self.record_dtype = record_dtype
         self.record_size = record_dtype.itemsize
+        self.fmt = "<5b64b6b2h2f2hf5hf"
+        self.record_size = struct.calcsize(self.fmt)
 
     def __iter__(self):
         # Get worker information for multi-worker support.
@@ -161,62 +158,103 @@ class ZSTDIterableDataset(IterableDataset):
             worker_id = worker_info.id
             num_workers = worker_info.num_workers
             
-        global_idx = 0  # Global record counter across all files.
-        # Iterate over each file.
-        while True:
-            for filename in self.file_list:
-                # Ensure the file has the .zst extension.
-                decompressor = zstd.ZstdDecompressor()
-                with open(filename, 'rb') as f:
-                    with decompressor.stream_reader(f) as zf:
-                        while True:
-                            record_bytes = zf.read(self.record_dtype.itemsize)
-                            if not record_bytes:
-                                break  # End of file
-                            if global_idx % num_workers == worker_id:
-                                record = np.frombuffer(record_bytes, dtype=self.record_dtype)
-                                
-                                curr_record = record[0]
-                                try:
-                                    base_time = curr_record[12]
-                                    increment_time = curr_record[13]
-                                    time_control = f'{base_time}+{increment_time}'
-                                    time_control = torch.LongTensor([time_controls_encoded[time_control]])
-                                except KeyError:
-                                    time_control = torch.LongTensor([0])
-                                yield {
-                                    "turn": torch.tensor([curr_record[0]]),
-                                    "white_kingside_castling_rights": torch.tensor([curr_record[1]]),
-                                    "white_queenside_castling_rights": torch.tensor([curr_record[2]]),
-                                    "black_kingside_castling_rights": torch.tensor([curr_record[3]]),
-                                    "black_queenside_castling_rights": torch.tensor([curr_record[4]]),
-                                    "board_position": torch.tensor(np.array(curr_record[5])),
-                                    "from_square": torch.tensor([curr_record[6]]),
-                                    "to_square": torch.tensor([curr_record[7]]),
-                                    "length": torch.tensor([curr_record[8]]),
-                                    "phase": torch.tensor([curr_record[9]]),
-                                    "result": torch.tensor([curr_record[10]]),
-                                    "categorical_result": torch.tensor([curr_record[11]]),
-                                    "time_control": time_control,
-                                    "white_remaining_time": torch.tensor([curr_record[14]]),
-                                    "black_remaining_time": torch.tensor([curr_record[15]]),
-                                    "white_rating": torch.tensor([curr_record[16]]),
-                                    "black_rating": torch.tensor([curr_record[17]]),
-                                    "time_spent_on_move": torch.tensor([curr_record[18]]),
-                                    "move_number": torch.tensor([curr_record[19]]),
-                                    "num_legal_moves": torch.tensor([curr_record[20]]),
-                                    "white_material_value": torch.tensor([curr_record[21]]),
-                                    "black_material_value": torch.tensor([curr_record[22]]),
-                                    "material_difference": torch.tensor([curr_record[23]]),
-                                    "moves_until_end": torch.tensor([curr_record[24]]),
-                                }
-                            global_idx += 1
+        #divide chunks amongst workers
+        files = self.file_list[worker_id::num_workers]
+        
+        for filename in files:
+            with open(filename, "rb") as f:
+                dctx = zstd.ZstdDecompressor()
+                decompressed = dctx.decompress(f.read())
+                num_dicts = len(decompressed) // self.record_size
+                for i in range(num_dicts):
+                    offset = i * self.record_size
+                    record_bytes = decompressed[offset: offset + self.record_size]
+                    unpacked = struct.unpack(self.fmt, record_bytes)
+                    record = {}
+                    idx = 0
+                    record["turn"] = unpacked[idx]; idx += 1
+                    record["white_kingside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["white_queenside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["black_kingside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["black_queenside_castling_rights"] = unpacked[idx]; idx += 1
+
+                    # board_position: next 64 int8 values
+                    record["board_position"] = list(unpacked[idx: idx+64]); idx += 64
+
+                    # Next 6 int8 values:
+                    record["from_square"] = unpacked[idx]; idx += 1
+                    record["to_square"] = unpacked[idx]; idx += 1
+                    record["length"] = unpacked[idx]; idx += 1
+                    record["phase"] = unpacked[idx]; idx += 1
+                    record["result"] = unpacked[idx]; idx += 1
+                    record["categorical_result"] = unpacked[idx]; idx += 1
+
+                    # 2 int16:
+                    record["base_time"] = unpacked[idx]; idx += 1
+                    record["increment_time"] = unpacked[idx]; idx += 1
+
+                    # 2 float32:
+                    record["white_remaining_time"] = unpacked[idx]; idx += 1
+                    record["black_remaining_time"] = unpacked[idx]; idx += 1
+
+                    # 2 int16:
+                    record["white_rating"] = unpacked[idx]; idx += 1
+                    record["black_rating"] = unpacked[idx]; idx += 1
+
+                    # 1 float32:
+                    record["time_spent_on_move"] = unpacked[idx]; idx += 1
+
+                    # 5 int16:
+                    record["move_number"] = unpacked[idx]; idx += 1
+                    record["num_legal_moves"] = unpacked[idx]; idx += 1
+                    record["white_material_value"] = unpacked[idx]; idx += 1
+                    record["black_material_value"] = unpacked[idx]; idx += 1
+                    record["material_difference"] = unpacked[idx]; idx += 1
+
+                    # 1 float32:
+                    record["moves_until_end"] = unpacked[idx]; idx += 1
+                    
+                    try:
+                        base_time = record["base_time"]
+                        increment_time = record["increment_time"]
+                        time_control = f'{base_time}+{increment_time}'
+                        time_control = torch.LongTensor([time_controls_encoded[time_control]])
+                    except KeyError:
+                        time_control = torch.LongTensor([0])
+
+                    yield {
+                        "turn": torch.tensor([record["turn"]]),
+                        "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]),
+                        "white_queenside_castling_rights": torch.tensor([record["white_queenside_castling_rights"]]),
+                        "black_kingside_castling_rights": torch.tensor([record["black_kingside_castling_rights"]]),
+                        "black_queenside_castling_rights": torch.tensor([record["black_queenside_castling_rights"]]),
+                        "board_position": torch.tensor(np.array(record["board_position"])),
+                        "from_square": torch.tensor([record["from_square"]]),
+                        "to_square": torch.tensor([record["to_square"]]),
+                        "length": torch.tensor([record["length"]]),
+                        "phase": torch.tensor([record["phase"]]),
+                        "result": torch.tensor([record["result"]]),
+                        "categorical_result": torch.tensor([record["categorical_result"]]),
+                        "time_control": time_control,
+                        "white_remaining_time": torch.tensor([record["white_remaining_time"]]),
+                        "black_remaining_time": torch.tensor([record["black_remaining_time"]]),
+                        "white_rating": torch.tensor([record["white_rating"]]),
+                        "black_rating": torch.tensor([record["black_rating"]]),
+                        "time_spent_on_move": torch.tensor([record["time_spent_on_move"]]),
+                        "move_number": torch.tensor([record["move_number"]]),
+                        "num_legal_moves": torch.tensor([record["num_legal_moves"]]),
+                        "white_material_value": torch.tensor([record["white_material_value"]]),
+                        "black_material_value": torch.tensor([record["black_material_value"]]),
+                        "material_difference": torch.tensor([record["material_difference"]]),
+                        "moves_until_end": torch.tensor([record["moves_until_end"]]),
+                    }
                     
 
 # Example usage:
 if __name__ == "__main__":
     # List of file paths to be processed.
-    file_list = get_all_record_files('data_folder')
+    file_list = get_all_record_files('c++/testing')
+    file_list.pop(0)
     
     # Instantiate the dataset with the list of files.
     dataset = ZSTDIterableDataset(file_list, record_dtype)
@@ -224,12 +262,16 @@ if __name__ == "__main__":
     # Create a DataLoader with multiple workers.
     loader = DataLoader(dataset, batch_size=512, num_workers=4)
     
+    print("dataset created")
+    
     def cycle(iterable):
         while True:
             for x in iterable:
                 yield x
                 
     dataiter = iter(cycle(loader))
+    
+    print("iterating dataset")
     
     # Iterate over the DataLoader.
     start = time.time()
