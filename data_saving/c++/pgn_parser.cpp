@@ -631,8 +631,8 @@ class MyVisitor : public pgn::Visitor {
             int black_kingside_castling_rights = 0;
             int black_queenside_castling_rights = 0;
             std::vector<int> encoded_board = parse_board(fen);
-            std::cout << fen << std::endl;
-            printArray(encoded_board);
+            //std::cout << fen << std::endl;
+            //printArray(encoded_board);
 
             //can white castle kingside?
             if (castling_rights.find('K') != std::string::npos) {
