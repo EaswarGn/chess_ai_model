@@ -20,6 +20,7 @@ from criteria import MultiTaskChessLoss
 from datasets import ChessDatasetFT, ChunkLoader
 from model import ChessTemporalTransformerEncoder
 import numpy as np
+import subprocess
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -54,6 +55,8 @@ record_dtype = np.dtype([
     ("moves_until_end", np.float16)
 ])
 
+rating = 1900
+
 
 def train_model(CONFIG):
     """
@@ -63,11 +66,18 @@ def train_model(CONFIG):
 
         CONFIG (dict): Configuration. See ./configs.
     """
-    writer = SummaryWriter(log_dir='logs')
-
+    os.makedirs("logs/main_log", exist_ok=True)
+    writer = SummaryWriter(log_dir='logs/main_log')
+    tensorboard_process = subprocess.Popen(["tensorboard", "--logdir=logs/main_log", "--port=6006"])
+    time.sleep(5)
+    localtunnel_process = subprocess.Popen(["lt", "--port", "6006"])
+    time.sleep(5)
+    print("TensorBoard is running locally at http://localhost:6006")
+    print("Waiting for localtunnel to generate the public URL...")
+    
+    
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG).to(DEVICE)
-    
 
     # Optimizer
     optimizer = CONFIG.OPTIMIZER(
@@ -146,51 +156,44 @@ def train_model(CONFIG):
     #val_dataset = ChunkLoader(testing_file_list, record_dtype)
     train_loader = DataLoader(train_dataset, batch_size=512, num_workers=4)
     #val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
+    
+    step = 0
+    # One epoch's training
+    train_epoch(
+        train_loader=train_loader,
+        model=compiled_model,
+        criterion=criterion,
+        optimizer=optimizer,
+        scaler=scaler,
+        epoch=0,
+        epochs=epochs,
+        step=step,
+        writer=writer,
+        CONFIG=CONFIG,
+    )
 
-    # Epochs
-    for epoch in range(start_epoch, epochs):
-        
-        #epoch = epoch - 1
+    """# One epoch's validation
+    validate_epoch(
+        val_loader=val_loader,
+        model=compiled_model,
+        criterion=criterion,
+        epoch=epoch,
+        writer=writer,
+        CONFIG=CONFIG,
+    )"""
 
-        # Step
-        step = epoch * steps_per_epoch // CONFIG.BATCHES_PER_STEP
+    # Save checkpoint
+    #save_checkpoint(rating, step, model, optimizer, CONFIG.NAME, CONFIG.CHECKPOINT_FOLDER)
+    
+    num_epochs_completed += 1
+    
+    if num_epochs_completed%3==0:
+        num_full_loops += 1
+        model_file = 'checkpoints/CT-EFT-85/CT-EFT-85.pt'
 
-        # One epoch's training
-        train_epoch(
-            train_loader=train_loader,
-            model=compiled_model,
-            criterion=criterion,
-            optimizer=optimizer,
-            scaler=scaler,
-            epoch=epoch,
-            epochs=epochs,
-            step=step,
-            writer=writer,
-            CONFIG=CONFIG,
-        )
-
-        """# One epoch's validation
-        validate_epoch(
-            val_loader=val_loader,
-            model=compiled_model,
-            criterion=criterion,
-            epoch=epoch,
-            writer=writer,
-            CONFIG=CONFIG,
-        )"""
-
-        # Save checkpoint
-        save_checkpoint(epoch, model, optimizer, CONFIG.NAME, CONFIG.CHECKPOINT_FOLDER)
-        
-        num_epochs_completed += 1
-        
-        if num_epochs_completed%3==0:
-            num_full_loops += 1
-            model_file = 'checkpoints/CT-EFT-85/CT-EFT-85.pt'
-
-            # Destination path in Google Drive (choose your own folder and filename)
-            destination = f'../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
-            shutil.copy(model_file, destination)
+        # Destination path in Google Drive (choose your own folder and filename)
+        destination = f'../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
+        shutil.copy(model_file, destination)
             
 def calculate_accuracy(predictions, targets):
     predicted_classes = torch.argmax(predictions, dim=1)
@@ -270,6 +273,8 @@ def train_epoch(
         criterion = criterion
     )
     criterion = criterion.to(DEVICE)
+    
+    steps_per_epoch = 50000
 
     # Batches
     for i, batch in enumerate(train_loader):
@@ -407,6 +412,9 @@ def train_epoch(
 
             # Time taken for this training step
             step_time.update(time.time() - start_step_time)
+            
+            if step % steps_per_epoch == 0:
+                save_checkpoint(rating, step, model, optimizer, "CT-EFT-85", "checkpoints/models")
 
             # Print status
             if step % CONFIG.PRINT_FREQUENCY == 0:

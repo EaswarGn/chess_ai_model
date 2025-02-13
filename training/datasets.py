@@ -212,15 +212,17 @@ class ChunkLoader(IterableDataset):
         self.record_size = record_dtype.itemsize
         self.fmt = "<5b64b6b2h2f2hf5hf"
         self.record_size = struct.calcsize(self.fmt)
-        self.length = len(self.file_list)*self.get_chunk_size()
+        self.length = self.get_len()
         
-    def get_chunk_size(self):
-        with open(self.file_list[0], "rb") as f:
-            dctx = zstd.ZstdDecompressor()
-            
-            decompressed = dctx.decompress(f.read())
-            num_dicts = len(decompressed) // self.record_size
-            return num_dicts
+    def get_len(self):
+        len = 0
+        for filename in self.file_list:
+            with open(filename, "rb") as f:
+                dctx = zstd.ZstdDecompressor()
+                decompressed = dctx.decompress(f.read())
+                num_dicts = len(decompressed) // self.record_size
+                len += num_dicts
+        return len
 
     def __iter__(self):
         # Get worker information for multi-worker support.

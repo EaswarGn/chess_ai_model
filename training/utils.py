@@ -76,7 +76,11 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06):
     return lr
 
 
-def save_checkpoint(epoch, model, optimizer, config_name, checkpoint_folder, prefix=""):
+from huggingface_hub import HfApi
+import shutil
+api = HfApi()
+
+def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_folder, prefix=""):
     """
     Checkpoint saver. Each save overwrites any previous save.
 
@@ -97,13 +101,32 @@ def save_checkpoint(epoch, model, optimizer, config_name, checkpoint_folder, pre
         to "".
     """
     state = {
-        "epoch": epoch,
+        "step": step,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
     }
     pathlib.Path(checkpoint_folder).mkdir(parents=True, exist_ok=True)
-    filename = prefix + config_name + ".pt"
+    filename = rating + "_" + step + ".pt"
     torch.save(state, os.path.join(checkpoint_folder, filename))
+    
+    os.makedirs("logs/checkpoint_logs", exist_ok=True)
+    os.makedirs(f"logs/checkpoint_logs/{rating}_step={step}", exist_ok=True)
+    shutil.copy(os.listdir("logs/main_log")[0], f"logs/checkpoint_logs/{rating}_step={step}")
+    
+    api.upload_folder(
+        folder_path="checkpoints",
+        repo_id="codingmonster1234/models",
+        repo_type="dataset",
+    )
+    
+    api.upload_folder(
+        folder_path="logs",
+        #path_in_repo="codingmonster1234/logs", # Upload to a specific folder
+        repo_id="codingmonster1234/models",
+        repo_type="dataset",
+        ignore_patterns="**/logs/*.txt", # Ignore all text logs
+    )
+    
     print("Checkpoint saved.\n")
 
 

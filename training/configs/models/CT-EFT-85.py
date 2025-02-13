@@ -95,9 +95,7 @@ LOGS_FOLDER = str(
 ######### Checkpoints #########
 ###############################
 
-CHECKPOINT_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "checkpoints" / NAME
-)  # folder containing checkpoints
+CHECKPOINT_FOLDER = 'checkpoints/models'  # folder containing checkpoints
 TRAINING_CHECKPOINT = None  # path to model checkpoint to resume training, None if none
 AVERAGE_STEPS = {491000, 492500, 494000, 495500, 497000, 498500, 500000}
 CHECKPOINT_AVG_PREFIX = (
