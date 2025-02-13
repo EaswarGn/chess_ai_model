@@ -134,7 +134,7 @@ def train_model(CONFIG):
     steps_per_epoch = 10000
     epochs = total_steps//steps_per_epoch
     
-    training_file_list = get_all_record_files('chessmodel_dataset/1900_training_chunks')
+    training_file_list = get_all_record_files('/content/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     #file_list = [file.replace("._", "", 1) for file in file_list]
     print(len(training_file_list))
