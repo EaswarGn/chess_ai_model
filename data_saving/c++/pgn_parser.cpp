@@ -596,6 +596,7 @@ class MyVisitor : public pgn::Visitor {
 
         //printArray(moves_with_time);
 
+        //shuffle moves so model doesn't have bias
         std::random_device rd;  // Seed source
         std::mt19937 gen(rd()); // Mersenne Twister random generator
         std::shuffle(moves_with_time.begin(), moves_with_time.end(), gen);

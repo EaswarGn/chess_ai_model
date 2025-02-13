@@ -17,13 +17,42 @@ from utils import *
 from configs import import_config
 from criteria import MultiTaskChessLoss
 #from d import ChessDataset, ChessDatasetFT
-from datasets import ChessDatasetFT
+from datasets import ChessDatasetFT, ChunkLoader
 from model import ChessTemporalTransformerEncoder
+import numpy as np
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )  # CPU isn't really practical here
 cudnn.benchmark = False
+
+record_dtype = np.dtype([
+    ("turn", np.int8),
+    ("white_kingside_castling_rights", np.int8),
+    ("white_queenside_castling_rights", np.int8),
+    ("black_kingside_castling_rights", np.int8),
+    ("black_queenside_castling_rights", np.int8),
+    ("board_position", np.int8, (64,)),
+    ("from_square", np.int8),
+    ("to_square", np.int8),
+    ("length", np.int8),
+    ("phase", np.int8),
+    ("result", np.int8),
+    ("categorical_result", np.int8),
+    ("base_time", np.int16),
+    ("increment_time", np.int16),
+    ("white_remaining_time", np.float16),
+    ("black_remaining_time", np.float16),
+    ("white_rating", np.int16),
+    ("black_rating", np.int16),
+    ("time_spent_on_move", np.float16),
+    ("move_number", np.int16),
+    ("num_legal_moves", np.int16),
+    ("white_material_value", np.int16),
+    ("black_material_value", np.int16),
+    ("material_difference", np.int16),
+    ("moves_until_end", np.float16)
+])
 
 
 def train_model(CONFIG):
@@ -97,58 +126,34 @@ def train_model(CONFIG):
 
     # Find total epochs to train
     #epochs = (CONFIG.N_STEPS // (len(train_loader) // CONFIG.BATCHES_PER_STEP)) + 1
-    epochs = 9
+    
     num_epochs_completed = 0
     num_full_loops = 0
     start_epoch = 0
+    total_steps = 500000
+    steps_per_epoch = 10000
+    epochs = total_steps//steps_per_epoch
+    
+    training_file_list = get_all_record_files('chessmodel_dataset/1900_training_chunks')
+    training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
+    #file_list = [file.replace("._", "", 1) for file in file_list]
+    print(len(training_file_list))
+    
+    testing_file_list = get_all_record_files('chessmodel_dataset/ranged_chunks_zipped/1900')
+    testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
+    
+    train_dataset = ChunkLoader(training_file_list, record_dtype)
+    val_dataset = ChunkLoader(testing_file_list, record_dtype)
+    train_loader = DataLoader(train_dataset, batch_size=512, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
 
     # Epochs
     for epoch in range(start_epoch, epochs):
-        #epoch = epoch+1
-        
-        train_data_folder = ''
-        val_data_folder = ''
-        
-        data_epoch = (epoch%3)+1
-        if DEVICE.type == 'cpu':
-            train_data_folder = f'../data/epoch_{data_epoch}/train_data'
-            val_data_folder = f'../data/epoch_{data_epoch}/val_data'
-        else:
-            train_data_folder = f'../../drive/My Drive/data/epoch_{data_epoch}/train_data'
-            val_data_folder = f'../../drive/My Drive/data/epoch_{data_epoch}/val_data'
-            
-        
-        train_loader = DataLoader(
-            dataset=ChessDatasetFT(
-                data_folder=train_data_folder,
-                h5_file='data.h5',
-                split="train",
-                n_moves=CONFIG.N_MOVES,
-            ),
-            batch_size=CONFIG.BATCH_SIZE,
-            num_workers=CONFIG.NUM_WORKERS,
-            pin_memory=CONFIG.PIN_MEMORY,
-            prefetch_factor=CONFIG.PREFETCH_FACTOR,
-            shuffle=True,
-        )
-        val_loader = DataLoader(
-            dataset=ChessDatasetFT(
-                data_folder=val_data_folder,
-                h5_file='data.h5',
-                split="val",
-                n_moves=CONFIG.N_MOVES,
-            ),
-            batch_size=CONFIG.BATCH_SIZE,
-            num_workers=CONFIG.NUM_WORKERS,
-            pin_memory=CONFIG.PIN_MEMORY,
-            prefetch_factor=CONFIG.PREFETCH_FACTOR,
-            shuffle=False,
-        )
         
         #epoch = epoch - 1
 
         # Step
-        step = epoch * len(train_loader) // CONFIG.BATCHES_PER_STEP
+        step = epoch * steps_per_epoch // CONFIG.BATCHES_PER_STEP
 
         # One epoch's training
         train_epoch(

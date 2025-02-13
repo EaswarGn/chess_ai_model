@@ -190,7 +190,7 @@ if __name__ == "__main__":
     CONFIG = import_config(args.config_name)
 
     # Model
-    model = CONFIG.MODEL(CONFIG).to(DEVICE)
+    model = ChessTemporalTransformerEncoder(CONFIG=CONFIG)
     print(
         "There are %d learnable parameters in this model."
         % sum([p.numel() for p in model.parameters()])

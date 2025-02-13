@@ -127,8 +127,9 @@ import torch
 from torch.utils.data import IterableDataset, DataLoader, get_worker_info
 import numpy as np
 import zstandard as zstd
+from zstandard import ZstdError
 
-class ZSTDIterableDataset(IterableDataset):
+class ChunkLoader(IterableDataset):
     """
     An IterableDataset that streams records from a list of Zstandard-compressed
     binary files. It iterates over each file in the provided list, reads fixed-size
@@ -164,6 +165,7 @@ class ZSTDIterableDataset(IterableDataset):
         for filename in files:
             with open(filename, "rb") as f:
                 dctx = zstd.ZstdDecompressor()
+                
                 decompressed = dctx.decompress(f.read())
                 num_dicts = len(decompressed) // self.record_size
                 for i in range(num_dicts):
@@ -253,11 +255,13 @@ class ZSTDIterableDataset(IterableDataset):
 # Example usage:
 if __name__ == "__main__":
     # List of file paths to be processed.
-    file_list = get_all_record_files('c++/testing')
-    file_list.pop(0)
+    file_list = get_all_record_files('/Volumes/Lexar/chessmodel_dataset/1900_training_chunks')
+    file_list = [file for file in file_list if file.endswith('.zst')]   
+    #file_list = [file.replace("._", "", 1) for file in file_list]
+    print(len(file_list))
     
     # Instantiate the dataset with the list of files.
-    dataset = ZSTDIterableDataset(file_list, record_dtype)
+    dataset = ChunkLoader(file_list, record_dtype)
     
     # Create a DataLoader with multiple workers.
     loader = DataLoader(dataset, batch_size=512, num_workers=4)

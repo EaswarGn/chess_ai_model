@@ -6,6 +6,13 @@ import pathlib
 import torch.nn.functional as F
 
 
+from pathlib import Path
+
+
+
+def get_all_record_files(directory: str):
+    return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
+
 def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06):
     """
     The LR schedule.
