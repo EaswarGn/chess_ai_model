@@ -144,7 +144,7 @@ def train_model(CONFIG):
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
     #val_dataset = ChunkLoader(testing_file_list, record_dtype)
-    train_loader = DataLoader(train_dataset, batch_size=512, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=512, num_workers=2)
     #val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
 
     # Epochs
@@ -429,9 +429,9 @@ def train_epoch(
                         epoch,
                         epochs,
                         i + 1,
-                        len(train_loader),
+                        1e7,
                         step,
-                        (len(train_loader)//CONFIG.BATCHES_PER_STEP)*(epoch+1),
+                        (1e7//CONFIG.BATCHES_PER_STEP)*(epoch+1),
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
