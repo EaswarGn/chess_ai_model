@@ -274,7 +274,7 @@ def train_epoch(
     )
     criterion = criterion.to(DEVICE)
     
-    steps_per_epoch = 10
+    steps_per_epoch = 25000
 
     # Batches
     for i, batch in enumerate(train_loader):

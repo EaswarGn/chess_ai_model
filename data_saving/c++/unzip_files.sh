@@ -9,10 +9,10 @@ for file in *.zip; do
   folder_name="${file%.*}"
 
   # Unzip into the folder
-  unzip "$file" -d "$folder_name"
+  unzip "$file"
 
   # Remove the original zip file after extraction
   rm "$file"
 
-  echo "Unzipped $file into $folder_name"
+  echo "Unzipped $file"
 done
