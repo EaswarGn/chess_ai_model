@@ -278,6 +278,11 @@ class ChunkLoader(IterableDataset):
 
                     # 1 float32:
                     record["time_spent_on_move"] = unpacked[idx]; idx += 1
+                    
+                    if record["turn"]==0:
+                        record["time_spent_on_move"] = ["time_spent_on_move"]/record["white_remaining_time"]
+                    else:
+                        record["time_spent_on_move"] = ["time_spent_on_move"]/record["black_remaining_time"]
 
                     # 5 int16:
                     record["move_number"] = unpacked[idx]; idx += 1
@@ -287,7 +292,7 @@ class ChunkLoader(IterableDataset):
                     record["material_difference"] = unpacked[idx]; idx += 1
 
                     # 1 float32:
-                    record["moves_until_end"] = unpacked[idx]; idx += 1
+                    record["moves_until_end"] = unpacked[idx]/100; idx += 1
                     
                     try:
                         base_time = record["base_time"]
