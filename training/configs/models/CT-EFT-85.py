@@ -26,7 +26,7 @@ NAME = "CT-EFT-85"  # name and identifier for this configuration
 ###############################
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
-BATCH_SIZE = 1024  # batch size
+BATCH_SIZE = 16  # batch size
 NUM_WORKERS = 2  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
