@@ -101,18 +101,19 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         to "".
     """
     rating = str(rating)
+    step = str(step)
     state = {
         "step": step,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
     }
     pathlib.Path(checkpoint_folder).mkdir(parents=True, exist_ok=True)
-    filename = rating + "_" + step + ".pt"
+    filename = rating + "_step=" + step + ".pt"
     torch.save(state, os.path.join(checkpoint_folder, filename))
     
     os.makedirs("logs/checkpoint_logs", exist_ok=True)
     os.makedirs(f"logs/checkpoint_logs/{rating}_step={step}", exist_ok=True)
-    shutil.copy(os.listdir("logs/main_log")[0], f"logs/checkpoint_logs/{rating}_step={step}")
+    shutil.copy(f"logs/main_log/{os.listdir('logs/main_log')[0]}", f"logs/checkpoint_logs/{rating}_step={step}")
     
     api.upload_folder(
         folder_path="checkpoints",
