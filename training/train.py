@@ -139,13 +139,13 @@ def train_model(CONFIG):
     #file_list = [file.replace("._", "", 1) for file in file_list]
     print(len(training_file_list))
     
-    testing_file_list = get_all_record_files('chessmodel_dataset/ranged_chunks_zipped/1900')
-    testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
+    #testing_file_list = get_all_record_files('chessmodel_dataset/ranged_chunks_zipped/1900')
+    #testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
-    val_dataset = ChunkLoader(testing_file_list, record_dtype)
+    #val_dataset = ChunkLoader(testing_file_list, record_dtype)
     train_loader = DataLoader(train_dataset, batch_size=512, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
+    #val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
 
     # Epochs
     for epoch in range(start_epoch, epochs):
@@ -169,7 +169,7 @@ def train_model(CONFIG):
             CONFIG=CONFIG,
         )
 
-        # One epoch's validation
+        """# One epoch's validation
         validate_epoch(
             val_loader=val_loader,
             model=compiled_model,
@@ -177,7 +177,7 @@ def train_model(CONFIG):
             epoch=epoch,
             writer=writer,
             CONFIG=CONFIG,
-        )
+        )"""
 
         # Save checkpoint
         save_checkpoint(epoch, model, optimizer, CONFIG.NAME, CONFIG.CHECKPOINT_FOLDER)
