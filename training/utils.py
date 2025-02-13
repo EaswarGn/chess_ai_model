@@ -100,6 +100,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         prefix (str, optional): The checkpoint filename prefix. Defaults
         to "".
     """
+    rating = str(rating)
     state = {
         "step": step,
         "model_state_dict": model.state_dict(),
