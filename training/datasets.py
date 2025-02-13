@@ -280,9 +280,15 @@ class ChunkLoader(IterableDataset):
                     record["time_spent_on_move"] = unpacked[idx]; idx += 1
                     
                     if record["turn"]==0:
-                        record["time_spent_on_move"] = ["time_spent_on_move"]/record["white_remaining_time"]
+                        if record['white_remaining_time'] == 0:
+                            record["time_spent_on_move"] = 0.05
+                        else:
+                            record["time_spent_on_move"] = record["time_spent_on_move"]/record["white_remaining_time"]
                     else:
-                        record["time_spent_on_move"] = ["time_spent_on_move"]/record["black_remaining_time"]
+                        if record['black_remaining_time'] == 0:
+                            record["time_spent_on_move"] = 0.05
+                        else:
+                            record["time_spent_on_move"] = record["time_spent_on_move"]/record["black_remaining_time"]
 
                     # 5 int16:
                     record["move_number"] = unpacked[idx]; idx += 1
@@ -300,7 +306,8 @@ class ChunkLoader(IterableDataset):
                         time_control = f'{base_time}+{increment_time}'
                         time_control = torch.LongTensor([time_controls_encoded[time_control]])
                     except KeyError:
-                        time_control = torch.LongTensor([0])
+                        #time_control = torch.LongTensor([0])
+                        continue
 
                     yield {
                         "turn": torch.tensor([record["turn"]]),
