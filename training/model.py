@@ -126,7 +126,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             dict: Dictionary containing all predictions
         """
         
-        batch_size = batch["turns"].size(0)
+        batch_size = batch["turn"].size(0)
         # Expand CLS tokens for the batch
         cls_tokens = torch.cat([
             self.moves_remaining_cls_token.expand(batch_size, 1, self.d_model),
@@ -136,12 +136,12 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
         # Encoder
         boards = self.board_encoder(
-            batch["turns"],
+            batch["turn"],
             batch["white_kingside_castling_rights"],
             batch["white_queenside_castling_rights"],
             batch["black_kingside_castling_rights"],
             batch["black_queenside_castling_rights"],
-            batch["board_positions"],
+            batch["board_position"],
             batch["time_control"],
             batch["move_number"],
             batch["num_legal_moves"],
