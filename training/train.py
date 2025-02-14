@@ -144,7 +144,7 @@ def train_model(CONFIG):
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     
     rand_folder = random.randint(1, 3)
-    testing_file_list = get_all_record_files(f'chessmodel_dataset/ranged_chunks_zipped/1900/{rand_folder}_chunks')
+    testing_file_list = get_all_record_files(f'/content/ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = testing_file_list[:10]
     
