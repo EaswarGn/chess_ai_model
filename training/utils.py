@@ -119,6 +119,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         folder_path="checkpoints",
         repo_id="codingmonster1234/models",
         repo_type="dataset",
+        ignore_patterns="**/logs/*.txt", # Ignore all text logs
     )
     
     api.upload_folder(

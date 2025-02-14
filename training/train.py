@@ -21,6 +21,7 @@ from datasets import ChessDatasetFT, ChunkLoader
 from model import ChessTemporalTransformerEncoder
 import numpy as np
 import subprocess
+import random
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -133,68 +134,48 @@ def train_model(CONFIG):
 
     # AMP scaler
     scaler = GradScaler(device=DEVICE, enabled=CONFIG.USE_AMP)
+    
+    batch_size = CONFIG.BATCH_SIZE
 
     # Find total epochs to train
     #epochs = (CONFIG.N_STEPS // (len(train_loader) // CONFIG.BATCHES_PER_STEP)) + 1
     
-    num_epochs_completed = 0
-    num_full_loops = 0
-    start_epoch = 0
-    total_steps = 500000
-    steps_per_epoch = 10000
-    epochs = total_steps//steps_per_epoch
-    
     training_file_list = get_all_record_files('/content/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
-    #file_list = [file.replace("._", "", 1) for file in file_list]
-    print(len(training_file_list))
     
-    testing_file_list = get_all_record_files('chessmodel_dataset/ranged_chunks_zipped/1900')
+    rand_folder = random.randint(1, 3)
+    testing_file_list = get_all_record_files(f'chessmodel_dataset/ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
+    testing_file_list = testing_file_list[:10]
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
     val_dataset = ChunkLoader(testing_file_list, record_dtype)
-    train_loader = DataLoader(train_dataset, batch_size=512, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=512, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
     
+    
+    start_epoch = 0
+    total_steps = CONFIG.N_STEPS
+    steps_per_epoch = 10000
+    epochs = total_steps//steps_per_epoch
     step = 0
+    
     # One epoch's training
-    """train_epoch(
+    train_epoch(
         train_loader=train_loader,
+        val_loader=val_loader,
         model=compiled_model,
         criterion=criterion,
         optimizer=optimizer,
         scaler=scaler,
-        epoch=0,
+        epoch=start_epoch,
         epochs=epochs,
+        steps_per_epoch=steps_per_epoch,
         step=step,
         writer=writer,
         CONFIG=CONFIG,
-    )"""
-
-    # One epoch's validation
-    validate_epoch(
-        val_loader=val_loader,
-        model=compiled_model,
-        criterion=criterion,
-        epoch=0,
-        writer=writer,
-        CONFIG=CONFIG,
     )
-    sys.exit()
-
-    # Save checkpoint
-    #save_checkpoint(rating, step, model, optimizer, CONFIG.NAME, CONFIG.CHECKPOINT_FOLDER)
     
-    num_epochs_completed += 1
-    
-    if num_epochs_completed%3==0:
-        num_full_loops += 1
-        model_file = 'checkpoints/CT-EFT-85/CT-EFT-85.pt'
-
-        # Destination path in Google Drive (choose your own folder and filename)
-        destination = f'../../drive/My Drive/CT-EFT-85_{num_full_loops}.pt'
-        shutil.copy(model_file, destination)
             
 def calculate_accuracy(predictions, targets):
     predicted_classes = torch.argmax(predictions, dim=1)
@@ -206,12 +187,14 @@ def calculate_accuracy(predictions, targets):
 
 def train_epoch(
     train_loader,
+    val_loader,
     model,
     criterion,
     optimizer,
     scaler,
     epoch,
     epochs,
+    steps_per_epoch,
     step,
     writer,
     CONFIG,
@@ -274,8 +257,6 @@ def train_epoch(
         criterion = criterion
     )
     criterion = criterion.to(DEVICE)
-    
-    steps_per_epoch = 25000
 
     # Batches
     for i, batch in enumerate(train_loader):
@@ -415,7 +396,19 @@ def train_epoch(
             step_time.update(time.time() - start_step_time)
             
             if step % steps_per_epoch == 0:
+                
+                # One epoch's validation
+                validate_epoch(
+                    val_loader=val_loader,
+                    model=model,
+                    criterion=criterion,
+                    epoch=epoch,
+                    writer=writer,
+                    CONFIG=CONFIG,
+                )
+                
                 save_checkpoint(rating, step, model, optimizer, "CT-EFT-85", "checkpoints/models")
+                epoch+=1
 
             # Print status
             if step % CONFIG.PRINT_FREQUENCY == 0:

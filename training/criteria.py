@@ -157,7 +157,7 @@ class MultiTaskChessLoss(nn.Module):
             targets['moves_until_end'].float()
         )
         
-        # Stack losses
+        """# Stack losses
         losses = torch.stack([
             move_loss,
             time_loss,
@@ -174,12 +174,15 @@ class MultiTaskChessLoss(nn.Module):
             weights = F.softmax(self.weights / self.temperature, dim=0)
         
         # Compute weighted total loss
-        total_loss = torch.sum(losses * weights)
+        total_loss = torch.sum(losses * weights)"""
+        
+        total_loss = move_loss + time_loss + result_loss + moves_until_end_loss
+        
         
         return total_loss, {
             'move_loss': move_loss,
             'time_loss': time_loss,
             'result_loss': result_loss,
             'moves_until_end_loss': moves_until_end_loss,
-            'weights': weights.detach()
+            #'weights': weights.detach()
         }
