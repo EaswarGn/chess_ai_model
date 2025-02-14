@@ -85,6 +85,7 @@ class MyVisitor : public pgn::Visitor {
     MyVisitor(int& processed, int total, const std::string& outputdir, int chunksperfile, int maxfilesperdir)
         : games_processed(processed), total_games(total), output_dir(outputdir), chunks_per_file(chunksperfile), max_files_per_dir(maxfilesperdir) {
         start_time = std::chrono::high_resolution_clock::now();
+        fens.push_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         clock_board = Board();
         games_removed = 0;
 
@@ -557,11 +558,12 @@ class MyVisitor : public pgn::Visitor {
             fen_string:uci_move_str:turn:white_remaining_time:black_remaining_time:white_time_spent
             if it's black's turn:
             fen_string:uci_move_str:turn:white_remaining_time:black_remaining_time:black_time_spent
-            turn is either "0" or "1", where "0" is for white and "1" is for white
+            turn is either "0" or "1", where "0" is for white and "1" is for black
         */
 
         int white_clock_iterator = 0;
         int black_clock_iterator = 0;
+        fens.pop_back();
         for(int i = 0; i<=moves_with_turns.size()-1; i++){
             size_t pos = moves_with_turns[i].find(':');
             std::string move = moves_with_turns[i].substr(0, pos);
@@ -827,6 +829,7 @@ class MyVisitor : public pgn::Visitor {
         white_move_count = 0;
         black_move_count = 0;
         clock_board = Board();
+        fens.push_back("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
         games_processed++;  // Increment game count
 
