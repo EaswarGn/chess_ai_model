@@ -248,6 +248,7 @@ def train_epoch(
     
     crossentropy_loss = nn.CrossEntropyLoss()
     
+    move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(
         move_weight=1.0, 
         time_weight=0.5, 
@@ -397,17 +398,18 @@ def train_epoch(
             
             if step % steps_per_epoch == 0:
                 
+                save_checkpoint(rating, step, model, optimizer, "CT-EFT-85", "checkpoints/models")
+                
                 # One epoch's validation
                 validate_epoch(
                     val_loader=val_loader,
                     model=model,
-                    criterion=criterion,
+                    criterion=move_loss_criterion,
                     epoch=epoch,
                     writer=writer,
                     CONFIG=CONFIG,
                 )
                 
-                save_checkpoint(rating, step, model, optimizer, "CT-EFT-85", "checkpoints/models")
                 epoch+=1
 
             # Print status
@@ -501,7 +503,7 @@ def train_epoch(
             # Reset step time
             start_step_time = time.time()
 
-            # If this is the last one or two epochs, save checkpoints at
+            """# If this is the last one or two epochs, save checkpoints at
             # regular intervals for averaging
             if (
                 epoch in [epochs - 1, epochs - 2] and step % 1500 == 0
@@ -513,7 +515,7 @@ def train_epoch(
                     CONFIG.NAME,
                     CONFIG.CHECKPOINT_FOLDER,
                     prefix="step" + str(step) + "_",
-                )
+                )"""
 
         # Reset data time
         start_data_time = time.time()
