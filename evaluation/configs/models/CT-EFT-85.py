@@ -26,7 +26,7 @@ NAME = "CT-EFT-85"  # name and identifier for this configuration
 ###############################
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
-BATCH_SIZE = 512  # batch size
+BATCH_SIZE = 1024  # batch size
 NUM_WORKERS = 2  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
@@ -45,8 +45,8 @@ VOCAB_SIZES = {
     "board_position": len(PIECES),
     "time_controls": len(time_controls_encoded)
 }  # vocabulary sizes
-D_MODEL = 768  # size of vectors throughout the transformer model
-N_HEADS = 16 #12  # number of heads in the multi-head attention
+D_MODEL = 384  # size of vectors throughout the transformer model
+N_HEADS = 8 #12  # number of heads in the multi-head attention
 D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
 D_VALUES = 64  # size of value vectors in the multi-head attention
 D_INNER = 4 * D_MODEL  # an intermediate size in the position-wise FC
@@ -95,9 +95,7 @@ LOGS_FOLDER = str(
 ######### Checkpoints #########
 ###############################
 
-CHECKPOINT_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "checkpoints" / NAME
-)  # folder containing checkpoints
+CHECKPOINT_FOLDER = 'checkpoints/models'  # folder containing checkpoints
 TRAINING_CHECKPOINT = None  # path to model checkpoint to resume training, None if none
 AVERAGE_STEPS = {491000, 492500, 494000, 495500, 497000, 498500, 500000}
 CHECKPOINT_AVG_PREFIX = (

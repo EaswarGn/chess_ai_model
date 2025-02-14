@@ -29,3 +29,4 @@ logs
 /data_saving/data_folder
 *.bin
 *.zst
+training/1900.zip
