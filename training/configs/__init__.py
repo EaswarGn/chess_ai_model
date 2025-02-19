@@ -1,6 +1,6 @@
 from importlib import import_module
 
-__all__ = ["data", "models"]
+__all__ = ["models"]
 
 
 class ConfigNotFound(Exception):

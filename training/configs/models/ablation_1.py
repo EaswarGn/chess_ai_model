@@ -9,10 +9,10 @@ from chess_transformers.configs.other.fairy_stockfish import *
 from chess_transformers.transformers.criteria import LabelSmoothedCE
 from chess_transformers.data.levels import TURN, PIECES, UCI_MOVES, BOOL
 from chess_transformers.transformers.models import ChessTransformerEncoderFT"""
-from .levels import TURN, PIECES, UCI_MOVES, BOOL
-from utils import get_lr
-from criteria import LabelSmoothedCE
-from time_controls import time_controls_encoded
+from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
+from .utils.utils import get_lr
+from .utils.criteria import LabelSmoothedCE
+from .utils.time_controls import time_controls_encoded
 
 
 ###############################
@@ -57,6 +57,14 @@ DISABLE_COMPILATION = False  # disable model compilation?
 COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
 DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
 SAMPLING_K = 1  # k in top-k sampling model predictions during play
+OUTPUTS = {
+    'from_squares': None,
+    'to_squares': None,
+    'game_result': None,
+    'move_time': None, 
+    'moves_until_end': None,
+    'categorical_game_result': None
+}
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
 ###############################
