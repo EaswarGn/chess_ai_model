@@ -47,10 +47,6 @@ from pathlib import Path
 def get_all_record_files(directory: str):
     return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
 
-
-
-
-
 class ChunkLoader(IterableDataset):
     """
     An IterableDataset that streams records from a list of Zstandard-compressed

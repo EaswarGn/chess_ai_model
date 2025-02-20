@@ -58,35 +58,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.move_time_head = CONFIG.OUTPUTS['move_time']
         self.game_length_head = CONFIG.OUTPUTS['moves_until_end']
         self.categorical_game_result_head = CONFIG.OUTPUTS['categorical_game_result']
-
-        """# Prediction Heads
-        # 1. From/To square prediction heads (existing)
-        self.from_squares = nn.Linear(self.d_model, 1)
-        self.to_squares = nn.Linear(self.d_model, 1)
-
-        # 2. Game Result Prediction Head (outputs value between -1 and 1)
-        self.game_result_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Tanh()  # Ensures output is between -1 and 1
-        )
-
-        # 3. Move Time Prediction Head (outputs value between 0 and 1)
-        self.move_time_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Sigmoid()  # Ensures output is between 0 and 1
-        )
-        
-        # 4. Predicts number of full moves left in the game
-        self.game_length_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Sigmoid()
-        )
-        
-        # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.d_model, 3),
-            nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-        )"""
         
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
@@ -176,22 +147,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
-
-
-        """
-        # From/To square predictions (unchanged)
-        from_squares = (
-            self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
-        )  # (N, 1, 64)
-        to_squares = (
-            self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
-        )  # (N, 1, 64)
-
-        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1)  # First CLS token
-        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Second CLS token
-        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Third CLS token
-        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
-        categorical_game_result = categorical_game_result.squeeze(1)"""
         
         
         
