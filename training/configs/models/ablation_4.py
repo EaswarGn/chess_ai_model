@@ -20,7 +20,7 @@ from .utils.time_controls import time_controls_encoded
 ############ Name #############
 ###############################
 
-NAME = "CT-EFT-85"  # name and identifier for this configuration
+NAME = "ablation_1"  # name and identifier for this configuration
 
 ###############################
 ######### Dataloading #########

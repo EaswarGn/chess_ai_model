@@ -266,47 +266,22 @@ def train_epoch(
         with torch.autocast(
             device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
         ):
-            # (Direct) Move prediction models
-            if CONFIG.NAME.startswith(("CT-ED-", "CT-E-")):
-                # Forward prop.
-                #predicted_moves = model(batch)  # (N, n_moves, move_vocab_size)
-                predicted_moves = model(batch)
-                # Note: n_moves is how many moves into the future we are
-                # targeting for modeling. For an Encoder-Decoder model,
-                # this might be max_move_sequence_length. For an
-                # Encoder-only model, this will be 1.
-
-                # Loss
-                loss = criterion(
-                    predicted=predicted_moves,  # (N, n_moves, move_vocab_size)
-                    targets=batch["moves"][:, 1:],  # (N, n_moves)
-                    lengths=batch["lengths"],  # (N, 1)
-                )  # scalar
-                # Note: We don't pass the first move (the prompt
-                # "<move>") as it is not a target/next-move of anything
-
-            # "From" and "To" square prediction models
-            elif CONFIG.NAME.startswith(("CT-EFT-")):
-                # Forward prop.
-                predictions = model(
-                    batch
-                )  # (N, 1, 64), (N, 1, 64)
-                
-                loss, loss_details = criterion(predictions, batch)
-                result_loss = loss_details['result_loss']
-                move_time_loss = loss_details['time_loss']
-                move_loss = loss_details['move_loss']
-                moves_until_end_loss = loss_details['moves_until_end_loss']
-                
-                batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-                categorical_game_result_loss = crossentropy_loss(
-                    predictions['categorical_game_result'].float(),
-                    batch['categorical_result']
-                )
-
-            # Other models
-            else:
-                raise NotImplementedError
+            # Forward prop.
+            predictions = model(
+                batch
+            )  # (N, 1, 64), (N, 1, 64)
+            
+            loss, loss_details = criterion(predictions, batch)
+            result_loss = loss_details['result_loss']
+            move_time_loss = loss_details['time_loss']
+            move_loss = loss_details['move_loss']
+            moves_until_end_loss = loss_details['moves_until_end_loss']
+            
+            batch['categorical_result'] = batch['categorical_result'].squeeze(1)
+            categorical_game_result_loss = crossentropy_loss(
+                predictions['categorical_game_result'].float(),
+                batch['categorical_result']
+            )
 
             loss = loss / CONFIG.BATCHES_PER_STEP
             result_loss = result_loss / CONFIG.BATCHES_PER_STEP
@@ -340,26 +315,15 @@ def train_epoch(
         categorical_game_result_losses.update(
             categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
         )
-
-        # Keep track of accuracy (Direct) Move prediction models
-        if CONFIG.NAME.startswith(("CT-ED-", "CT-E-")):
-            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                logits=predicted_moves[:, 0, :],  # (N, move_vocab_size)
-                targets=batch["moves"][:, 1],  # (N)
-                k=[1, 3, 5],
-            )
-
-        elif CONFIG.NAME.startswith(("CT-EFT-")):
-            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+        
+        top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
                 logits=predictions['from_squares'][:, 0, :],  # (N, 64)
                 targets=batch["from_squares"].squeeze(1),  # (N)
                 other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
                 other_targets=batch["to_squares"].squeeze(1),  # (N)
                 k=[1, 3, 5],
             )
-
-        else:
-            raise NotImplementedError
+        
         top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
         top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
         top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
@@ -393,7 +357,7 @@ def train_epoch(
             
             if step % steps_per_epoch == 0:
                 
-                save_checkpoint(rating, step, model, optimizer, "CT-EFT-85", "checkpoints/models")
+                save_checkpoint(rating, step, model, optimizer, CONFIG.NAME, "checkpoints/models")
                 
                 # One epoch's validation
                 validate_epoch(
@@ -569,46 +533,22 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             with torch.autocast(
                 device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
             ):
-                # (Direct) Move prediction models
-                if CONFIG.NAME.startswith(("CT-ED-", "CT-E-")):
-                    # Forward prop.
-                    predicted_moves = model(batch)  # (N, n_moves, move_vocab_size)
-                    # Note: n_moves is how many moves into the future we
-                    # are targeting for modeling. For an Encoder-Decoder
-                    # model, this might be max_move_sequence_length. For
-                    # an Encoder-only model, this will be 1.
-
-                    # Loss
-                    loss = criterion(
-                        predicted=predicted_moves,  # (N, n_moves, move_vocab_size)
-                        targets=batch["moves"][:, 1:],  # (N, n_moves)
-                        lengths=batch["lengths"],  # (N, 1)
-                    )  # scalar
-                    # Note: We don't pass the first move (the prompt
-                    # "<move>") as it is not a target/next-move of
-                    # anything
-
-                # "From" and "To" square prediction models
-                elif CONFIG.NAME.startswith(("CT-EFT-")):
-                    predictions = model(
-                        batch
-                    )  # (N, 1, 64), (N, 1, 64)
-                    
-                    loss, loss_details = criterion(predictions, batch)
-                    result_loss = loss_details['result_loss']
-                    move_time_loss = loss_details['time_loss']
-                    move_loss = loss_details['move_loss']
-                    moves_until_end_loss = loss_details['moves_until_end_loss']
-                    
-                    batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-                    categorical_game_result_loss = crossentropy_loss(
-                        predictions['categorical_game_result'].float(),
-                        batch['categorical_result']
-                    )
-
-                # Other models
-                else:
-                    raise NotImplementedError
+                
+                predictions = model(
+                    batch
+                )  # (N, 1, 64), (N, 1, 64)
+                
+                loss, loss_details = criterion(predictions, batch)
+                result_loss = loss_details['result_loss']
+                move_time_loss = loss_details['time_loss']
+                move_loss = loss_details['move_loss']
+                moves_until_end_loss = loss_details['moves_until_end_loss']
+                
+                batch['categorical_result'] = batch['categorical_result'].squeeze(1)
+                categorical_game_result_loss = crossentropy_loss(
+                    predictions['categorical_game_result'].float(),
+                    batch['categorical_result']
+                )
 
             losses.update(
                 loss.item(), batch["lengths"].sum().item()
@@ -629,25 +569,14 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                 categorical_game_result_loss.item(), batch["lengths"].sum().item()
             )
 
-            # Keep track of accuracy (Direct) Move prediction models
-            if CONFIG.NAME.startswith(("CT-ED-", "CT-E-")):
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                    logits=predicted_moves[:, 0, :],  # (N, move_vocab_size)
-                    targets=batch["moves"][:, 1],  # (N)
-                    k=[1, 3, 5],
-                )
-
-            elif CONFIG.NAME.startswith(("CT-EFT-")):
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                    logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                    targets=batch["from_squares"].squeeze(1),  # (N)
-                    other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                    other_targets=batch["to_squares"].squeeze(1),  # (N)
-                    k=[1, 3, 5],
-                )
-
-            else:
-                raise NotImplementedError
+            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                targets=batch["from_squares"].squeeze(1),  # (N)
+                other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                other_targets=batch["to_squares"].squeeze(1),  # (N)
+                k=[1, 3, 5],
+            )
+            
             top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
             top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
             top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
