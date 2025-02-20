@@ -105,9 +105,6 @@ def train_model(CONFIG):
         new_state_dict[new_key] = value
     model.load_state_dict(new_state_dict, strict=True)
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])"""
-    
-    print("model loaded")
-    sys.exit()
 
     # Load checkpoint if available
     if CONFIG.TRAINING_CHECKPOINT is not None:

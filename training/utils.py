@@ -108,45 +108,44 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
     }
+    checkpoint_folder = f'{config_name}/{checkpoint_folder}'
     pathlib.Path(checkpoint_folder).mkdir(parents=True, exist_ok=True)
-    filename = rating + "_step=" + step + ".pt"
+    filename = rating + "_step_" + step + ".pt"
     torch.save(state, os.path.join(checkpoint_folder, filename))
     
-    os.makedirs("logs/checkpoint_logs", exist_ok=True)
-    os.makedirs(f"logs/checkpoint_logs/{rating}_step={step}", exist_ok=True)
-    shutil.copy(f"logs/main_log/{os.listdir('logs/main_log')[0]}", f"logs/checkpoint_logs/{rating}_step={step}")
-    
-    
+    os.makedirs(f'{config_name}/logs/checkpoint_logs', parents=True, exist_ok=True)
+    os.makedirs(f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}", exist_ok=True)
+    shutil.copy(f"{config_name}/logs/main_log/{os.listdir('logs/main_log')[0]}", f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}")
     
     try:
         api.upload_folder(
-            folder_path="checkpoints",
+            folder_path=f"{config_name}",
             repo_id=f"codingmonster1234/{config_name}",
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
         )
         
-        api.upload_folder(
+        """api.upload_folder(
             folder_path="logs",
             repo_id=f"codingmonster1234/{config_name}",
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
-        )
+        )"""
     except RepositoryNotFoundError:
         api.create_repo(f"codingmonster1234/{config_name}", repo_type="dataset")  
         api.upload_folder(
-            folder_path="checkpoints",
+            folder_path=f"{config_name}",
             repo_id=f"codingmonster1234/{config_name}",
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
         )
         
-        api.upload_folder(
+        """api.upload_folder(
             folder_path="logs",
             repo_id=f"codingmonster1234/{config_name}",
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
-        )
+        )"""
     
     print("Checkpoint saved.\n")
 
