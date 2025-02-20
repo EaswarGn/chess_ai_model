@@ -3,7 +3,7 @@ import json
 import torch
 import argparse
 import tables as tb
-from torch.utils.data import Dataset, DataLoader, IterableDataset, get_worker_info
+from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 import time
 import zstandard as zstd
 import struct
@@ -11,177 +11,36 @@ import struct
 from configs import import_config
 from time_controls import time_controls_encoded
 import numpy as np
+import multiprocessing as mp
 
-
-class ChessDatasetFT(Dataset):
-    def __init__(self, data_folder, h5_file, split, **unused):
-        """
-        Init.
-
-        Args:
-
-            data_folder (str): The folder containing the H5 and splits
-            files.
-
-            h5_file (str): The H5 file.
-
-            split (str): The data split. One of "train", "val", None.
-            Defaults to None, which means that all datapoints will be
-            included.
-        """
-        # Open table in H5 file
-        self.h5_file = tb.open_file(os.path.join(data_folder, h5_file), mode="r")
-        self.encoded_table = self.h5_file.root.encoded_data
-        #self.human_table = self.h5_file.root.data
-        self.len = self.encoded_table.nrows
-        #self.split = split
-        
-        self.first_index = 0
-        
-    def convert_to_indices(self, result):
-        if result == 1:  # white win
-            return 2
-        elif result == 0:  # draw
-            return 1
-        else:  # black win
-            return 0
-
-    def __getitem__(self, i):
-        turns = torch.IntTensor([self.encoded_table[self.first_index + i]["turn"]])
-        white_kingside_castling_rights = torch.IntTensor(
-            [self.encoded_table[self.first_index + i]["white_kingside_castling_rights"]]
-        )  # (1)
-        white_queenside_castling_rights = torch.IntTensor(
-            [self.encoded_table[self.first_index + i]["white_queenside_castling_rights"]]
-        )  # (1)
-        black_kingside_castling_rights = torch.IntTensor(
-            [self.encoded_table[self.first_index + i]["black_kingside_castling_rights"]]
-        )  # (1)
-        black_queenside_castling_rights = torch.IntTensor(
-            [self.encoded_table[self.first_index + i]["black_queenside_castling_rights"]]
-        )  # (1)
-        board_position = torch.IntTensor(
-            self.encoded_table[self.first_index + i]["board_position"]
-        )  # (64)
-        from_square = torch.LongTensor(
-            [self.encoded_table[self.first_index + i]["from_square"]]
-        )  # (1)
-        to_square = torch.LongTensor(
-            [self.encoded_table[self.first_index + i]["to_square"]]
-        )  # (1)
-        length = torch.LongTensor([1])
-        
-       #new features
-        phase = torch.IntTensor(
-            [self.encoded_table[i]['phase']-2]
-        )
-        result = torch.IntTensor(
-            [self.encoded_table[i]['result']]
-        )
-        
-        categorical_result = torch.LongTensor(
-            [self.convert_to_indices(self.encoded_table[i]['result'])]
-        )
-        
-        try:
-            base_time = self.encoded_table[i]['base_time']
-            increment_time = self.encoded_table[i]['increment_time']
-            time_control = f'{base_time}+{increment_time}'
-            
-            # Attempt to look up the time control encoding
-            time_control = torch.LongTensor([time_controls_encoded[time_control]])
-
-        except KeyError as e:
-            # Handle the KeyError
-            #print(f"KeyError: Missing key {e} in encoded_table or time_controls_encoded")
-            # You can either provide a default value or skip the iteration, etc.
-            base_time = None
-            increment_time = None
-            time_control = torch.LongTensor([0])  # Or whatever default you need
-
-        
-        """white_remaining_time = torch.FloatTensor(
-            [self.encoded_table[i]['white_remaining_time']]
-        )
-        black_remaining_time = torch.FloatTensor(
-            [self.encoded_table[i]['black_remaining_time']]
-        )"""
-        white_remaining_time = torch.FloatTensor(
-            [self.encoded_table[i]['white_remaining_time']]
-        )
-        black_remaining_time = torch.FloatTensor(
-            [self.encoded_table[i]['black_remaining_time']]
-        )
-        """white_rating = torch.IntTensor(
-            [self.encoded_table[i]['white_rating']-1]
-        )
-        black_rating = torch.IntTensor(
-            [self.encoded_table[i]['black_rating']-1]
-        )"""
-        white_rating = torch.IntTensor(
-            [self.encoded_table[i]['white_rating']-1]
-        )
-        black_rating = torch.IntTensor(
-            [self.encoded_table[i]['black_rating']-1]
-        )
-        """time_spent_on_move = torch.FloatTensor(
-            [self.encoded_table[i]['time_spent_on_move']]
-        )"""
-        time_spent_on_move = torch.FloatTensor(
-            [self.encoded_table[i]['time_spent_on_move']/100]
-        )
-        move_number = torch.IntTensor(
-            [self.encoded_table[i]['move_number']]
-        )
-        num_legal_moves = torch.IntTensor(
-            [self.encoded_table[i]['num_legal_moves']]
-        )
-        
-        white_material_value = torch.IntTensor(
-            [self.encoded_table[i]['white_material_value']]
-        )
-        
-        black_material_value = torch.IntTensor(
-            [self.encoded_table[i]['black_material_value']]
-        )
-        
-        material_difference = torch.IntTensor(
-            [self.encoded_table[i]['material_difference']]
-        )
-        
-        moves_until_end = torch.FloatTensor(
-            [self.encoded_table[i]['moves_until_end']/100]
-        )
-        
-        return {
-            "turns": turns,
-            "white_kingside_castling_rights": white_kingside_castling_rights,
-            "white_queenside_castling_rights": white_queenside_castling_rights,
-            "black_kingside_castling_rights": black_kingside_castling_rights,
-            "black_queenside_castling_rights": black_queenside_castling_rights,
-            "board_positions": board_position,
-            "from_squares": from_square,
-            "to_squares": to_square,
-            "lengths": length,
-            "phase": phase,
-            "game_result": result,
-            "time_control": time_control,
-            "white_remaining_time": white_remaining_time,
-            "black_remaining_time": black_remaining_time,
-            "white_rating": white_rating,
-            "black_rating": black_rating,
-            "move_time": time_spent_on_move,
-            "move_number": move_number,
-            "num_legal_moves": num_legal_moves,
-            "white_material_value": white_material_value,
-            "black_material_value": black_material_value,
-            "material_difference": material_difference,
-            "moves_until_end": moves_until_end,
-            "categorical_result": categorical_result
-        }
-
-    def __len__(self):
-        return self.len
+# Define the record dtype
+record_dtype = np.dtype([
+    ("turn", np.int8),
+    ("white_kingside_castling_rights", np.int8),
+    ("white_queenside_castling_rights", np.int8),
+    ("black_kingside_castling_rights", np.int8),
+    ("black_queenside_castling_rights", np.int8),
+    ("board_position", np.int8, (64,)),
+    ("from_square", np.int8),
+    ("to_square", np.int8),
+    ("length", np.int8),
+    ("phase", np.int8),
+    ("result", np.int8),
+    ("categorical_result", np.int8),
+    ("base_time", np.int16),
+    ("increment_time", np.int16),
+    ("white_remaining_time", np.float16),
+    ("black_remaining_time", np.float16),
+    ("white_rating", np.int16),
+    ("black_rating", np.int16),
+    ("time_spent_on_move", np.float16),
+    ("move_number", np.int16),
+    ("num_legal_moves", np.int16),
+    ("white_material_value", np.int16),
+    ("black_material_value", np.int16),
+    ("material_difference", np.int16),
+    ("moves_until_end", np.float16)
+])
     
     
 from pathlib import Path
@@ -216,7 +75,6 @@ class ChunkLoader(IterableDataset):
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
             dctx = zstd.ZstdDecompressor()
-            
             decompressed = dctx.decompress(f.read())
             num_dicts = len(decompressed) // self.record_size
             return num_dicts
@@ -346,36 +204,41 @@ if __name__ == "__main__":
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
-
-    # Dataset
-    dataset = ChessDatasetFT(
-        data_folder='',
-        h5_file='data.h5',
-        split="train",
-    )
     
-    train_loader = DataLoader(
-        dataset,
-        batch_size=512,
-        #num_workers=2,
-        #pin_memory=False,
-        #prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        shuffle=True,
-    )
     
+    # List of file paths to be processed.
+    file_list = get_all_record_files('/Volumes/Lexar/chessmodel_dataset/1900_training_chunks')
+    file_list = [file for file in file_list if file.endswith('.zst')]   
+    #file_list = [file.replace("._", "", 1) for file in file_list]
+    print(f"found {len(file_list)} chunks")
+    
+    # Instantiate the dataset with the list of files.
+    dataset = ChunkLoader(file_list, record_dtype)
+    
+    # Create a DataLoader with multiple workers.
+    loader = DataLoader(dataset, batch_size=CONFIG.BATCH_SIZE, num_workers=mp.cpu_count()//2)
+    
+    print("dataloader successfully created")
     
     def cycle(iterable):
         while True:
             for x in iterable:
                 yield x
                 
-    dataiter = iter(cycle(train_loader))
-
+    dataiter = iter(cycle(loader))
+    
+    print("iterating dataset")
+    
+    # Iterate over the DataLoader.
     start = time.time()
     average = 0
-    n=0
-    for i, batch in enumerate(dataiter):
+    n = 0
+    for batch in dataiter:
+        # Process your batch here.
         elapsed = time.time()-start
-        print(f"Taken {elapsed}s to load batch")
+        print(f"Time taken for one batch: {elapsed}s")
         start = time.time()
-    dataset.h5_file.close()
+        
+        average += elapsed
+        n+=1
+        print(f"Average time taken per batch: {average/n}s")
