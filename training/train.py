@@ -23,9 +23,7 @@ import numpy as np
 import subprocess
 import random
 
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)  # CPU isn't really practical here
+DEVICE = None
 cudnn.benchmark = False
 
 record_dtype = np.dtype([
@@ -67,6 +65,11 @@ def train_model(CONFIG):
 
         CONFIG (dict): Configuration. See ./configs.
     """
+    DEVICE = torch.device(
+        f"cuda:{CONFIG.GPU_ID}" if torch.cuda.is_available() else "cpu"
+    )  # CPU isn't really practical here
+    
+    
     os.makedirs("logs/main_log", exist_ok=True)
     writer = SummaryWriter(log_dir='logs/main_log')
     tensorboard_process = subprocess.Popen(["tensorboard", "--logdir=logs/main_log", "--port=6006"])
