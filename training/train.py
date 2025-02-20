@@ -250,12 +250,7 @@ def train_epoch(
     
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(
-        move_weight=1.0, 
-        time_weight=0.5, 
-        result_weight=1.0,
-        moves_until_end_weight=0.5,
-        temperature=1.0,
-        criterion = criterion
+        CONFIG
     )
     criterion = criterion.to(DEVICE)
 
@@ -557,12 +552,7 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
     crossentropy_loss = nn.CrossEntropyLoss()
     
     criterion = MultiTaskChessLoss(
-        move_weight=1.0, 
-        time_weight=0.5, 
-        result_weight=1.0,
-        moves_until_end_weight=0.5,
-        temperature=1.0,
-        criterion = criterion
+        CONFIG
     )
     criterion = criterion.to(DEVICE)
 

@@ -84,13 +84,10 @@ class LabelSmoothedCE(torch.nn.Module):
 
 class MultiTaskChessLoss(nn.Module):
     def __init__(self, 
-                 move_weight=1.0, 
-                 time_weight=0.5, 
-                 result_weight=1.0,
-                 moves_until_end_weight=0.5,
-                 temperature=1.0,
-                 criterion=None,
-                 log_space=True):
+                 #loss_weights,
+                 CONFIG,
+                 #criterion=None,
+        ):
         """
         Multi-task loss with learnable, dynamically balanced weights.
         
@@ -103,34 +100,61 @@ class MultiTaskChessLoss(nn.Module):
             log_space (bool): Whether to use log-space weight parametrization
         """
         super().__init__()
-        self.move_loss = criterion  # for from/to squares
+        """self.move_loss = criterion  # for from/to squares
         self.time_loss = nn.L1Loss()  # for move time prediction
         self.result_loss = nn.L1Loss()  # for game result prediction
-        self.moves_until_end_loss = nn.L1Loss()
+        self.moves_until_end_loss = nn.L1Loss()"""
+        self.loss_weights = CONFIG.LOSS_WEIGHTS
+        self.loss_functions = CONFIG.LOSSES
         
-        # Option to use log-space parametrization for more stable learning
-        self.log_space = log_space
-        
-        if log_space:
-            # Initialize log weights 
-            self.log_weights = nn.Parameter(torch.log(torch.tensor([
-                move_weight,   # from/to squares
-                time_weight,   # move time
-                result_weight,  # game result
-                moves_until_end_weight
-            ])))
-        else:
-            # Direct weight parametrization 
-            self.weights = nn.Parameter(torch.tensor([
-                move_weight,   # from/to squares
-                time_weight,   # move time
-                result_weight,  # game result
-                moves_until_end_weight
-            ]))
-        
-        self.temperature = temperature
 
     def forward(self, predictions, targets):
+        
+        individual_losses = {
+            'move_loss': 0,
+            'move_time_loss': 0,
+            'game_result_loss': 0,
+            'moves_until_end_loss': 0
+        }
+        
+        for key in self.loss_functions:
+            if key == 'move_loss':
+                individual_losses[key] = self.loss_functions[key](
+                    predicted=predictions['from_squares'],
+                    targets=targets["from_squares"],
+                    lengths=targets["lengths"],
+                ) + self.move_loss(
+                    predicted=predictions['to_squares'],
+                    targets=targets["to_squares"],
+                    lengths=targets["lengths"],
+                )
+
+            if key == 'move_time_loss':  # Fix indentation here
+                individual_losses[key] = self.loss_functions[key](
+                    predictions['move_time'].float(), 
+                    targets['move_time'].float()
+                )
+                
+            if key == 'game_result_loss':
+                individual_losses[key] = self.loss_functions[key](
+                    predictions['game_result'].float(), 
+                    targets['game_result'].float()
+                )
+            if key == 'moves_until_end_loss':
+                individual_losses[key] = self.loss_functions[key](
+                    predictions['moves_until_end'].float(), 
+                    targets['moves_until_end'].float()
+                )
+
+
+        loss_weights = self.loss_weights
+        total_loss = 0.0
+        for key in individual_losses:
+            total_loss += individual_losses[key]*loss_weights[f'{key}_weight']
+        
+        return total_loss, individual_losses
+                
+        """
         # Compute individual losses
         move_loss = self.move_loss(
             predicted=predictions['from_squares'],
@@ -155,34 +179,13 @@ class MultiTaskChessLoss(nn.Module):
         moves_until_end_loss = self.moves_until_end_loss(
             predictions['moves_until_end'].float(), 
             targets['moves_until_end'].float()
-        )
-        
-        """# Stack losses
-        losses = torch.stack([
-            move_loss,
-            time_loss,
-            result_loss,
-            moves_until_end_loss
-        ])
-        
-        # Dynamic weight computation
-        if self.log_space:
-            # Exponentiate log weights for positive values
-            weights = F.softmax(self.log_weights / self.temperature, dim=0)
-        else:
-            # Use softmax directly on weights
-            weights = F.softmax(self.weights / self.temperature, dim=0)
-        
-        # Compute weighted total loss
-        total_loss = torch.sum(losses * weights)"""
-        
-        total_loss = move_loss + time_loss + result_loss + moves_until_end_loss
+        )"""
         
         
-        return total_loss, {
+        
+        """return total_loss, {
             'move_loss': move_loss,
             'time_loss': time_loss,
             'result_loss': result_loss,
             'moves_until_end_loss': moves_until_end_loss,
-            #'weights': weights.detach()
-        }
+        }"""

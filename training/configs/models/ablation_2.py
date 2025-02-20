@@ -1,5 +1,6 @@
 import torch
 import pathlib
+from torch import nn
 
 """from chess_transformers.train.utils import get_lr
 from chess_transformers.configs.data.LE22c import *
@@ -58,11 +59,17 @@ COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
 DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
 SAMPLING_K = 1  # k in top-k sampling model predictions during play
 OUTPUTS = {
-    'from_squares': None,
-    'to_squares': None,
-    'game_result': None,
+    'from_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
+    'to_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
+    'game_result': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Tanh()  # Ensures output is between -1 and 1
+    ).squeeze(-1),
     'move_time': None, 
-    'moves_until_end': None,
+    'moves_until_end': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Sigmoid()
+    ).squeeze(-1),
     'categorical_game_result': None
 }
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
@@ -94,6 +101,18 @@ LABEL_SMOOTHING = 0.1  # label smoothing co-efficient in the Cross Entropy loss
 BOARD_STATUS_LENGTH = 70  # total length of input sequence
 USE_AMP = True  # use automatic mixed precision training?
 CRITERION = LabelSmoothedCE  # training criterion (loss)
+LOSS_WEIGHTS = {
+    'move_loss_weight': 1.0,
+    'move_time_loss_weight': 1.0,
+    'game_result_loss_weight': 1.0,
+    'moves_until_end_loss_weight': 1.0,
+}
+LOSSES = {
+    'move_loss': CRITERION,
+    #'move_time_loss': nn.L1Loss(),
+    'game_result_loss': nn.L1Loss(),
+    'moves_until_end_loss': nn.L1Loss()
+}
 OPTIMIZER = torch.optim.Adam  # optimizer
 LOGS_FOLDER = str(
     pathlib.Path(__file__).parent.parent.parent.resolve() / "train" / "logs" / NAME

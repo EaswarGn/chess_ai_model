@@ -51,8 +51,15 @@ class ChessTemporalTransformerEncoder(nn.Module):
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens
         )
+        
+        self.from_squares = CONFIG.OUTPUTS['from_squares']
+        self.to_squares = CONFIG.OUTPUTS['to_squares']
+        self.game_result_head = CONFIG.OUTPUTS['game_result']
+        self.move_time_head = CONFIG.OUTPUTS['move_time']
+        self.game_length_head = CONFIG.OUTPUTS['moves_until_end']
+        self.categorical_game_result_head = CONFIG.OUTPUTS['categorical_game_result']
 
-        # Prediction Heads
+        """# Prediction Heads
         # 1. From/To square prediction heads (existing)
         self.from_squares = nn.Linear(self.d_model, 1)
         self.to_squares = nn.Linear(self.d_model, 1)
@@ -79,12 +86,14 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.categorical_game_result_head = nn.Sequential(
             nn.Linear(self.d_model, 3),
             nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-        )
+        )"""
         
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+
+
 
         # Initialize weights
         self.init_weights()
@@ -156,7 +165,17 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["material_difference"],
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
+        
+        
+        from_squares = self.from_squares(boards[:, 16+self.num_cls_tokens:, :]) if self.from_squares is not None else None
+        to_squares = self.to_squares(boards[:, 16+self.num_cls_tokens:, :]) if self.to_squares is not None else None
+        moves_until_end = self.game_length_head(boards[:, 0:1, :]) if self.game_length_head is not None else None
+        game_result = self.game_result_head(boards[:, 1:2, :]) if self.game_result_head is not None else None
+        move_time = self.move_time_head(boards[:, 2:3, :]) if self.move_time_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]) if self.categorical_game_result_head is not None else None
 
+
+        """
         # From/To square predictions (unchanged)
         from_squares = (
             self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
@@ -169,7 +188,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Second CLS token
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Third CLS token
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
-        categorical_game_result = categorical_game_result.squeeze(1)
+        categorical_game_result = categorical_game_result.squeeze(1)"""
+        
+        
         
         predictions = {
             'from_squares': from_squares,
