@@ -106,18 +106,31 @@ def train_model(CONFIG):
     model.load_state_dict(new_state_dict, strict=True)
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])"""
 
+    step = 0
+    start_epoch = 0
+    total_steps = CONFIG.N_STEPS
+    steps_per_epoch = CONFIG.STEPS_PER_EPOCH
+    epochs = total_steps//steps_per_epoch
+    
     # Load checkpoint if available
-    if CONFIG.TRAINING_CHECKPOINT is not None:
+    if CONFIG.CHECKPOINT_PATH is not None:
         checkpoint = torch.load(
-            os.path.join(CONFIG.CHECKPOINT_FOLDER, CONFIG.TRAINING_CHECKPOINT),
+            CONFIG.CHECKPOINT_PATH,
             weights_only=True,
         )
-        start_epoch = checkpoint["epoch"] + 1
-        model.load_state_dict(checkpoint["model_state_dict"])
+        
+        step = checkpoint['step']
+        start_epoch = CONFIG.STEPS_PER_EPOCH//step + 1
+        
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key.replace('_orig_mod.', '')  # remove the '_orig_mod' prefix
+            new_state_dict[new_key] = value
+        model.load_state_dict(new_state_dict, strict=True)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        
         print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
-    else:
-        start_epoch = 0
 
     # Compile model
     compiled_model = torch.compile(
@@ -153,13 +166,6 @@ def train_model(CONFIG):
     val_dataset = ChunkLoader(testing_file_list, record_dtype)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-    
-    
-    start_epoch = 0
-    total_steps = CONFIG.N_STEPS
-    steps_per_epoch = CONFIG.STEPS_PER_EPOCH
-    epochs = total_steps//steps_per_epoch
-    step = 0
     
     # One epoch's training
     train_epoch(
@@ -473,20 +479,6 @@ def train_epoch(
 
             # Reset step time
             start_step_time = time.time()
-
-            """# If this is the last one or two epochs, save checkpoints at
-            # regular intervals for averaging
-            if (
-                epoch in [epochs - 1, epochs - 2] and step % 1500 == 0
-            ):  # 'epoch' is 0-indexed
-                save_checkpoint(
-                    epoch,
-                    model,
-                    optimizer,
-                    CONFIG.NAME,
-                    CONFIG.CHECKPOINT_FOLDER,
-                    prefix="step" + str(step) + "_",
-                )"""
 
         # Reset data time
         start_data_time = time.time()

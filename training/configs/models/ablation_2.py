@@ -1,15 +1,7 @@
 import torch
 import pathlib
 from torch import nn
-
-"""from chess_transformers.train.utils import get_lr
-from chess_transformers.configs.data.LE22c import *
-from chess_transformers.configs.other.stockfish import *
-from chess_transformers.train.datasets import ChessDatasetFT
-from chess_transformers.configs.other.fairy_stockfish import *
-from chess_transformers.transformers.criteria import LabelSmoothedCE
-from chess_transformers.data.levels import TURN, PIECES, UCI_MOVES, BOOL
-from chess_transformers.transformers.models import ChessTransformerEncoderFT"""
+import multiprocessing as mp
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
 from .utils.criteria import LabelSmoothedCE
@@ -28,7 +20,7 @@ NAME = "ablation_2"  # name and identifier for this configuration
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 1024  # batch size
-NUM_WORKERS = 2  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()//2  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -115,35 +107,4 @@ LOSSES = {
     'moves_until_end_loss': nn.L1Loss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
-LOGS_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "train" / "logs" / NAME
-)  # logs folder
-
-###############################
-######### Checkpoints #########
-###############################
-
-CHECKPOINT_FOLDER = 'checkpoints/models'  # folder containing checkpoints
-TRAINING_CHECKPOINT = None  # path to model checkpoint to resume training, None if none
-AVERAGE_STEPS = {491000, 492500, 494000, 495500, 497000, 498500, 500000}
-CHECKPOINT_AVG_PREFIX = (
-    "step"  # prefix to add to checkpoint name when saving checkpoints for averaging
-)
-CHECKPOINT_AVG_SUFFIX = (
-    ".pt"  # checkpoint end string to match checkpoints saved for averaging
-)
-FINAL_CHECKPOINT = (
-    "averaged_" + NAME + ".pt"
-)  # final checkpoint to be used for eval/inference
-FINAL_CHECKPOINT_GDID = (
-    "1OHtg336ujlOjp5Kp0KjE1fAPF74aZpZD"  # Google Drive ID for download
-)
-
-
-################################
-########## Evaluation ##########
-################################
-
-EVAL_GAMES_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "evaluate" / "games" / NAME
-)  # folder where evaluation games are saved in PGN files
+CHECKPOINT_PATH = None
