@@ -59,18 +59,18 @@ COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
 DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
 SAMPLING_K = 1  # k in top-k sampling model predictions during play
 OUTPUTS = {
-    'from_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
-    'to_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
+    'from_squares': nn.Linear(D_MODEL, 1),
+    'to_squares': nn.Linear(D_MODEL, 1),
     'game_result': nn.Sequential(
         nn.Linear(D_MODEL, 1),
         nn.Tanh()  # Ensures output is between -1 and 1
-    ).squeeze(-1),
+    ),
     'move_time': None, 
     'moves_until_end': None,
     'categorical_game_result': nn.Sequential(
         nn.Linear(D_MODEL, 3),
         nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-    ).squeeze(-1).squeeze(1)
+    )
 }
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
@@ -83,6 +83,7 @@ BATCHES_PER_STEP = (
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
 N_STEPS = 500000  # number of training steps
+STEPS_PER_EPOCH = 10000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
 LR_SCHEDULE = "exp_decay"  # the learning rate schedule; see utils.py for learning rate schedule

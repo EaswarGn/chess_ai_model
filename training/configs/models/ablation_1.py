@@ -59,12 +59,12 @@ COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
 DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
 SAMPLING_K = 1  # k in top-k sampling model predictions during play
 OUTPUTS = {
-    'from_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
-    'to_squares': nn.Linear(D_MODEL, 1).squeeze(2).unsqueeze(1),
+    'from_squares': nn.Linear(D_MODEL, 1),
+    'to_squares': nn.Linear(D_MODEL, 1),
     'game_result': nn.Sequential(
         nn.Linear(D_MODEL, 1),
         nn.Tanh()  # Ensures output is between -1 and 1
-    ).squeeze(-1),
+    ),
     'move_time': None, 
     'moves_until_end': None,
     'categorical_game_result': None

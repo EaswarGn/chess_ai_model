@@ -94,7 +94,8 @@ def train_model(CONFIG):
         checkpoint_path = 'checkpoints/CT-EFT-85.pt'
     else:
         checkpoint_path = '../../../../drive/My Drive/CT-EFT-85.pt'
-    checkpoint = torch.load(str(checkpoint_path), weights_only=True)
+    checkpoint_path = 'test2.pt'
+    checkpoint = torch.load(str(checkpoint_path), weights_only=True, map_location=torch.device('cpu'))
     state_dict = checkpoint['model_state_dict']
     
     # Strip the _orig_mod prefix
@@ -102,8 +103,11 @@ def train_model(CONFIG):
     for key, value in state_dict.items():
         new_key = key.replace('_orig_mod.', '')  # remove the '_orig_mod' prefix
         new_state_dict[new_key] = value
-    model.load_state_dict(new_state_dict)
+    model.load_state_dict(new_state_dict, strict=True)
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])"""
+    
+    print("model loaded")
+    sys.exit()
 
     # Load checkpoint if available
     if CONFIG.TRAINING_CHECKPOINT is not None:
@@ -156,7 +160,7 @@ def train_model(CONFIG):
     
     start_epoch = 0
     total_steps = CONFIG.N_STEPS
-    steps_per_epoch = 10000
+    steps_per_epoch = CONFIG.STEPS_PER_EPOCH
     epochs = total_steps//steps_per_epoch
     step = 0
     
@@ -600,9 +604,9 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             
             if predictions['categorical_game_result'] is None:
                 categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-            
-            categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                        batch['categorical_result']), batch["lengths"].shape[0])
+            else:
+                categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                            batch['categorical_result']), batch["lengths"].shape[0])
 
         # Log to tensorboard
         writer.add_scalar(

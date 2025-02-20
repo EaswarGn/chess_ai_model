@@ -77,6 +77,7 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06):
 
 
 from huggingface_hub import HfApi
+from huggingface_hub.utils import RepositoryNotFoundError
 import shutil
 api = HfApi()
 
@@ -115,20 +116,37 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
     os.makedirs(f"logs/checkpoint_logs/{rating}_step={step}", exist_ok=True)
     shutil.copy(f"logs/main_log/{os.listdir('logs/main_log')[0]}", f"logs/checkpoint_logs/{rating}_step={step}")
     
-    api.create_repo(f"codingmonster1234/{config_name}")  
-    api.upload_folder(
-        folder_path="checkpoints",
-        repo_id=f"codingmonster1234/{config_name}",
-        repo_type="dataset",
-        ignore_patterns="**/logs/*.txt", # Ignore all text logs
-    )
     
-    api.upload_folder(
-        folder_path="logs",
-        repo_id=f"codingmonster1234/{config_name}",
-        repo_type="dataset",
-        ignore_patterns="**/logs/*.txt", # Ignore all text logs
-    )
+    
+    try:
+        api.upload_folder(
+            folder_path="checkpoints",
+            repo_id=f"codingmonster1234/{config_name}",
+            repo_type="dataset",
+            ignore_patterns="**/logs/*.txt", # Ignore all text logs
+        )
+        
+        api.upload_folder(
+            folder_path="logs",
+            repo_id=f"codingmonster1234/{config_name}",
+            repo_type="dataset",
+            ignore_patterns="**/logs/*.txt", # Ignore all text logs
+        )
+    except RepositoryNotFoundError:
+        api.create_repo(f"codingmonster1234/{config_name}", repo_type="dataset")  
+        api.upload_folder(
+            folder_path="checkpoints",
+            repo_id=f"codingmonster1234/{config_name}",
+            repo_type="dataset",
+            ignore_patterns="**/logs/*.txt", # Ignore all text logs
+        )
+        
+        api.upload_folder(
+            folder_path="logs",
+            repo_id=f"codingmonster1234/{config_name}",
+            repo_type="dataset",
+            ignore_patterns="**/logs/*.txt", # Ignore all text logs
+        )
     
     print("Checkpoint saved.\n")
 

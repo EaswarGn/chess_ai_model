@@ -119,8 +119,6 @@ class MultiTaskChessLoss(nn.Module):
         
         for key in self.loss_functions:
             if key == 'move_loss':
-                print(predictions['from_squares'])
-                print(self.loss_functions)
                 individual_losses[key] = self.loss_functions[key](
                     predicted=predictions['from_squares'],
                     targets=targets["from_squares"],

@@ -6,7 +6,6 @@ import tables as tb
 from torch.utils.data import Dataset, DataLoader, IterableDataset, get_worker_info
 import time
 import zstandard as zstd
-from zstandard import ZstdError
 import struct
 
 from configs import import_config
