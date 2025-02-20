@@ -278,10 +278,13 @@ def train_epoch(
             moves_until_end_loss = loss_details['moves_until_end_loss']
             
             batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-            categorical_game_result_loss = crossentropy_loss(
-                predictions['categorical_game_result'].float(),
-                batch['categorical_result']
-            )
+            if predictions['categorical_game_result'] is None:
+                categorical_game_result_loss = torch.tensor(0.0)
+            else:
+                categorical_game_result_loss = crossentropy_loss(
+                    predictions['categorical_game_result'].float(),
+                    batch['categorical_result']
+                )
 
             loss = loss / CONFIG.BATCHES_PER_STEP
             result_loss = result_loss / CONFIG.BATCHES_PER_STEP
@@ -316,19 +319,27 @@ def train_epoch(
             categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item()
         )
         
-        top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                targets=batch["from_squares"].squeeze(1),  # (N)
-                other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                other_targets=batch["to_squares"].squeeze(1),  # (N)
-                k=[1, 3, 5],
-            )
+        if predictions['from_squares'] is None:
+            top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+        else:
+            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                    logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                    targets=batch["from_squares"].squeeze(1),  # (N)
+                    other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                    other_targets=batch["to_squares"].squeeze(1),  # (N)
+                    k=[1, 3, 5],
+                )
         
         top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
         top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
         top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-        categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                    batch['categorical_result']), batch["lengths"].shape[0])
+        
+        if predictions['categorical_game_result'] is None:
+            categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+        
+        else:
+            categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                        batch['categorical_result']), batch["lengths"].shape[0])
 
         # Update model (i.e. perform a training step) only after
         # gradients are accumulated from batches_per_step batches
@@ -545,10 +556,13 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                 moves_until_end_loss = loss_details['moves_until_end_loss']
                 
                 batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-                categorical_game_result_loss = crossentropy_loss(
-                    predictions['categorical_game_result'].float(),
-                    batch['categorical_result']
-                )
+                if predictions['categorical_game_result'] is None:
+                    categorical_game_result_loss = torch.tensor(0.0)
+                else:
+                    categorical_game_result_loss = crossentropy_loss(
+                        predictions['categorical_game_result'].float(),
+                        batch['categorical_result']
+                    )
 
             losses.update(
                 loss.item(), batch["lengths"].sum().item()
@@ -569,19 +583,26 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                 categorical_game_result_loss.item(), batch["lengths"].sum().item()
             )
 
-            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                targets=batch["from_squares"].squeeze(1),  # (N)
-                other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                other_targets=batch["to_squares"].squeeze(1),  # (N)
-                k=[1, 3, 5],
-            )
+            if predictions['from_squares'] is None:
+                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+            else:
+                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                        targets=batch["from_squares"].squeeze(1),  # (N)
+                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                        other_targets=batch["to_squares"].squeeze(1),  # (N)
+                        k=[1, 3, 5],
+                    )
             
             top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
             top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
             top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+            
+            if predictions['categorical_game_result'] is None:
+                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+            
             categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                    batch['categorical_result']), batch["lengths"].shape[0])
+                        batch['categorical_result']), batch["lengths"].shape[0])
 
         # Log to tensorboard
         writer.add_scalar(

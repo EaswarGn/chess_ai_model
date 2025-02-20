@@ -118,15 +118,18 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # Specific initialization for heads
         for head in [self.from_squares, self.to_squares]:
-            nn.init.xavier_uniform_(head.weight)
-            nn.init.constant_(head.bias, 0)
+            if head is not None:  # Ensure the head is not None before initializing
+                nn.init.xavier_uniform_(head.weight)
+                nn.init.constant_(head.bias, 0)
 
         for head in [self.game_result_head, self.move_time_head, self.game_length_head]:
-            for layer in head:
-                if isinstance(layer, nn.Linear):
-                    nn.init.xavier_uniform_(layer.weight)
-                    if layer.bias is not None:
-                        nn.init.constant_(layer.bias, 0)
+            if head is not None:  # Ensure the head is not None before iterating over its layers
+                for layer in head:
+                    if isinstance(layer, nn.Linear):
+                        nn.init.xavier_uniform_(layer.weight)
+                        if layer.bias is not None:
+                            nn.init.constant_(layer.bias, 0)
+
 
     def forward(self, batch):
         """
@@ -167,12 +170,12 @@ class ChessTemporalTransformerEncoder(nn.Module):
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
         
-        from_squares = self.from_squares(boards[:, 16+self.num_cls_tokens:, :]) if self.from_squares is not None else None
-        to_squares = self.to_squares(boards[:, 16+self.num_cls_tokens:, :]) if self.to_squares is not None else None
-        moves_until_end = self.game_length_head(boards[:, 0:1, :]) if self.game_length_head is not None else None
-        game_result = self.game_result_head(boards[:, 1:2, :]) if self.game_result_head is not None else None
-        move_time = self.move_time_head(boards[:, 2:3, :]) if self.move_time_head is not None else None
-        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]) if self.categorical_game_result_head is not None else None
+        from_squares = (self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        to_squares = (self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
+        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
+        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
 
 
         """

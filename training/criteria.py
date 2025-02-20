@@ -111,19 +111,21 @@ class MultiTaskChessLoss(nn.Module):
     def forward(self, predictions, targets):
         
         individual_losses = {
-            'move_loss': 0,
-            'move_time_loss': 0,
-            'game_result_loss': 0,
-            'moves_until_end_loss': 0
+            'move_loss': torch.tensor(0.0),
+            'move_time_loss': torch.tensor(0.0),
+            'game_result_loss': torch.tensor(0.0),
+            'moves_until_end_loss': torch.tensor(0.0)
         }
         
         for key in self.loss_functions:
             if key == 'move_loss':
+                print(predictions['from_squares'])
+                print(self.loss_functions)
                 individual_losses[key] = self.loss_functions[key](
                     predicted=predictions['from_squares'],
                     targets=targets["from_squares"],
                     lengths=targets["lengths"],
-                ) + self.move_loss(
+                ) + self.loss_functions[key](
                     predicted=predictions['to_squares'],
                     targets=targets["to_squares"],
                     lengths=targets["lengths"],
@@ -146,13 +148,19 @@ class MultiTaskChessLoss(nn.Module):
                     targets['moves_until_end'].float()
                 )
 
+        loss_details = {
+            'result_loss': individual_losses['game_result_loss'],
+            'time_loss': individual_losses['move_time_loss'],
+            'move_loss': individual_losses['move_loss'],
+            'moves_until_end_loss': individual_losses['moves_until_end_loss']
+        }
 
         loss_weights = self.loss_weights
         total_loss = 0.0
         for key in individual_losses:
             total_loss += individual_losses[key]*loss_weights[f'{key}_weight']
         
-        return total_loss, individual_losses
+        return total_loss, loss_details
                 
         """
         # Compute individual losses

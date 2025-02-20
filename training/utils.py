@@ -115,6 +115,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
     os.makedirs(f"logs/checkpoint_logs/{rating}_step={step}", exist_ok=True)
     shutil.copy(f"logs/main_log/{os.listdir('logs/main_log')[0]}", f"logs/checkpoint_logs/{rating}_step={step}")
     
+    api.create_repo(f"codingmonster1234/{config_name}")  
     api.upload_folder(
         folder_path="checkpoints",
         repo_id=f"codingmonster1234/{config_name}",

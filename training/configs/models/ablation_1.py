@@ -80,6 +80,7 @@ BATCHES_PER_STEP = (
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
 N_STEPS = 500000  # number of training steps
+STEPS_PER_EPOCH = 10000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
 LR_SCHEDULE = "exp_decay"  # the learning rate schedule; see utils.py for learning rate schedule
@@ -105,7 +106,9 @@ LOSS_WEIGHTS = {
     'moves_until_end_loss_weight': 1.0,
 }
 LOSSES = {
-    'move_loss': CRITERION,
+    'move_loss': CRITERION(
+        eps=LABEL_SMOOTHING, n_predictions=N_MOVES
+    ),
     #'move_time_loss': nn.L1Loss(),
     'game_result_loss': nn.L1Loss(),
     #'moves_until_end_loss': nn.L1Loss()
