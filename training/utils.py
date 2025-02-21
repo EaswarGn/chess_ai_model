@@ -124,13 +124,6 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
         )
-        
-        """api.upload_folder(
-            folder_path="logs",
-            repo_id=f"codingmonster1234/{config_name}",
-            repo_type="dataset",
-            ignore_patterns="**/logs/*.txt", # Ignore all text logs
-        )"""
     except RepositoryNotFoundError:
         api.create_repo(f"codingmonster1234/{config_name}", repo_type="dataset")  
         api.upload_folder(
@@ -139,13 +132,6 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
         )
-        
-        """api.upload_folder(
-            folder_path="logs",
-            repo_id=f"codingmonster1234/{config_name}",
-            repo_type="dataset",
-            ignore_patterns="**/logs/*.txt", # Ignore all text logs
-        )"""
     
     print("Checkpoint saved.\n")
 
