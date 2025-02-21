@@ -136,11 +136,11 @@ def train_model(CONFIG):
     
     batch_size = CONFIG.BATCH_SIZE
     
-    training_file_list = get_all_record_files('/content/1900_zipped_training_chunks')
+    training_file_list = get_all_record_files('~/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     
     rand_folder = random.randint(1, 3)
-    testing_file_list = get_all_record_files(f'/content/ranged_chunks_zipped/1900/{rand_folder}_chunks')
+    testing_file_list = get_all_record_files(f'~/ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
     
