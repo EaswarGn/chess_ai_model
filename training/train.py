@@ -90,23 +90,6 @@ def train_model(CONFIG):
         betas=CONFIG.BETAS,
         eps=CONFIG.EPSILON,
     )
-    
-    """checkpoint_path = ''
-    if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/CT-EFT-85.pt'
-    else:
-        checkpoint_path = '../../../../drive/My Drive/CT-EFT-85.pt'
-    checkpoint_path = 'test2.pt'
-    checkpoint = torch.load(str(checkpoint_path), weights_only=True, map_location=torch.device('cpu'))
-    state_dict = checkpoint['model_state_dict']
-    
-    # Strip the _orig_mod prefix
-    new_state_dict = {}
-    for key, value in state_dict.items():
-        new_key = key.replace('_orig_mod.', '')  # remove the '_orig_mod' prefix
-        new_state_dict[new_key] = value
-    model.load_state_dict(new_state_dict, strict=True)
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])"""
 
     step = 0
     start_epoch = 0
@@ -152,9 +135,6 @@ def train_model(CONFIG):
     scaler = GradScaler(device=DEVICE, enabled=CONFIG.USE_AMP)
     
     batch_size = CONFIG.BATCH_SIZE
-
-    # Find total epochs to train
-    #epochs = (CONFIG.N_STEPS // (len(train_loader) // CONFIG.BATCHES_PER_STEP)) + 1
     
     training_file_list = get_all_record_files('/content/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
@@ -162,7 +142,7 @@ def train_model(CONFIG):
     rand_folder = random.randint(1, 3)
     testing_file_list = get_all_record_files(f'/content/ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
-    testing_file_list = testing_file_list[:10]
+    testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
     val_dataset = ChunkLoader(testing_file_list, record_dtype)
