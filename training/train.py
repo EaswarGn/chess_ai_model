@@ -68,16 +68,14 @@ def train_model(CONFIG):
     DEVICE = torch.device(
         f"cuda:{CONFIG.GPU_ID}" if torch.cuda.is_available() else "cpu"
     )  # CPU isn't really practical here
+    print(f"training on {DEVICE}")
     
     
-    os.makedirs("logs/main_log", exist_ok=True)
-    writer = SummaryWriter(log_dir='logs/main_log')
-    tensorboard_process = subprocess.Popen(["tensorboard", "--logdir=logs/main_log", "--port=6006"])
-    time.sleep(5)
-    localtunnel_process = subprocess.Popen(["lt", "--port", "6006"])
+    os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True, parents=True)
+    writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
+    tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log", "--port=6006"])
     time.sleep(5)
     print("TensorBoard is running locally at http://localhost:6006")
-    print("Waiting for localtunnel to generate the public URL...")
     
     
     # Model
