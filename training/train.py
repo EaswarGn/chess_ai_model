@@ -17,7 +17,7 @@ from utils import *
 from configs import import_config
 from criteria import MultiTaskChessLoss
 #from d import ChessDataset, ChessDatasetFT
-from datasets import ChessDatasetFT, ChunkLoader
+from datasets import ChunkLoader
 from model import ChessTemporalTransformerEncoder
 import numpy as np
 import subprocess
@@ -65,13 +65,14 @@ def train_model(CONFIG):
 
         CONFIG (dict): Configuration. See ./configs.
     """
+    global DEVICE
     DEVICE = torch.device(
         f"cuda:{CONFIG.GPU_ID}" if torch.cuda.is_available() else "cpu"
     )  # CPU isn't really practical here
     print(f"training on {DEVICE}")
     
     
-    os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True, parents=True)
+    os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
     writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
     tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log", "--port=6006"])
     time.sleep(5)

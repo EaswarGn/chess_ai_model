@@ -113,9 +113,9 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
     filename = rating + "_step_" + step + ".pt"
     torch.save(state, os.path.join(checkpoint_folder, filename))
     
-    os.makedirs(f'{config_name}/logs/checkpoint_logs', parents=True, exist_ok=True)
+    os.makedirs(f'{config_name}/logs/checkpoint_logs', exist_ok=True)
     os.makedirs(f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}", exist_ok=True)
-    shutil.copy(f"{config_name}/logs/main_log/{os.listdir('logs/main_log')[0]}", f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}")
+    shutil.copy(f"{config_name}/logs/main_log/{os.listdir(f'{config_name}/logs/main_log')[0]}", f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}")
     
     try:
         api.upload_folder(
