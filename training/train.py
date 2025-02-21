@@ -138,16 +138,19 @@ def train_model(CONFIG):
     
     training_file_list = get_all_record_files('~/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
+    training_file_list = [s for s in training_file_list if "._" not in s]
     
     rand_folder = random.randint(1, 3)
     testing_file_list = get_all_record_files(f'~/ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
+    testing_file_list = [s for s in testing_file_list if "._" not in s]
     testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
+    
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
     val_dataset = ChunkLoader(testing_file_list, record_dtype)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=CONFIG.NUM_WORKERS)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=CONFIG.NUM_WORKERS)
     
     # One epoch's training
     train_epoch(
