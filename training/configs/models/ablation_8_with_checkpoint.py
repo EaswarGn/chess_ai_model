@@ -114,4 +114,4 @@ LOSSES = {
     'moves_until_end_loss': nn.L1Loss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
-CHECKPOINT_PATH = 'orig_checkpoint/checkpoint.pt'
+CHECKPOINT_PATH = '1900_step%3D30000.pt'
