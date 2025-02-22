@@ -3,8 +3,6 @@ pandas==2.2.2
 transformers==4.44.0
 scikit-learn==1.4.2
 chess==1.10.0
-openpyxl==3.1.2
-pgn2data==0.0.9
 zstandard==0.22.0
 pydot==3.0.2
 py7zr==0.22.0
