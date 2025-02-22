@@ -2,6 +2,7 @@ sudo apt-get install npm
 npm install -g localtunnel
 git config --global credential.helper store
 curl ifconfig.me
+#TODO: remove secret
 git clone https://EaswarGn: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@github.com/EaswarGn/chess_ai_model.git
 cd ~/chess_ai_model
 ls
