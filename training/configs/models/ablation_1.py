@@ -20,7 +20,7 @@ GPU_ID = 0
 ###############################
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
-BATCH_SIZE = 1024  # batch size
+BATCH_SIZE = 512  # batch size
 NUM_WORKERS = mp.cpu_count() # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
@@ -72,8 +72,8 @@ BATCHES_PER_STEP = (
     4  # perform a training step, i.e. update parameters, once every so many batches
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
-N_STEPS = 15000  # number of training steps
-STEPS_PER_EPOCH = 3000
+N_STEPS = 1000  # number of training steps
+STEPS_PER_EPOCH = 2000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
 LR_SCHEDULE = "exp_decay"  # the learning rate schedule; see utils.py for learning rate schedule
