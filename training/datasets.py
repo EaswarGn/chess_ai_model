@@ -2,7 +2,6 @@ import os
 import json
 import torch
 import argparse
-import tables as tb
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 import time
 import zstandard as zstd

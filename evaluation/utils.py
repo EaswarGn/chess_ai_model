@@ -5,7 +5,7 @@ import regex
 import argparse
 from configs import import_config
 import torch.nn.functional as F
-from configs.models.levels import TURN, PIECES, UCI_MOVES, BOOL, SQUARES, FILES, RANKS, TIME_CONTROLS
+from configs.models.utils.levels import TURN, PIECES, UCI_MOVES, BOOL, SQUARES, FILES, RANKS, TIME_CONTROLS
 from model import ChessTemporalTransformerEncoder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -352,13 +352,22 @@ def load_model(CONFIG):
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/CT-EFT-85.pt'
+        checkpoint_path = 'checkpoints/1900_step_40000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
+        
+    
 
     # Load checkpoint
     checkpoint = torch.load(str(checkpoint_path), weights_only=True, map_location=torch.device('cpu'))
-    _model.load_state_dict(checkpoint["model_state_dict"])
+    
+    state_dict = checkpoint['model_state_dict']
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        new_key = key.replace('_orig_mod.', '')  # remove the '_orig_mod' prefix
+        new_state_dict[new_key] = value
+    
+    _model.load_state_dict(new_state_dict)
 
     # Compile model
     model = torch.compile(
@@ -402,10 +411,10 @@ def get_model_inputs(board,
 
     t, b, wk, wq, bk, bq, halfmove_count, fullmove_count = parse_fen(board.fen())
 
-    model_inputs["turns"] = (
+    model_inputs["turn"] = (
         torch.IntTensor([encode(t, vocabulary=TURN)]).unsqueeze(0).to(DEVICE)
     )
-    model_inputs["board_positions"] = (
+    model_inputs["board_position"] = (
         torch.IntTensor(encode(b, vocabulary=PIECES)).unsqueeze(0).to(DEVICE)
     )
     model_inputs["white_kingside_castling_rights"] = (
@@ -481,8 +490,58 @@ def get_model_inputs(board,
     model_inputs["material_difference"] = torch.IntTensor(
             [model_inputs["material_difference"]]
         ).unsqueeze(0)
-
     return model_inputs
+
+
+def get_move_probabilities(board, predictions):
+    legal_moves = [move.uci() for move in board.legal_moves]
+    predicted_from_squares = predictions['from_squares']
+    predicted_to_squares = predictions['to_squares']
+    predicted_from_squares = predicted_from_squares[:, 0, :]  # (1, 64)
+    predicted_to_squares = predicted_to_squares[:, 0, :]  # (1, 64)
+    
+    # Convert "From" and "To" square predictions to move predictions
+    predicted_from_log_probabilities = torch.log_softmax(
+        predicted_from_squares, dim=-1
+    ).unsqueeze(
+        2
+    )  # (1, 64, 1)
+    predicted_to_log_probabilities = torch.log_softmax(
+        predicted_to_squares, dim=-1
+    ).unsqueeze(
+        1
+    )  # (1, 1, 64)
+    predicted_moves = (
+        predicted_from_log_probabilities + predicted_to_log_probabilities
+    ).view(
+        1, -1
+    )  # (1, 64 * 64)
+
+    # Filter out move indices corresponding to illegal moves
+    legal_moves = list(
+        set([m[:4] for m in legal_moves])
+    )  # for handling pawn promotions manually, remove pawn promotion targets
+    legal_move_indices = list()
+    for m in legal_moves:
+        from_square = m[:2]
+        to_square = m[2:4]
+        legal_move_indices.append(
+            SQUARES[from_square] * 64 + SQUARES[to_square]
+        )
+    
+    # Create dictionary for legal moves and their probabilities
+    move_probabilities = {}
+    for idx in legal_move_indices:
+        move = legal_moves[legal_move_indices.index(idx)]
+        prob = torch.exp(predicted_moves[0, idx]).item()  # Exponentiate the log-probability
+        move_probabilities[move] = prob
+
+    # Sort the dictionary by probability in descending order
+    sorted_move_probabilities = dict(sorted(move_probabilities.items(), key=lambda item: item[1], reverse=True))
+
+    return sorted_move_probabilities
+
+
 
 
 if __name__ == "__main__":
@@ -494,7 +553,7 @@ if __name__ == "__main__":
 
     # Train model
     model = load_model(CONFIG)
-    board = chess.Board("r1bq1rk1/pp1n2bp/2p2np1/3p1pB1/3P4/2N1PNP1/PP3PBP/R2Q1RK1 w - - 1 11")
+    board = chess.Board("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
     white_remaining_time=558
     black_remaining_time=579
     white_rating = 1654
@@ -508,6 +567,7 @@ if __name__ == "__main__":
                                          black_rating=black_rating)
                         )
     model_move = get_move(board, predictions)
+    print(get_move_probabilities(board, predictions))
     
     print(board)
     print("FEN: ", board.fen())

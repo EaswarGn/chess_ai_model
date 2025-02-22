@@ -1,7 +1,7 @@
 import torch
 import pathlib
-from torch import nn
 import multiprocessing as mp
+from torch import nn
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
 from .utils.criteria import LabelSmoothedCE
@@ -12,8 +12,8 @@ from .utils.time_controls import time_controls_encoded
 ############ Name #############
 ###############################
 
-NAME = "ablation_8"  # name and identifier for this configuration
-GPU_ID = 7
+NAME = "ablation_1"  # name and identifier for this configuration
+GPU_ID = 0
 
 ###############################
 ######### Dataloading #########
@@ -21,7 +21,7 @@ GPU_ID = 7
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 1024  # batch size
-NUM_WORKERS = mp.cpu_count()//2  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()//2 # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -58,18 +58,9 @@ OUTPUTS = {
         nn.Linear(D_MODEL, 1),
         nn.Tanh()  # Ensures output is between -1 and 1
     ),
-    'move_time': nn.Sequential(
-        nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()  # Ensures output is between 0 and 1
-    ), 
-    'moves_until_end': nn.Sequential(
-        nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()
-    ),
-    'categorical_game_result': nn.Sequential(
-        nn.Linear(D_MODEL, 3),
-        nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-    )
+    'move_time': None, 
+    'moves_until_end': None,
+    'categorical_game_result': None
 }
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
@@ -111,9 +102,9 @@ LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
-    'move_time_loss': nn.L1Loss(),
+    #'move_time_loss': nn.L1Loss(),
     'game_result_loss': nn.L1Loss(),
-    'moves_until_end_loss': nn.L1Loss()
+    #'moves_until_end_loss': nn.L1Loss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
 CHECKPOINT_PATH = None

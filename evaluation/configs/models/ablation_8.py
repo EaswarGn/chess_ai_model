@@ -1,25 +1,19 @@
 import torch
 import pathlib
-
-"""from chess_transformers.train.utils import get_lr
-from chess_transformers.configs.data.LE22c import *
-from chess_transformers.configs.other.stockfish import *
-from chess_transformers.train.datasets import ChessDatasetFT
-from chess_transformers.configs.other.fairy_stockfish import *
-from chess_transformers.transformers.criteria import LabelSmoothedCE
-from chess_transformers.data.levels import TURN, PIECES, UCI_MOVES, BOOL
-from chess_transformers.transformers.models import ChessTransformerEncoderFT"""
-from .levels import TURN, PIECES, UCI_MOVES, BOOL
-from .utils import get_lr
-from .criteria import LabelSmoothedCE
-from .time_controls import time_controls_encoded
+from torch import nn
+import multiprocessing as mp
+from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
+from .utils.utils import get_lr
+from .utils.criteria import LabelSmoothedCE
+from .utils.time_controls import time_controls_encoded
 
 
 ###############################
 ############ Name #############
 ###############################
 
-NAME = "CT-EFT-85"  # name and identifier for this configuration
+NAME = "ablation_8"  # name and identifier for this configuration
+GPU_ID = 7
 
 ###############################
 ######### Dataloading #########
@@ -27,7 +21,7 @@ NAME = "CT-EFT-85"  # name and identifier for this configuration
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 1024  # batch size
-NUM_WORKERS = 2  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()//2  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -57,6 +51,26 @@ DISABLE_COMPILATION = False  # disable model compilation?
 COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
 DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
 SAMPLING_K = 1  # k in top-k sampling model predictions during play
+OUTPUTS = {
+    'from_squares': nn.Linear(D_MODEL, 1),
+    'to_squares': nn.Linear(D_MODEL, 1),
+    'game_result': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Tanh()  # Ensures output is between -1 and 1
+    ),
+    'move_time': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Sigmoid()  # Ensures output is between 0 and 1
+    ), 
+    'moves_until_end': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Sigmoid()
+    ),
+    'categorical_game_result': nn.Sequential(
+        nn.Linear(D_MODEL, 3),
+        nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
+    )
+}
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
 ###############################
@@ -68,6 +82,7 @@ BATCHES_PER_STEP = (
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
 N_STEPS = 500000  # number of training steps
+STEPS_PER_EPOCH = 10000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
 LR_SCHEDULE = "exp_decay"  # the learning rate schedule; see utils.py for learning rate schedule
@@ -86,36 +101,19 @@ LABEL_SMOOTHING = 0.1  # label smoothing co-efficient in the Cross Entropy loss
 BOARD_STATUS_LENGTH = 70  # total length of input sequence
 USE_AMP = True  # use automatic mixed precision training?
 CRITERION = LabelSmoothedCE  # training criterion (loss)
+LOSS_WEIGHTS = {
+    'move_loss_weight': 1.0,
+    'move_time_loss_weight': 1.0,
+    'game_result_loss_weight': 1.0,
+    'moves_until_end_loss_weight': 1.0,
+}
+LOSSES = {
+    'move_loss': CRITERION(
+        eps=LABEL_SMOOTHING, n_predictions=N_MOVES
+    ),
+    'move_time_loss': nn.L1Loss(),
+    'game_result_loss': nn.L1Loss(),
+    'moves_until_end_loss': nn.L1Loss()
+}
 OPTIMIZER = torch.optim.Adam  # optimizer
-LOGS_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "train" / "logs" / NAME
-)  # logs folder
-
-###############################
-######### Checkpoints #########
-###############################
-
-CHECKPOINT_FOLDER = 'checkpoints/models'  # folder containing checkpoints
-TRAINING_CHECKPOINT = None  # path to model checkpoint to resume training, None if none
-AVERAGE_STEPS = {491000, 492500, 494000, 495500, 497000, 498500, 500000}
-CHECKPOINT_AVG_PREFIX = (
-    "step"  # prefix to add to checkpoint name when saving checkpoints for averaging
-)
-CHECKPOINT_AVG_SUFFIX = (
-    ".pt"  # checkpoint end string to match checkpoints saved for averaging
-)
-FINAL_CHECKPOINT = (
-    "averaged_" + NAME + ".pt"
-)  # final checkpoint to be used for eval/inference
-FINAL_CHECKPOINT_GDID = (
-    "1OHtg336ujlOjp5Kp0KjE1fAPF74aZpZD"  # Google Drive ID for download
-)
-
-
-################################
-########## Evaluation ##########
-################################
-
-EVAL_GAMES_FOLDER = str(
-    pathlib.Path(__file__).parent.parent.parent.resolve() / "evaluate" / "games" / NAME
-)  # folder where evaluation games are saved in PGN files
+CHECKPOINT_PATH = None

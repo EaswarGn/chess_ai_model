@@ -5,7 +5,7 @@ from utils import load_model, get_model_inputs, get_move
 from configs import import_config
 import chess
 
-CONFIG = import_config('CT-EFT-85')
+CONFIG = import_config('ablation_8_with_checkpoint')
 app = Flask(__name__)
 
 # Load the model
@@ -20,7 +20,7 @@ def predict():
         black_remaining_time = int(request.json['black_remaining_time'])
         white_rating = int(request.json['white_rating'])
         black_rating = int(request.json['black_rating'])
-        
+
         predictions = model(get_model_inputs(board,
                                          time_control=time_control,
                                          white_remaining_time=white_remaining_time,

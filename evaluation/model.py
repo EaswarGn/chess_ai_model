@@ -5,66 +5,12 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules import BoardEncoder, MoveDecoder, OGBoardEncoder
+from modules import BoardEncoder
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )
-    
-class ResidualBlock(nn.Module):
-    def __init__(self, in_features, dropout=0.1):
-        super(ResidualBlock, self).__init__()
-        self.block = nn.Sequential(
-            nn.Linear(in_features, in_features),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_features, in_features),
-            nn.ReLU(),
-            nn.Dropout(dropout)
-        )
-        
-    def forward(self, x):
-        return x + self.block(x)
-    
-class ChessTemporalTransformerEncoder(nn.Module):
-    """
-    Extended Chess Transformer Encoder with additional prediction heads:
-    1. From and To square prediction
-    2. Game result prediction (white win/black win)
-    3. Move time prediction
-    """
 
-    def __init__(
-        self,
-        CONFIG,
-    ):
-        super(ChessTemporalTransformerEncoder, self).__init__()
-
-        self.code = "EFT-Extended"
-
-        # Existing configuration parameters
-        self.vocab_sizes = CONFIG.VOCAB_SIZES
-        self.d_model = CONFIG.D_MODEL
-        self.n_heads = CONFIG.N_HEADS
-        self.d_queries = CONFIG.D_QUERIES
-        self.d_values = CONFIG.D_VALUES
-        self.d_inner = CONFIG.D_INNER
-        self.n_layers = CONFIG.N_LAYERS
-        self.dropout = CONFIG.DROPOUT
-
-        # Encoder remains the same
-        self.board_encoder = BoardEncoder(
-            vocab_sizes=self.vocab_sizes,
-            d_model=self.d_model,
-            n_heads=self.n_heads,
-            d_queries=self.d_queries,
-            d_values=self.d_values,
-            d_inner=self.d_inner,
-            n_layers=self.n_layers,
-            dropout=self.dropout,
-        )
-
-        # Prediction Heads
 class ChessTemporalTransformerEncoder(nn.Module):
     """
     Extended Chess Transformer Encoder with additional prediction heads:
@@ -105,40 +51,20 @@ class ChessTemporalTransformerEncoder(nn.Module):
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens
         )
-
-        # Prediction Heads
-        # 1. From/To square prediction heads (existing)
-        self.from_squares = nn.Linear(self.d_model, 1)
-        self.to_squares = nn.Linear(self.d_model, 1)
-
-        # 2. Game Result Prediction Head (outputs value between -1 and 1)
-        self.game_result_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Tanh()  # Ensures output is between -1 and 1
-        )
-
-        # 3. Move Time Prediction Head (outputs value between 0 and 1)
-        self.move_time_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Sigmoid()  # Ensures output is between 0 and 1
-        )
         
-        # 4. Predicts number of full moves left in the game
-        self.game_length_head = nn.Sequential(
-            nn.Linear(self.d_model, 1),
-            nn.Sigmoid()
-        )
-        
-        # 4. Categorical Game Result Prediction Head (outputs probabilities for [white win, draw, black win])
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.d_model, 3),
-            nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-        )
+        self.from_squares = CONFIG.OUTPUTS['from_squares']
+        self.to_squares = CONFIG.OUTPUTS['to_squares']
+        self.game_result_head = CONFIG.OUTPUTS['game_result']
+        self.move_time_head = CONFIG.OUTPUTS['move_time']
+        self.game_length_head = CONFIG.OUTPUTS['moves_until_end']
+        self.categorical_game_result_head = CONFIG.OUTPUTS['categorical_game_result']
         
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+
+
 
         # Initialize weights
         self.init_weights()
@@ -163,15 +89,18 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # Specific initialization for heads
         for head in [self.from_squares, self.to_squares]:
-            nn.init.xavier_uniform_(head.weight)
-            nn.init.constant_(head.bias, 0)
+            if head is not None:  # Ensure the head is not None before initializing
+                nn.init.xavier_uniform_(head.weight)
+                nn.init.constant_(head.bias, 0)
 
         for head in [self.game_result_head, self.move_time_head, self.game_length_head]:
-            for layer in head:
-                if isinstance(layer, nn.Linear):
-                    nn.init.xavier_uniform_(layer.weight)
-                    if layer.bias is not None:
-                        nn.init.constant_(layer.bias, 0)
+            if head is not None:  # Ensure the head is not None before iterating over its layers
+                for layer in head:
+                    if isinstance(layer, nn.Linear):
+                        nn.init.xavier_uniform_(layer.weight)
+                        if layer.bias is not None:
+                            nn.init.constant_(layer.bias, 0)
+
 
     def forward(self, batch):
         """
@@ -210,20 +139,16 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["material_difference"],
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
-
-        # From/To square predictions (unchanged)
-        from_squares = (
-            self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
-        )  # (N, 1, 64)
-        to_squares = (
-            self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)
-        )  # (N, 1, 64)
-
-        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1)  # First CLS token
-        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Second CLS token
-        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1)  # Third CLS token
-        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1)  # Third CLS token
-        categorical_game_result = categorical_game_result.squeeze(1)
+        
+        
+        from_squares = (self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        to_squares = (self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
+        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
+        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
+        
+        
         
         predictions = {
             'from_squares': from_squares,
@@ -245,7 +170,7 @@ if __name__ == "__main__":
     CONFIG = import_config(args.config_name)
 
     # Model
-    model = CONFIG.MODEL(CONFIG).to(DEVICE)
+    model = ChessTemporalTransformerEncoder(CONFIG=CONFIG)
     print(
         "There are %d learnable parameters in this model."
         % sum([p.numel() for p in model.parameters()])

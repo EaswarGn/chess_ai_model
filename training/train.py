@@ -74,9 +74,8 @@ def train_model(CONFIG):
     
     os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
     writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
-    tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log", "--port=6006"])
+    tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log"])
     time.sleep(5)
-    print("TensorBoard is running locally at http://localhost:6006")
     
     
     # Model
@@ -105,7 +104,8 @@ def train_model(CONFIG):
         )
         
         step = checkpoint['step']
-        start_epoch = CONFIG.STEPS_PER_EPOCH//step + 1
+        step = int(step)
+        start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
         state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
