@@ -25,7 +25,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
     ):
         super(ChessTemporalTransformerEncoder, self).__init__()
 
-        self.code = "EFT-Extended"
+        self.code = CONFIG.NAME
 
         # Existing configuration parameters
         self.vocab_sizes = CONFIG.VOCAB_SIZES
@@ -132,8 +132,8 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["white_remaining_time"],
             batch["black_remaining_time"],
             batch["phase"],
-            batch["white_rating"],
-            batch["black_rating"],
+            #batch["white_rating"],
+            #batch["black_rating"],
             batch["white_material_value"],
             batch["black_material_value"],
             batch["material_difference"],
@@ -141,8 +141,8 @@ class ChessTemporalTransformerEncoder(nn.Module):
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
         
-        from_squares = (self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
-        to_squares = (self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None

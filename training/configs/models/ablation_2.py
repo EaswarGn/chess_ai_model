@@ -54,16 +54,16 @@ SAMPLING_K = 1  # k in top-k sampling model predictions during play
 OUTPUTS = {
     'from_squares': nn.Linear(D_MODEL, 1),
     'to_squares': nn.Linear(D_MODEL, 1),
-    'game_result': nn.Sequential(
-        nn.Linear(D_MODEL, 1),
-        nn.Tanh()  # Ensures output is between -1 and 1
-    ),
+    'game_result': None,
     'move_time': None, 
     'moves_until_end': nn.Sequential(
         nn.Linear(D_MODEL, 1),
         nn.Sigmoid()
     ),
-    'categorical_game_result': None
+    'categorical_game_result': nn.Sequential(
+        nn.Linear(D_MODEL, 3),
+        nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
+    )
 }
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
@@ -100,14 +100,16 @@ LOSS_WEIGHTS = {
     'move_time_loss_weight': 1.0,
     'game_result_loss_weight': 1.0,
     'moves_until_end_loss_weight': 1.0,
+    'categorical_game_result_loss_weight': 1.0
 }
 LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
     #'move_time_loss': nn.L1Loss(),
-    'game_result_loss': nn.L1Loss(),
-    'moves_until_end_loss': nn.L1Loss()
+    #'game_result_loss': nn.L1Loss(),
+    'moves_until_end_loss': nn.L1Loss(),
+    'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
 CHECKPOINT_PATH = None

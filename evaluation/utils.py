@@ -352,7 +352,7 @@ def load_model(CONFIG):
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/1900_step_40000.pt'
+        checkpoint_path = 'checkpoints/1900_step_60000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         

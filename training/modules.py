@@ -400,7 +400,7 @@ class BoardEncoder(nn.Module):
         self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
-        self.positional_embeddings = nn.Embedding(80 + num_cls_tokens, d_model, dtype=torch.float)
+        self.positional_embeddings = nn.Embedding(78 + num_cls_tokens, d_model, dtype=torch.float)
 
         # New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
@@ -517,8 +517,8 @@ class BoardEncoder(nn.Module):
         white_remaining_time,
         black_remaining_time,
         phase,
-        white_rating,
-        black_rating,
+        #white_rating,
+        #black_rating,
         white_material_value,
         black_material_value,
         material_difference,
@@ -554,8 +554,8 @@ class BoardEncoder(nn.Module):
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_embeddings(time_control),
                 self.phase_embeddings(phase),
-                self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
-                self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
+                #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
+                #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
                 self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
                 self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
                 self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
@@ -582,7 +582,7 @@ class BoardEncoder(nn.Module):
         # Dropout
         boards = self.apply_dropout(boards)
         
-        seq_length = 80 + cls_tokens.size(1)
+        seq_length = 78 + cls_tokens.size(1)
 
         # Encoder layers
         for encoder_layer in self.encoder_layers:

@@ -114,7 +114,8 @@ class MultiTaskChessLoss(nn.Module):
             'move_loss': torch.tensor(0.0),
             'move_time_loss': torch.tensor(0.0),
             'game_result_loss': torch.tensor(0.0),
-            'moves_until_end_loss': torch.tensor(0.0)
+            'moves_until_end_loss': torch.tensor(0.0),
+            'categorical_game_result_loss': torch.tensor(0.0)
         }
         
         for key in self.loss_functions:
@@ -145,12 +146,18 @@ class MultiTaskChessLoss(nn.Module):
                     predictions['moves_until_end'].float(), 
                     targets['moves_until_end'].float()
                 )
+            if key == 'categorical_game_result_loss':
+                individual_losses[key] = self.loss_functions[key](
+                    predictions['categorical_game_result'].float(), 
+                    targets['categorical_result'].float()
+                )
 
         loss_details = {
             'result_loss': individual_losses['game_result_loss'],
             'time_loss': individual_losses['move_time_loss'],
             'move_loss': individual_losses['move_loss'],
-            'moves_until_end_loss': individual_losses['moves_until_end_loss']
+            'moves_until_end_loss': individual_losses['moves_until_end_loss'],
+            'categorical_game_result_loss': individual_losses['categorical_game_result_loss']
         }
 
         loss_weights = self.loss_weights
