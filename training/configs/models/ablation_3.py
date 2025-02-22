@@ -21,7 +21,7 @@ GPU_ID = 2
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 1024  # batch size
-NUM_WORKERS = mp.cpu_count()//2  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
