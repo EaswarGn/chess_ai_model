@@ -147,9 +147,10 @@ class MultiTaskChessLoss(nn.Module):
                     targets['moves_until_end'].float()
                 )
             if key == 'categorical_game_result_loss':
+                targets['categorical_result'] = targets['categorical_result'].squeeze(1)
                 individual_losses[key] = self.loss_functions[key](
                     predictions['categorical_game_result'].float(), 
-                    targets['categorical_result'].float()
+                    targets['categorical_result']
                 )
 
         loss_details = {

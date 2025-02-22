@@ -269,15 +269,6 @@ def train_epoch(
             move_loss = loss_details['move_loss']
             moves_until_end_loss = loss_details['moves_until_end_loss']
             categorical_game_result_loss = loss_details['categorical_game_result_loss']
-            
-            """batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-            if predictions['categorical_game_result'] is None:
-                categorical_game_result_loss = torch.tensor(0.0)
-            else:
-                categorical_game_result_loss = crossentropy_loss(
-                    predictions['categorical_game_result'].float(),
-                    batch['categorical_result']
-                )"""
 
             loss = loss / CONFIG.BATCHES_PER_STEP
             result_loss = result_loss / CONFIG.BATCHES_PER_STEP
@@ -534,15 +525,6 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                 move_loss = loss_details['move_loss']
                 moves_until_end_loss = loss_details['moves_until_end_loss']
                 categorical_game_result_loss = loss_details['categorical_game_result_loss']
-                
-                """batch['categorical_result'] = batch['categorical_result'].squeeze(1)
-                if predictions['categorical_game_result'] is None:
-                    categorical_game_result_loss = torch.tensor(0.0)
-                else:
-                    categorical_game_result_loss = crossentropy_loss(
-                        predictions['categorical_game_result'].float(),
-                        batch['categorical_result']
-                    )"""
 
             losses.update(
                 loss.item(), batch["lengths"].sum().item()
