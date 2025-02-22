@@ -116,6 +116,10 @@ def train_model(CONFIG):
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
         print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
+        
+    #TODO: remove this
+    step = 1
+    start_epoch = 0
 
     # Compile model
     compiled_model = torch.compile(
