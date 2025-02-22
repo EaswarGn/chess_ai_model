@@ -408,6 +408,9 @@ def train_epoch(
                         top5s=top5_accuracies,
                     )
                 )
+            
+            if step >= CONFIG.N_STEPS:
+                sys.exit()
 
             # Log to tensorboard
             writer.add_scalar(
