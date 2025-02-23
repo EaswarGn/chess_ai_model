@@ -300,6 +300,7 @@ def train_epoch(
                     warmup_steps=CONFIG.WARMUP_STEPS,
                     schedule=CONFIG.LR_SCHEDULE,
                     decay=CONFIG.LR_DECAY,
+                    batch_size=CONFIG.BATCH_SIZE
                 ),
             )
 
