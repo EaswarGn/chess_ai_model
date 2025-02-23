@@ -1,5 +1,6 @@
+sudo apt-get update
 sudo apt-get install npm
-npm install -g localtunnel
+sudo npm install -g localtunnel
 git config --global credential.helper store
 curl ifconfig.me
 #TODO: remove secret
@@ -8,6 +9,7 @@ cd ~/chess_ai_model
 ls
 pip install -r requirements.txt
 pip install -U "huggingface_hub[cli]"
+cd ~
 huggingface-cli login
 huggingface-cli download codingmonster1234/test-repo --repo-type dataset --local-dir .
 chmod +x ~/chess_ai_model/data_saving/c++/unzip_files.sh
