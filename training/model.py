@@ -65,7 +65,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
 
 
-
         # Initialize weights
         self.init_weights()
         
@@ -127,22 +126,23 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["black_queenside_castling_rights"],
             batch["board_position"],
             batch["time_control"],
-            batch["move_number"],
-            batch["num_legal_moves"],
+            #batch["move_number"],
+            #batch["num_legal_moves"],
             batch["white_remaining_time"],
             batch["black_remaining_time"],
-            batch["phase"],
+            #batch["phase"],
             #batch["white_rating"],
             #batch["black_rating"],
-            batch["white_material_value"],
-            batch["black_material_value"],
-            batch["material_difference"],
+            #batch["white_material_value"],
+            #batch["black_material_value"],
+            #batch["material_difference"],
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
         
-        from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
-        to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        from_squares = (self.from_squares(boards[:, 8+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        to_squares = (self.to_squares(boards[:, 8+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        print(from_squares.shape)
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
