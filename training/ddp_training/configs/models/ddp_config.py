@@ -62,7 +62,7 @@ BATCHES_PER_STEP = (
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
 N_STEPS = 10000  # number of training steps
-STEPS_PER_EPOCH = 2000
+STEPS_PER_EPOCH = 20
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
 LR_SCHEDULE = "exp_decay"  # the learning rate schedule; see utils.py for learning rate schedule
