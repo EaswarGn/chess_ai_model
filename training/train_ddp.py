@@ -19,9 +19,9 @@ import os
 import sys
 from utils import *
 from configs import import_config
-from criteria import MultiTaskChessLoss
+from criteria_ddp import MultiTaskChessLoss
 from datasets import ChunkLoader
-from model import ChessTemporalTransformerEncoder
+from model_ddp import ChessTemporalTransformerEncoder
 import numpy as np
 import subprocess
 import random
@@ -504,6 +504,9 @@ if __name__ == "__main__":
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
+    
+    from picklableconfig import convert_config_to_picklable
+    CONFIG = convert_config_to_picklable(CONFIG)
     
     world_size = len(CONFIG.GPU_ID)
     mp.spawn(

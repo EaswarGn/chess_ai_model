@@ -7,5 +7,6 @@ __all__ = [
     "ablation_6",
     "ablation_7",
     "ablation_8",
-    "ablation_8_with_checkpoint"
+    "ablation_8_with_checkpoint",
+    "ddp_config"
 ]
