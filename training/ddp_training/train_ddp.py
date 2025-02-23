@@ -407,7 +407,9 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     with torch.no_grad():
-        for i, batch in enumerate(val_loader):
+        for i, batch in tqdm(
+            enumerate(val_loader), desc="Validating", total=len(val_loader)
+        ):
             for key in batch:
                 batch[key] = batch[key].to(device)
 
