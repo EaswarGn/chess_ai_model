@@ -84,7 +84,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]])
 
     # Optimizer
-    optimizer = CONFIG.OPTIMIZER(
+    optimizer = torch.optim.Adam(
         params=[p for p in model.parameters() if p.requires_grad],
         lr=CONFIG.LR,
         betas=CONFIG.BETAS,
