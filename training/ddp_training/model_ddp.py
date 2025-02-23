@@ -170,13 +170,16 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
 if __name__ == "__main__":
     # Get configuration
+    DEVICE = torch.device(
+        "cuda" if torch.cuda.is_available() else "cpu"
+    )
     parser = argparse.ArgumentParser()
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
 
     # Model
-    model = ChessTemporalTransformerEncoder(CONFIG=CONFIG)
+    model = ChessTemporalTransformerEncoder(CONFIG=CONFIG, DEVICE=DEVICE)
     print(
         "There are %d learnable parameters in this model."
         % sum([p.numel() for p in model.parameters()])
