@@ -81,7 +81,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-    model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]], find_unused_parameters=True)
+    model = DDP(model, device_ids=CONFIG.GPU_ID, find_unused_parameters=True)
 
     # Optimizer
     optimizer = torch.optim.Adam(
