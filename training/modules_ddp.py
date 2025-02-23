@@ -466,6 +466,14 @@ class BoardEncoder(nn.Module):
             nn.Linear(d_model // 2, d_model),
         )
 
+        # Temporal Feature Fusion Layer
+        self.temporal_fusion = nn.Sequential(
+            nn.Linear(d_model * 2, d_model),
+            nn.ReLU(),
+            nn.Linear(d_model, d_model)
+        )"""
+        
+        
         # Encoder layers
         self.encoder_layers = nn.ModuleList(
             [self.make_encoder_layer() for _ in range(n_layers)]
@@ -474,13 +482,6 @@ class BoardEncoder(nn.Module):
         # Dropout and Layer Norm
         self.apply_dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model)
-
-        # Temporal Feature Fusion Layer
-        self.temporal_fusion = nn.Sequential(
-            nn.Linear(d_model * 2, d_model),
-            nn.ReLU(),
-            nn.Linear(d_model, d_model)
-        )"""
 
     def make_encoder_layer(self):
         """
