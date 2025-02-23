@@ -13,7 +13,7 @@ from .utils.time_controls import time_controls_encoded
 ###############################
 
 NAME = "ablation_2"  # name and identifier for this configuration
-GPU_ID = 1
+GPU_ID = 0
 
 ###############################
 ######### Dataloading #########

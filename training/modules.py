@@ -400,7 +400,7 @@ class BoardEncoder(nn.Module):
         self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
-        self.positional_embeddings = nn.Embedding(73 + num_cls_tokens, d_model, dtype=torch.float)
+        self.positional_embeddings = nn.Embedding(72 + num_cls_tokens, d_model, dtype=torch.float)
 
         # New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
@@ -582,7 +582,7 @@ class BoardEncoder(nn.Module):
         # Dropout
         boards = self.apply_dropout(boards)
         
-        seq_length = 73 + cls_tokens.size(1)
+        seq_length = 72 + cls_tokens.size(1)
 
         # Encoder layers
         for encoder_layer in self.encoder_layers:
