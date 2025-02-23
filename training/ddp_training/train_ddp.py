@@ -110,6 +110,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '')
+            new_key = new_key.replace('module.', '')
             new_state_dict[new_key] = value
         model.module.load_state_dict(new_state_dict, strict=True)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
