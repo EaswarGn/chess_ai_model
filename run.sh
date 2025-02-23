@@ -19,4 +19,4 @@ cd ~/ranged_chunks_zipped
 ~/chess_ai_model/data_saving/c++/unzip_files.sh
 cd ~/chess_ai_model/training
 wget https://huggingface.co/datasets/codingmonster1234/ablation_8_with_checkpoint/resolve/main/checkpoints/models/1900_step_60000.pt
-python train.py ablation_3_reduced
+python train_ddp.py ablation_3_reduced
