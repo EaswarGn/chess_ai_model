@@ -408,7 +408,7 @@ class BoardEncoder(nn.Module):
             vocab_sizes.get("time_control", 458), d_model, dtype=torch.float
         )
         
-        # Continuous Feature Projections (ensure output remains float)
+        """# Continuous Feature Projections (ensure output remains float)
         self.move_number_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
@@ -419,7 +419,7 @@ class BoardEncoder(nn.Module):
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
-        )
+        )"""
         
         self.white_remaining_time_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
@@ -433,7 +433,7 @@ class BoardEncoder(nn.Module):
             nn.Linear(d_model // 2, d_model),
         )
 
-        # Phase and Rating Embeddings
+        """# Phase and Rating Embeddings
         self.phase_embeddings = nn.Embedding(
             vocab_sizes.get("phase", 3), d_model, dtype=torch.float
         )
@@ -480,7 +480,7 @@ class BoardEncoder(nn.Module):
             nn.Linear(d_model * 2, d_model),
             nn.ReLU(),
             nn.Linear(d_model, d_model)
-        )
+        )"""
 
     def make_encoder_layer(self):
         """
