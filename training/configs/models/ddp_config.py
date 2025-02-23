@@ -13,7 +13,7 @@ from .utils.time_controls import time_controls_encoded
 ###############################
 
 NAME = "ddp_config"  # name and identifier for this configuration
-GPU_ID = [0]
+GPU_ID = [0, 1]
 
 ###############################
 ######### Dataloading #########
