@@ -218,7 +218,7 @@ def train_epoch(
     crossentropy_loss = nn.CrossEntropyLoss()
     
     move_loss_criterion = criterion
-    criterion = MultiTaskChessLoss(CONFIG).to(device)
+    criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
         for key in batch:
@@ -397,7 +397,7 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
     
     crossentropy_loss = nn.CrossEntropyLoss()
     
-    criterion = MultiTaskChessLoss(CONFIG).to(device)
+    criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     with torch.no_grad():
         for i, batch in enumerate(val_loader):

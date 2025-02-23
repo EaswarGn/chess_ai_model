@@ -83,6 +83,7 @@ class MultiTaskChessLoss(nn.Module):
     def __init__(self, 
                  #loss_weights,
                  CONFIG,
+                 device
                  #criterion=None,
         ):
         """
@@ -104,7 +105,7 @@ class MultiTaskChessLoss(nn.Module):
         self.loss_weights = CONFIG.LOSS_WEIGHTS
         self.loss_functions = {
             'move_loss': LabelSmoothedCE(
-                eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES
+                DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES
             ),
             'move_time_loss': nn.L1Loss(),
             #'game_result_loss': nn.L1Loss(),
