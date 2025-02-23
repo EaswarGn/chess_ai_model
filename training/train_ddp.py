@@ -69,7 +69,7 @@ def cleanup_ddp():
 def train_model_ddp(rank, world_size, CONFIG):
     setup_ddp(rank, world_size)
     
-    DEVICE = torch.device(f"cuda:{CONFIG.GPU_IDS[rank]}")
+    DEVICE = torch.device(f"cuda:{CONFIG.GPU_ID[rank]}")
     if rank == 0:
         print(f"Training on {world_size} GPUs")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
@@ -81,7 +81,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG).to(DEVICE)
-    model = DDP(model, device_ids=[CONFIG.GPU_IDS[rank]])
+    model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]])
 
     # Optimizer
     optimizer = CONFIG.OPTIMIZER(
@@ -505,7 +505,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
     
-    world_size = len(CONFIG.GPU_IDS)
+    world_size = len(CONFIG.GPU_ID)
     mp.spawn(
         train_model_ddp,
         args=(world_size, CONFIG),
