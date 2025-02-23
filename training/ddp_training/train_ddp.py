@@ -311,16 +311,17 @@ def train_epoch(
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
                 """
                 
-                validate_epoch(
-                    rank=rank,
-                    val_loader=val_loader,
-                    model=model,
-                    criterion=move_loss_criterion,
-                    epoch=epoch,
-                    writer=writer,
-                    CONFIG=CONFIG,
-                    device=device
-                )
+                if rank == 0:
+                    validate_epoch(
+                        rank=rank,
+                        val_loader=val_loader,
+                        model=model,
+                        criterion=move_loss_criterion,
+                        epoch=epoch,
+                        writer=writer,
+                        CONFIG=CONFIG,
+                        device=device
+                    )
                 
                 epoch += 1
 
