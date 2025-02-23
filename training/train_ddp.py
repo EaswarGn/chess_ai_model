@@ -122,7 +122,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         disable=CONFIG.DISABLE_COMPILATION,
     )
 
-    criterion = LabelSmoothedCE(eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
+    criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
     
     training_file_list = get_all_record_files('../../1900_zipped_training_chunks')

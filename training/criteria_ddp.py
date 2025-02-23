@@ -2,10 +2,6 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
-
 
 class LabelSmoothedCE(torch.nn.Module):
     """
@@ -15,7 +11,7 @@ class LabelSmoothedCE(torch.nn.Module):
     https://arxiv.org/abs/1512.00567
     """
 
-    def __init__(self, eps, n_predictions):
+    def __init__(self, DEVICE, eps, n_predictions):
         """
         Init.
 
@@ -28,6 +24,7 @@ class LabelSmoothedCE(torch.nn.Module):
         """
         super(LabelSmoothedCE, self).__init__()
         self.eps = eps
+        self.DEVICE = DEVICE
         self.indices = torch.arange(n_predictions).unsqueeze(0).to(DEVICE)  # (1, n_predictions)
         self.indices.requires_grad = False
 
@@ -62,7 +59,7 @@ class LabelSmoothedCE(torch.nn.Module):
         target_vector = (
             torch.zeros_like(predicted)
             .scatter(dim=1, index=targets.unsqueeze(1), value=1.0)
-            .to(DEVICE)
+            .to(self.DEVICE)
         )  # (sum(lengths), vocab_size), one-hot
         target_vector = target_vector * (
             1.0 - self.eps
