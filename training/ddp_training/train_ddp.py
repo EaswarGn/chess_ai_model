@@ -306,8 +306,10 @@ def train_epoch(
             step_time.update(time.time() - start_step_time)
             
             if step % steps_per_epoch == 0:
+                """
                 if rank == 0:
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                """
                 
                 validate_epoch(
                     rank=rank,
