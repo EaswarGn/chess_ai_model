@@ -56,7 +56,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.move_time_head = nn.Sequential(
             nn.Linear(CONFIG.D_MODEL, 1),
             nn.Sigmoid()  # Ensures output is between 0 and 1
-        ), 
+        )
         self.game_length_head = nn.Sequential(
             nn.Linear(CONFIG.D_MODEL, 1),
             nn.Sigmoid()
@@ -151,8 +151,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         to_squares = (self.to_squares(boards[:, 8+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
-        print(type(boards[:, 2:3, :]))
-
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
