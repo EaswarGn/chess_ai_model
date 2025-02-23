@@ -134,8 +134,6 @@ def train_model(CONFIG):
     # AMP scaler
     scaler = GradScaler(device=DEVICE, enabled=CONFIG.USE_AMP)
     
-    batch_size = CONFIG.BATCH_SIZE
-    
     training_file_list = get_all_record_files('~/1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
@@ -149,8 +147,22 @@ def train_model(CONFIG):
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
     val_dataset = ChunkLoader(testing_file_list, record_dtype)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=CONFIG.NUM_WORKERS)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=CONFIG.NUM_WORKERS)
+    train_loader = DataLoader(
+        dataset=train_dataset,
+        batch_size=CONFIG.BATCH_SIZE,
+        num_workers=CONFIG.NUM_WORKERS,
+        pin_memory = CONFIG.PIN_MEMORY,
+        prefetch_factor=CONFIG.PREFETCH_FACTOR,
+        shuffle=False,
+    )
+    val_loader = DataLoader(
+        dataset=val_dataset,
+        batch_size=CONFIG.BATCH_SIZE,
+        num_workers=CONFIG.NUM_WORKERS,
+        pin_memory = CONFIG.PIN_MEMORY,
+        prefetch_factor=CONFIG.PREFETCH_FACTOR,
+        shuffle=False,
+    )
     
     # One epoch's training
     train_epoch(
