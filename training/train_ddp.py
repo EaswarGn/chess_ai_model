@@ -80,7 +80,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer = None
 
     # Model
-    model = ChessTemporalTransformerEncoder(CONFIG).to(DEVICE)
+    model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
     model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]])
 
     # Optimizer

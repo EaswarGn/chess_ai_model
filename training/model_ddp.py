@@ -5,11 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules import BoardEncoder, MoveDecoder, OGBoardEncoder
-
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
+from modules_ddp import BoardEncoder
 
 class ChessTemporalTransformerEncoder(nn.Module):
     """
@@ -22,6 +18,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
     def __init__(
         self,
         CONFIG,
+        DEVICE
     ):
         super(ChessTemporalTransformerEncoder, self).__init__()
 
@@ -41,6 +38,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # Encoder remains the same
         self.board_encoder = BoardEncoder(
+            DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
             n_heads=self.n_heads,
