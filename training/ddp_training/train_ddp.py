@@ -252,6 +252,8 @@ def train_epoch(
         if math.isnan(loss):
             sys.exit()
 
+        print(model.state_dict())
+        
         scaler.scale(loss).backward()
 
         losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
