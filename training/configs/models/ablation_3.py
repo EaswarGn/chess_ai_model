@@ -59,7 +59,10 @@ OUTPUTS = {
         nn.Linear(D_MODEL, 1),
         nn.Sigmoid()  # Ensures output is between 0 and 1
     ), 
-    'moves_until_end': None,
+    'moves_until_end': nn.Sequential(
+        nn.Linear(D_MODEL, 1),
+        nn.Sigmoid()
+    ),
     'categorical_game_result': nn.Sequential(
         nn.Linear(D_MODEL, 3),
         nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
@@ -112,4 +115,4 @@ LOSSES = {
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
-CHECKPOINT_PATH = '1900_step_60000.pt'
+CHECKPOINT_PATH = None

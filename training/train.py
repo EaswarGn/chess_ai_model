@@ -116,10 +116,6 @@ def train_model(CONFIG):
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
         print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
-        
-    #TODO: remove this
-    step = 1
-    start_epoch = 0
 
     # Compile model
     compiled_model = torch.compile(
@@ -393,7 +389,7 @@ def train_epoch(
                         i + 1,
                         len(train_loader),
                         step,
-                        (len(train_loader)//CONFIG.BATCHES_PER_STEP)*(epoch+1),
+                        CONFIG.N_STEPS,
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
@@ -408,9 +404,6 @@ def train_epoch(
                         top5s=top5_accuracies,
                     )
                 )
-            
-            if step >= CONFIG.N_STEPS:
-                sys.exit()
 
             # Log to tensorboard
             writer.add_scalar(
@@ -460,6 +453,9 @@ def train_epoch(
                 scalar_value=top5_accuracies.val,
                 global_step=step,
             )
+            
+            if step >= CONFIG.N_STEPS:
+                sys.exit()
 
             # Reset step time
             start_step_time = time.time()
@@ -590,10 +586,10 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
             tag="val/moves_until_end_loss", scalar_value=moves_until_end_losses.avg, global_step=epoch + 1
         )
         writer.add_scalar(
-                tag="val/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=epoch+1
+                tag="val/categorical_game_result_loss", scalar_value=categorical_game_result_losses.avg, global_step=epoch+1
             )
         writer.add_scalar(
-            tag="val/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=epoch+1
+            tag="val/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.avg, global_step=epoch+1
         )
         writer.add_scalar(
             tag="val/top1_accuracy",
