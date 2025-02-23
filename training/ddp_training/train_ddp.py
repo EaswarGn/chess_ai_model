@@ -83,9 +83,6 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-    # Print out all the parameters with their indices
-    for idx, (name, param) in enumerate(model.named_parameters()):
-        print(f"Index: {idx}, Parameter Name: {name}, Requires Grad: {param.requires_grad}")
 
     model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]])#, find_unused_parameters=True)
 
@@ -251,8 +248,6 @@ def train_epoch(
 
         if math.isnan(loss):
             sys.exit()
-
-        print(model.state_dict())
         
         scaler.scale(loss).backward()
 
