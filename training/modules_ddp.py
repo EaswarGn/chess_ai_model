@@ -382,6 +382,8 @@ class BoardEncoder(nn.Module):
         self.n_layers = n_layers
         self.dropout = dropout
 
+        self.DEVICE = DEVICE
+
         # Existing Embeddings
         self.turn_embeddings = nn.Embedding(vocab_sizes["turn"], d_model, dtype=torch.float)
         self.white_kingside_castling_rights_embeddings = nn.Embedding(
@@ -479,8 +481,6 @@ class BoardEncoder(nn.Module):
             nn.ReLU(),
             nn.Linear(d_model, d_model)
         )
-        
-        self.DEVICE = DEVICE
 
     def make_encoder_layer(self):
         """
