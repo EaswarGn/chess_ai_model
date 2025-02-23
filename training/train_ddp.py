@@ -20,7 +20,7 @@ import sys
 from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
-from datasets import ChunkLoader
+from datasets_ddp import ChunkLoader
 from model_ddp import ChessTemporalTransformerEncoder
 import numpy as np
 import subprocess
@@ -135,22 +135,8 @@ def train_model_ddp(rank, world_size, CONFIG):
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
     
-    train_dataset = ChunkLoader(training_file_list, record_dtype)
-    val_dataset = ChunkLoader(testing_file_list, record_dtype)
-    
-    train_sampler = DistributedSampler(
-        train_dataset,
-        num_replicas=world_size,
-        rank=rank,
-        shuffle=True
-    )
-    
-    val_sampler = DistributedSampler(
-        val_dataset,
-        num_replicas=world_size,
-        rank=rank,
-        shuffle=False
-    )
+    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size)
+    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size)
 
     train_loader = DataLoader(
         dataset=train_dataset,
@@ -158,7 +144,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        sampler=train_sampler
     )
 
     val_loader = DataLoader(
@@ -167,7 +152,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
-        sampler=val_sampler
     )
 
     train_epoch(
