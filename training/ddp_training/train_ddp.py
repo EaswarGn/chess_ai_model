@@ -388,7 +388,7 @@ def train_epoch(
      
      
 #def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, device):   
-def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, DEVICE):
+def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, device):
     """
     One epoch's validation.
 
@@ -410,6 +410,8 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, DE
     """
     print("\n")
     model.eval()  # eval mode disables dropout
+    
+    DEVICE = device
     
     losses = AverageMeter()  # loss
     top1_accuracies = AverageMeter()  # top-1 accuracy of first move
