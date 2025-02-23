@@ -427,7 +427,8 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
     crossentropy_loss = nn.CrossEntropyLoss()
     
     criterion = MultiTaskChessLoss(
-        CONFIG
+        CONFIG,
+        device=device
     )
     criterion = criterion.to(DEVICE)
 
