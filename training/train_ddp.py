@@ -69,6 +69,8 @@ def cleanup_ddp():
 def train_model_ddp(rank, world_size, CONFIG):
     setup_ddp(rank, world_size)
     
+    os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' 
+    
     DEVICE = torch.device(f"cuda:{CONFIG.GPU_ID[rank]}")
     if rank == 0:
         print(f"Training on {world_size} GPUs")
