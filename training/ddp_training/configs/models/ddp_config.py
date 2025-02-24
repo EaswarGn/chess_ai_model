@@ -13,14 +13,14 @@ from .utils.time_controls import time_controls_encoded
 ###############################
 
 NAME = "ddp_config"  # name and identifier for this configuration
-GPU_ID = [0, 1]
+GPU_ID = [0, 1, 2, 3, 4, 5, 6, 7]
 
 ###############################
 ######### Dataloading #########
 ###############################
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
-BATCH_SIZE = 256  # batch size
+BATCH_SIZE = 2048  # batch size
 NUM_WORKERS = mp.cpu_count()//len(GPU_ID)  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
