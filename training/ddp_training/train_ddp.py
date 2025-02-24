@@ -1,3 +1,5 @@
+import os
+os.environ["XLA_FLAGS"] = "--xla_gpu_cuda_data_dir=/usr/lib/cuda"
 import time
 import argparse
 import torch.optim
@@ -14,7 +16,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 import shutil
-import os
 
 import sys
 from utils import *
