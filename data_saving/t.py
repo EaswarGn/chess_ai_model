@@ -266,10 +266,10 @@ class ChunkLoader(IterableDataset):
 # Example usage:
 if __name__ == "__main__":
     # List of file paths to be processed.
-    file_list = get_all_record_files('/Volumes/Lexar/chessmodel_dataset/1900_training_chunks')
+    file_list = get_all_record_files('/Volumes/Lexar/1900_training_chunks')
     file_list = [file for file in file_list if file.endswith('.zst')]   
-    #file_list = [file.replace("._", "", 1) for file in file_list]
-    print(len(file_list))
+    file_list = [s for s in file_list if "._" not in s]
+    print(len(file_list)*100000)
     
     # Instantiate the dataset with the list of files.
     dataset = ChunkLoader(file_list, record_dtype)
