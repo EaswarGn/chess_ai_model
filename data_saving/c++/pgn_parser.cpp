@@ -731,7 +731,7 @@ class MyVisitor : public pgn::Visitor {
                 std::uniform_real_distribution<> dis(0.1, 0.5);
                 time_spent = dis(gen);
             }
-            if(time_spent<0){
+            if(increment_time>0 || time_spent < 0){
                 time_spent += increment_time;
             }
             

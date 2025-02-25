@@ -80,132 +80,39 @@ class LabelSmoothedCE(torch.nn.Module):
 
 
 class MultiTaskChessLoss(nn.Module):
-    def __init__(self, 
-                 #loss_weights,
-                 CONFIG,
-                 device
-                 #criterion=None,
-        ):
-        """
-        Multi-task loss with learnable, dynamically balanced weights.
-        
-        Args:
-            move_weight (float): Initial move loss weight
-            time_weight (float): Initial time loss weight
-            result_weight (float): Initial result loss weight
-            temperature (float): Softness of weight scaling
-            criterion (callable): Custom loss function for move prediction
-            log_space (bool): Whether to use log-space weight parametrization
-        """
+    def __init__(self, CONFIG, device):
         super().__init__()
-        """self.move_loss = criterion  # for from/to squares
-        self.time_loss = nn.L1Loss()  # for move time prediction
-        self.result_loss = nn.L1Loss()  # for game result prediction
-        self.moves_until_end_loss = nn.L1Loss()"""
-        self.loss_weights = CONFIG.LOSS_WEIGHTS
+        self.device = device
+        
+        # Initialize learnable weights (log-space for stability)
+        self.log_vars = nn.Parameter(torch.zeros(len(CONFIG.LOSS_WEIGHTS)), requires_grad=True)
+        
         self.loss_functions = {
-            'move_loss': LabelSmoothedCE(
-                DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES
-            ),
-            #'move_time_loss': nn.L1Loss(),
-            #'game_result_loss': nn.L1Loss(),
-            #'moves_until_end_loss': nn.L1Loss(),
+            'move_loss': LabelSmoothedCE(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
+            'move_time_loss': nn.L1Loss(),
+            'moves_until_end_loss': nn.L1Loss(),
             'categorical_game_result_loss': nn.CrossEntropyLoss()
         }
-        
 
     def forward(self, predictions, targets):
-        
-        individual_losses = {
-            'move_loss': torch.tensor(0.0),
-            'move_time_loss': torch.tensor(0.0),
-            'game_result_loss': torch.tensor(0.0),
-            'moves_until_end_loss': torch.tensor(0.0),
-            'categorical_game_result_loss': torch.tensor(0.0)
-        }
-        
-        for key in self.loss_functions:
+        individual_losses = {}
+
+        for i, key in enumerate(self.loss_functions):
+            loss_fn = self.loss_functions[key]
+            
             if key == 'move_loss':
-                individual_losses[key] = self.loss_functions[key](
-                    predicted=predictions['from_squares'],
-                    targets=targets["from_squares"],
-                    lengths=targets["lengths"],
-                ) + self.loss_functions[key](
-                    predicted=predictions['to_squares'],
-                    targets=targets["to_squares"],
-                    lengths=targets["lengths"],
-                )
-
-            if key == 'move_time_loss':  # Fix indentation here
-                individual_losses[key] = self.loss_functions[key](
-                    predictions['move_time'].float(), 
-                    targets['move_time'].float()
-                )
+                loss = loss_fn(predictions['from_squares'], targets["from_squares"], targets["lengths"]) + \
+                       loss_fn(predictions['to_squares'], targets["to_squares"], targets["lengths"])
+            else:
+                loss = loss_fn(predictions[key].float(), targets[key].float())
                 
-            if key == 'game_result_loss':
-                individual_losses[key] = self.loss_functions[key](
-                    predictions['game_result'].float(), 
-                    targets['game_result'].float()
-                )
-            if key == 'moves_until_end_loss':
-                individual_losses[key] = self.loss_functions[key](
-                    predictions['moves_until_end'].float(), 
-                    targets['moves_until_end'].float()
-                )
-            if key == 'categorical_game_result_loss':
-                targets['categorical_result'] = targets['categorical_result'].squeeze(1)
-                individual_losses[key] = self.loss_functions[key](
-                    predictions['categorical_game_result'].float(), 
-                    targets['categorical_result']
-                )
+            individual_losses[key] = loss
 
-        loss_details = {
-            'result_loss': individual_losses['game_result_loss'],
-            'time_loss': individual_losses['move_time_loss'],
-            'move_loss': individual_losses['move_loss'],
-            'moves_until_end_loss': individual_losses['moves_until_end_loss'],
-            'categorical_game_result_loss': individual_losses['categorical_game_result_loss']
-        }
-
-        loss_weights = self.loss_weights
+        # Compute dynamically weighted loss
         total_loss = 0.0
-        for key in individual_losses:
-            total_loss += individual_losses[key]*loss_weights[f'{key}_weight']
-        
-        return total_loss, loss_details
-                
-        """
-        # Compute individual losses
-        move_loss = self.move_loss(
-            predicted=predictions['from_squares'],
-            targets=targets["from_squares"],
-            lengths=targets["lengths"],
-        ) + self.move_loss(
-            predicted=predictions['to_squares'],
-            targets=targets["to_squares"],
-            lengths=targets["lengths"],
-        )
-        
-        time_loss = self.time_loss(
-            predictions['move_time'].float(), 
-            targets['move_time'].float()
-        )
-        
-        result_loss = self.result_loss(
-            predictions['game_result'].float(), 
-            targets['game_result'].float()
-        )
-        
-        moves_until_end_loss = self.moves_until_end_loss(
-            predictions['moves_until_end'].float(), 
-            targets['moves_until_end'].float()
-        )"""
-        
-        
-        
-        """return total_loss, {
-            'move_loss': move_loss,
-            'time_loss': time_loss,
-            'result_loss': result_loss,
-            'moves_until_end_loss': moves_until_end_loss,
-        }"""
+        for i, key in enumerate(individual_losses):
+            precision = torch.exp(-self.log_vars[i])
+            weighted_loss = precision * individual_losses[key] + self.log_vars[i]
+            total_loss += weighted_loss
+
+        return total_loss, individual_losses

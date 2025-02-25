@@ -159,20 +159,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
-    
-    if rank==0:
-        validate_epoch(
-            rank=rank,
-            val_loader=val_loader,
-            model=model,
-            criterion=criterion,
-            epoch=0,
-            writer=writer,
-            CONFIG=CONFIG,
-            device=DEVICE
-        )
-    else:
-        sys.exit()
 
     train_epoch(
         rank=rank,
@@ -377,10 +363,7 @@ def train_epoch(
             
             if step % steps_per_epoch == 0:
                 
-                if rank == 0:
-                    time.sleep(5)
-                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
-                    
+                if rank == 0: 
                     validate_epoch(
                         rank=rank,
                         val_loader=val_loader,
@@ -391,11 +374,14 @@ def train_epoch(
                         CONFIG=CONFIG,
                         device=device
                     )
+                    
+                    time.sleep(5)
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
                 
                 epoch += 1
             
             
-            if step >= len(train_loader)//4:
+            if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
                 cleanup_ddp()
                 sys.exit()
 

@@ -34,7 +34,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.n_layers = CONFIG.N_LAYERS
         self.dropout = CONFIG.DROPOUT
         
-        self.num_cls_tokens = 1
+        self.num_cls_tokens = 3
 
         # Encoder remains the same
         self.board_encoder = BoardEncoder(
@@ -53,17 +53,21 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
         self.to_squares = nn.Linear(CONFIG.D_MODEL, 1)
         self.game_result_head = None
-        self.move_time_head = None
-        self.game_length_head = None
+        self.move_time_head = nn.Sequential(
+            nn.Linear(CONFIG.D_MODEL, 1),
+        )
+        self.game_length_head = nn.Sequential(
+            nn.Linear(CONFIG.D_MODEL, 1),
+        )
         self.categorical_game_result_head = nn.Sequential(
             nn.Linear(CONFIG.D_MODEL, 3),
             nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
         )
         
         # Create task-specific CLS tokens
-        #self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
-        #self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
 
 
         # Initialize weights
@@ -113,9 +117,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
         batch_size = batch["turn"].size(0)
         # Expand CLS tokens for the batch
         cls_tokens = torch.cat([
-            #self.moves_remaining_cls_token.expand(batch_size, 1, self.d_model),
+            self.moves_remaining_cls_token.expand(batch_size, 1, self.d_model),
             self.game_result_cls_token.expand(batch_size, 1, self.d_model),
-            #self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
+            self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
         ], dim=1)
         
         # Encoder
@@ -146,7 +150,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
-        categorical_game_result = self.categorical_game_result_head(boards[:, 0:1, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
         
         

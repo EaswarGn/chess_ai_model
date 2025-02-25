@@ -119,11 +119,17 @@ class ChunkLoader(IterableDataset):
                     record["white_material_value"] = unpacked[idx]; idx += 1
                     record["black_material_value"] = unpacked[idx]; idx += 1
                     record["material_difference"] = unpacked[idx]; idx += 1
-                    record["moves_until_end"] = unpacked[idx] / 100; idx += 1
+                    record["moves_until_end"] = unpacked[idx]; idx += 1
 
                     try:
                         base_time = record["base_time"]
                         increment_time = record["increment_time"]
+                        
+                        if int(increment_time)>0 and int(record["move_number"])!=0:
+                            record["time_spent_on_move"] = record["time_spent_on_move"] + int(increment_time)
+                        if int(record["time_spent_on_move"])<1:
+                            record["time_spent_on_move"] = 0
+                        
                         time_control = f'{base_time}+{increment_time}'
                         time_control = torch.LongTensor([time_controls_encoded[time_control]])
                     except KeyError:
