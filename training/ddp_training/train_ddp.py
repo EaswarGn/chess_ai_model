@@ -113,7 +113,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             new_state_dict[new_key] = value
-        model.module.load_state_dict(new_state_dict, strict=True)
+        model.load_state_dict(new_state_dict, strict=True)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
         if rank == 0:
@@ -158,6 +158,20 @@ def train_model_ddp(rank, world_size, CONFIG):
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
+    
+    if rank==0:
+        validate_epoch(
+            rank=rank,
+            val_loader=val_loader,
+            model=model,
+            criterion=criterion,
+            epoch=0,
+            writer=writer,
+            CONFIG=CONFIG,
+            device=DEVICE
+        )
+    else:
+        sys.exit()
 
     train_epoch(
         rank=rank,

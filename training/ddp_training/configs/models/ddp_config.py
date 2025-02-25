@@ -98,4 +98,4 @@ LOSSES = {
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
-CHECKPOINT_PATH = None
+CHECKPOINT_PATH = 'ddp_config/checkpoints/models/1900_step_2000.pt'
