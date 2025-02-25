@@ -107,9 +107,9 @@ class MultiTaskChessLoss(nn.Module):
             'move_loss': LabelSmoothedCE(
                 DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES
             ),
-            'move_time_loss': nn.L1Loss(),
+            #'move_time_loss': nn.L1Loss(),
             #'game_result_loss': nn.L1Loss(),
-            'moves_until_end_loss': nn.L1Loss(),
+            #'moves_until_end_loss': nn.L1Loss(),
             'categorical_game_result_loss': nn.CrossEntropyLoss()
         }
         

@@ -401,7 +401,8 @@ class BoardEncoder(nn.Module):
         self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
-        self.positional_embeddings = nn.Embedding(72 + num_cls_tokens, d_model, dtype=torch.float)
+        self.seq_length = 78 + num_cls_tokens
+        self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
         # New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
@@ -515,16 +516,16 @@ class BoardEncoder(nn.Module):
         board_positions,
         # New input parameters for temporal features
         time_control,
-        #move_number,
-        #num_legal_moves,
+        move_number,
+        num_legal_moves,
         white_remaining_time,
         black_remaining_time,
-        #phase,
+        phase,
         #white_rating,
         #black_rating,
-        #white_material_value,
-        #black_material_value,
-        #material_difference,
+        white_material_value,
+        black_material_value,
+        material_difference,
         cls_tokens
     ):
         """
@@ -551,17 +552,17 @@ class BoardEncoder(nn.Module):
             [
                 # New features (ensure they are float as well)
                 #Input to linear layers must be float dtype
-                #self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)),
-                #self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
+                self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)),
+                self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_embeddings(time_control),
-                #self.phase_embeddings(phase),
+                self.phase_embeddings(phase),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
-                #self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
-                #self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
-                #self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
+                self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
+                self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
+                self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
                 self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
                 self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
@@ -585,7 +586,7 @@ class BoardEncoder(nn.Module):
         # Dropout
         boards = self.apply_dropout(boards)
         
-        seq_length = 72 + cls_tokens.size(1)
+        seq_length = self.seq_length
 
         # Encoder layers
         for encoder_layer in self.encoder_layers:

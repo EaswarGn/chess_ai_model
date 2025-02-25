@@ -306,25 +306,6 @@ def train_epoch(
             )
 
             step_time.update(time.time() - start_step_time)
-            
-            if step % steps_per_epoch == 0:
-                
-                if rank == 0:
-                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
-                
-                if rank == 0:
-                    validate_epoch(
-                        rank=rank,
-                        val_loader=val_loader,
-                        model=model,
-                        criterion=move_loss_criterion,
-                        epoch=epoch,
-                        writer=writer,
-                        CONFIG=CONFIG,
-                        device=device
-                    )
-                
-                epoch += 1
 
             if step % CONFIG.PRINT_FREQUENCY == 0 and rank == 0:
                 print(
@@ -348,7 +329,7 @@ def train_epoch(
                         i + 1,
                         len(train_loader),
                         step,
-                        len(train_loader)//4,
+                        len(train_loader)//CONFIG.BATCHES_PER_STEP,
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
@@ -378,6 +359,26 @@ def train_epoch(
                 writer.add_scalar(tag="train/top1_accuracy", scalar_value=top1_accuracies.val, global_step=step)
                 writer.add_scalar(tag="train/top3_accuracy", scalar_value=top3_accuracies.val, global_step=step)
                 writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
+            
+            if step % steps_per_epoch == 0:
+                
+                if rank == 0:
+                    time.sleep(5)
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                    
+                    validate_epoch(
+                        rank=rank,
+                        val_loader=val_loader,
+                        model=model,
+                        criterion=move_loss_criterion,
+                        epoch=epoch,
+                        writer=writer,
+                        CONFIG=CONFIG,
+                        device=device
+                    )
+                
+                epoch += 1
+            
             
             if step >= len(train_loader)//4:
                 cleanup_ddp()
