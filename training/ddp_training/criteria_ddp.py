@@ -89,7 +89,7 @@ class MultiTaskChessLoss(nn.Module):
         
         self.loss_functions = {
             'move_loss': LabelSmoothedCE(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
-            'move_time_loss': nn.L1Loss(),
+            'time_loss': nn.L1Loss(),
             'moves_until_end_loss': nn.L1Loss(),
             'categorical_game_result_loss': nn.CrossEntropyLoss()
         }
@@ -103,7 +103,7 @@ class MultiTaskChessLoss(nn.Module):
             if key == 'move_loss':
                 loss = loss_fn(predictions['from_squares'], targets["from_squares"], targets["lengths"]) + \
                        loss_fn(predictions['to_squares'], targets["to_squares"], targets["lengths"])
-            if key == 'move_time_loss':  # Fix indentation here
+            if key == 'time_loss':  # Fix indentation here
                 loss = loss_fn(
                     predictions['move_time'].float(), 
                     targets['move_time'].float()
