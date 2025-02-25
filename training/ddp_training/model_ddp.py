@@ -53,16 +53,9 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
         self.to_squares = nn.Linear(CONFIG.D_MODEL, 1)
         self.game_result_head = None
-        self.move_time_head = nn.Sequential(
-            nn.Linear(CONFIG.D_MODEL, 1),
-        )
-        self.game_length_head = nn.Sequential(
-            nn.Linear(CONFIG.D_MODEL, 1),
-        )
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(CONFIG.D_MODEL, 3),
-            nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-        )
+        self.move_time_head = CONFIG.move_time_head
+        self.game_length_head = CONFIG.game_length_head
+        self.categorical_game_result_head = CONFIG.categorical_game_result_head
         
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))

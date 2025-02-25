@@ -84,14 +84,13 @@ class MultiTaskChessLoss(nn.Module):
         super().__init__()
         self.device = device
         
-        # Initialize learnable weights (log-space for stability)
-        self.log_vars = nn.Parameter(torch.zeros(len(CONFIG.LOSS_WEIGHTS)), requires_grad=True)
+        self.loss_weights = CONFIG.LOSS_WEIGHTS
         
         self.loss_functions = {
-            'move_loss': LabelSmoothedCE(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
-            'time_loss': nn.L1Loss(),
-            'moves_until_end_loss': nn.L1Loss(),
-            'categorical_game_result_loss': nn.CrossEntropyLoss()
+            'move_loss': CONFIG.move_loss(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
+            'time_loss': CONFIG.move_time_loss,
+            'moves_until_end_loss': CONFIG.moves_until_end_loss,
+            'categorical_game_result_loss': CONFIG.categorical_game_result_loss
         }
 
     def forward(self, predictions, targets):
@@ -99,6 +98,11 @@ class MultiTaskChessLoss(nn.Module):
 
         for i, key in enumerate(self.loss_functions):
             loss_fn = self.loss_functions[key]
+            
+            if loss_fn is None:
+                loss = torch.tensor(0.0)
+                individual_losses[key] = loss
+                continue
             
             if key == 'move_loss':
                 loss = loss_fn(predictions['from_squares'], targets["from_squares"], targets["lengths"]) + \
@@ -130,11 +134,8 @@ class MultiTaskChessLoss(nn.Module):
             
         individual_losses['result_loss'] = torch.tensor(0.0)
 
-        # Compute dynamically weighted loss
         total_loss = 0.0
         for i, key in enumerate(individual_losses):
-            precision = torch.exp(-self.log_vars[i])
-            weighted_loss = precision * individual_losses[key] + self.log_vars[i]
-            total_loss += weighted_loss
+            total_loss += self.loss_weight[key+'_weight'] * individual_losses[key]
 
         return total_loss, individual_losses

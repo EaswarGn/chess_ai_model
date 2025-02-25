@@ -13,7 +13,7 @@ from .utils.time_controls import time_controls_encoded
 ###############################
 
 NAME = "ddp_config"  # name and identifier for this configuration
-GPU_ID = [0, 1]#, 2, 3, 4, 5, 6, 7]
+NUM_GPUS = 2#, 2, 3, 4, 5, 6, 7]
 
 ###############################
 ######### Dataloading #########
@@ -21,7 +21,7 @@ GPU_ID = [0, 1]#, 2, 3, 4, 5, 6, 7]
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 512  # batch size
-NUM_WORKERS = mp.cpu_count()//len(GPU_ID)  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()//NUM_GPUS  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -80,22 +80,40 @@ EPSILON = 1e-9  # epsilon term in the Adam optimizer
 LABEL_SMOOTHING = 0.1  # label smoothing co-efficient in the Cross Entropy loss
 BOARD_STATUS_LENGTH = 70  # total length of input sequence
 USE_AMP = True  # use automatic mixed precision training?
+OPTIMIZER = torch.optim.Adam  # optimizer
+CHECKPOINT_PATH = None
+
+
+###############################
+########### Outputs ##########
+###############################
+move_time_head = nn.Sequential(
+            nn.Linear(D_MODEL, 1),
+        )
+game_length_head = nn.Sequential(
+            nn.Linear(D_MODEL, 1),
+        )
+categorical_game_result_head = nn.Sequential(
+            nn.Linear(D_MODEL, 3),
+            nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
+        )
+game_result_head = None
+
+
+###############################
+########### LOSS ##########
+###############################
 CRITERION = LabelSmoothedCE  # training criterion (loss)
 LOSS_WEIGHTS = {
     'move_loss_weight': 1.0,
-    'move_time_loss_weight': 1.0,
-    'game_result_loss_weight': 1.0,
+    'move_time_loss_weight': 0.5,
+    'game_result_loss_weight': 0.0,
     'moves_until_end_loss_weight': 1.0,
     'categorical_game_result_loss_weight': 1.0
 }
-LOSSES = {
-    'move_loss': CRITERION(
-        eps=LABEL_SMOOTHING, n_predictions=N_MOVES
-    ),
-    'move_time_loss': nn.L1Loss(),
-    #'game_result_loss': nn.L1Loss(),
-    'moves_until_end_loss': nn.L1Loss(),
-    'categorical_game_result_loss': nn.CrossEntropyLoss()
-}
-OPTIMIZER = torch.optim.Adam  # optimizer
-CHECKPOINT_PATH = None
+
+move_loss =  CRITERION
+move_time_loss= nn.L1Loss(),
+#'game_result_loss': nn.L1Loss(),
+moves_until_end_loss= nn.L1Loss(),
+categorical_game_result_loss= nn.CrossEntropyLoss()

@@ -119,7 +119,10 @@ class ChunkLoader(IterableDataset):
                     record["white_material_value"] = unpacked[idx]; idx += 1
                     record["black_material_value"] = unpacked[idx]; idx += 1
                     record["material_difference"] = unpacked[idx]; idx += 1
-                    record["moves_until_end"] = unpacked[idx]/10; idx += 1
+                    record["moves_until_end"] = unpacked[idx]; idx += 1
+                    
+                    if int(record['move_number']) <= 16:
+                        record["moves_until_end"] = 0
 
                     try:
                         base_time = record["base_time"]

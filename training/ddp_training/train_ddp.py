@@ -72,7 +72,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' 
     
-    DEVICE = torch.device(f"cuda:{CONFIG.GPU_ID[rank]}")
+    DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
         print(f"Training on {world_size} GPUs")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
@@ -85,7 +85,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
 
-    model = DDP(model, device_ids=[CONFIG.GPU_ID[rank]], find_unused_parameters=True)
+    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
 
     # Optimizer
     optimizer = torch.optim.Adam(
@@ -562,10 +562,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
     
-    from picklableconfig import convert_config_to_picklable
-    CONFIG = convert_config_to_picklable(CONFIG)
+    #from picklableconfig import convert_config_to_picklable
+    #CONFIG = convert_config_to_picklable(CONFIG)
     
-    world_size = len(CONFIG.GPU_ID)
+    world_size = CONFIG.NUM_GPUS
     mp.spawn(
         train_model_ddp,
         args=(world_size, CONFIG),
