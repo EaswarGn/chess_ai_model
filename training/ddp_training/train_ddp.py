@@ -139,7 +139,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
-    testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
+    testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
     
     train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size)
     val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size)
@@ -381,9 +381,14 @@ def train_epoch(
                 epoch += 1
             
             
-            if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
-                cleanup_ddp()
-                sys.exit()
+            if CONFIG.N_STEPS == None:
+                if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
+                    cleanup_ddp()
+                    sys.exit()
+            else:
+                if step >= CONFIG.N_STEPS:
+                    cleanup_ddp()
+                    sys.exit()
 
             start_step_time = time.time()
 
