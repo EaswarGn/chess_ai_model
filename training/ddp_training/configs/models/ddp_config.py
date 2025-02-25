@@ -7,6 +7,8 @@ from .utils.utils import get_lr
 from .utils.criteria import LabelSmoothedCE
 from .utils.time_controls import time_controls_encoded
 
+
+#picklable config class for multiprocessing and distributed training on multiple gpus
 class CONFIG:
     def __init__(self):
         ###############################
