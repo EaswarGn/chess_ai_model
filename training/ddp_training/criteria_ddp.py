@@ -103,8 +103,28 @@ class MultiTaskChessLoss(nn.Module):
             if key == 'move_loss':
                 loss = loss_fn(predictions['from_squares'], targets["from_squares"], targets["lengths"]) + \
                        loss_fn(predictions['to_squares'], targets["to_squares"], targets["lengths"])
-            else:
-                loss = loss_fn(predictions[key].float(), targets[key].float())
+            if key == 'move_time_loss':  # Fix indentation here
+                loss = loss_fn(
+                    predictions['move_time'].float(), 
+                    targets['move_time'].float()
+                )
+                
+            if key == 'game_result_loss':
+                loss = loss_fn(
+                    predictions['game_result'].float(), 
+                    targets['game_result'].float()
+                )
+            if key == 'moves_until_end_loss':
+                loss = loss_fn(
+                    predictions['moves_until_end'].float(), 
+                    targets['moves_until_end'].float()
+                )
+            if key == 'categorical_game_result_loss':
+                targets['categorical_result'] = targets['categorical_result'].squeeze(1)
+                loss = loss_fn(
+                    predictions['categorical_game_result'].float(), 
+                    targets['categorical_result']
+                )
                 
             individual_losses[key] = loss
 
