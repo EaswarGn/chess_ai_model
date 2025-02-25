@@ -8,11 +8,12 @@ from copy import deepcopy
 @dataclass
 class ChessConfig:
     NAME: str
-    GPU_ID: List[int]
+    NUM_GPUS: int
     BATCH_SIZE: int
     NUM_WORKERS: int
     PREFETCH_FACTOR: int
     PIN_MEMORY: bool
+    VOCAB_SIZES: Dict[str, int]
     D_MODEL: int
     N_HEADS: int
     D_QUERIES: int
@@ -28,23 +29,29 @@ class ChessConfig:
     N_STEPS: int
     STEPS_PER_EPOCH: int
     WARMUP_STEPS: int
+    STEP: int
     LR_SCHEDULE: str
     LR_DECAY: float
     LR: float
+    START_EPOCH: int
     BETAS: tuple
     EPSILON: float
     LABEL_SMOOTHING: float
     USE_AMP: bool
-    LOSS_WEIGHTS: Dict[str, float]
     CHECKPOINT_PATH: Optional[str]
     PRINT_FREQUENCY: int
-    VOCAB_SIZES: Dict[str, int]
+    move_time_head: Optional[torch.nn]
+    game_length_head: Optional[torch.nn]
+    categorical_game_result_head: Optional[torch.nn]
+    game_result_head: Optional[torch.nn]
+    LOSS_WEIGHTS: Dict[str, float]
+    
 
 def convert_config_to_picklable(config):
     """Convert the existing config object to a ChessConfig instance"""
     config_dict = {
         'NAME': config.NAME,
-        'GPU_ID': config.GPU_ID,
+        'NUM_GPUS': config.NUM_GPUS,
         'BATCH_SIZE': config.BATCH_SIZE,
         'NUM_WORKERS': config.NUM_WORKERS,
         'PREFETCH_FACTOR': config.PREFETCH_FACTOR,
