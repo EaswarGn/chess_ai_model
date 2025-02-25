@@ -127,6 +127,8 @@ class MultiTaskChessLoss(nn.Module):
                 )
                 
             individual_losses[key] = loss
+            
+        individual_losses['result_loss'] = torch.tensor(0.0)
 
         # Compute dynamically weighted loss
         total_loss = 0.0
