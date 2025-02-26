@@ -15,7 +15,7 @@ class CONFIG:
         ############ Name #############
         ###############################
         self.NAME = "ddp_config"
-        self.NUM_GPUS = 1
+        self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
         ######### Dataloading #########
