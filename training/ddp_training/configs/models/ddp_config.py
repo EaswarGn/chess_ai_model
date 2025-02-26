@@ -79,7 +79,7 @@ class CONFIG:
         self.CHECKPOINT_PATH = None
 
         ###############################
-        ########### Outputs ##########
+        ########### Auxiliary Outputs ##########
         ###############################
         self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
@@ -97,7 +97,7 @@ class CONFIG:
             "move_loss_weight": 1.0,
             "time_loss_weight": 0.5,
             "result_loss_weight": 0.0,
-            "moves_until_end_loss_weight": 1.0,
+            "moves_until_end_loss_weight": 0.25,
             "categorical_game_result_loss_weight": 1.0,
         }
 

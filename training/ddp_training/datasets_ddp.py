@@ -121,7 +121,7 @@ class ChunkLoader(IterableDataset):
                     record["material_difference"] = unpacked[idx]; idx += 1
                     record["moves_until_end"] = unpacked[idx]; idx += 1
                     
-                    if int(record['move_number']) <= 16:
+                    if int(record['move_number']) <= 8:
                         record["moves_until_end"] = 35
 
                     try:
