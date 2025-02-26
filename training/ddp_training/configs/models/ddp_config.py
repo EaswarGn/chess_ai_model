@@ -98,7 +98,7 @@ class CONFIG:
             "time_loss_weight": 0.25,
             "result_loss_weight": 0.0,
             "moves_until_end_loss_weight": 0.125,
-            "categorical_game_result_loss_weight": 1.0,
+            "categorical_game_result_loss_weight": 0.5,
         }
 
         self.move_loss = self.CRITERION
