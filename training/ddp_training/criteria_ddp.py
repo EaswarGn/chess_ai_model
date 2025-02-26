@@ -133,7 +133,6 @@ class MultiTaskChessLoss(nn.Module):
             individual_losses[key] = loss
             
         individual_losses['result_loss'] = torch.tensor(0.0)
-        print(individual_losses)
 
         total_loss = 0.0
         for i, key in enumerate(individual_losses):
