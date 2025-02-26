@@ -81,12 +81,9 @@ class CONFIG:
         ###############################
         ########### Auxiliary Outputs ##########
         ###############################
-        self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.game_length_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.D_MODEL, 3),
-            nn.Softmax(dim=-1),
-        )
+        self.move_time_head = None
+        self.game_length_head = None
+        self.categorical_game_result_head = None
         self.game_result_head = None
 
         ###############################
@@ -95,14 +92,14 @@ class CONFIG:
         self.CRITERION = LabelSmoothedCE
         self.LOSS_WEIGHTS = {
             "move_loss_weight": 1.0,
-            "time_loss_weight": 0.2,
+            "time_loss_weight": 0.0,
             "result_loss_weight": 0.0,
-            "moves_until_end_loss_weight": 0.2,
-            "categorical_game_result_loss_weight": 0.3,
+            "moves_until_end_loss_weight": 0.0,
+            "categorical_game_result_loss_weight": 0.0,
         }
 
         self.move_loss = self.CRITERION
-        self.move_time_loss = nn.HuberLoss()
-        self.moves_until_end_loss = nn.HuberLoss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss()
+        self.move_time_loss = None
+        self.moves_until_end_loss = None
+        self.categorical_game_result_loss = None
 
