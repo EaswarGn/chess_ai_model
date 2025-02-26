@@ -113,7 +113,7 @@ class MultiTaskChessLoss(nn.Module):
                     targets['move_time'].float()
                 )
                 
-            if key == 'game_result_loss':
+            if key == 'result_loss':
                 loss = loss_fn(
                     predictions['game_result'].float(), 
                     targets['game_result'].float()
@@ -132,7 +132,7 @@ class MultiTaskChessLoss(nn.Module):
                 
             individual_losses[key] = loss
             
-        individual_losses['game_result_loss'] = torch.tensor(0.0)
+        individual_losses['result_loss'] = torch.tensor(0.0)
         print(individual_losses)
 
         total_loss = 0.0
