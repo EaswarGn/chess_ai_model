@@ -122,7 +122,7 @@ class ChunkLoader(IterableDataset):
                     record["moves_until_end"] = unpacked[idx]; idx += 1
                     
                     if int(record['move_number']) <= 16:
-                        record["moves_until_end"] = 0
+                        record["moves_until_end"] = 35
 
                     try:
                         base_time = record["base_time"]
