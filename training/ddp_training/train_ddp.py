@@ -456,8 +456,6 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
     categorical_game_result_losses = AverageMeter()
     categorical_game_result_accuracies = AverageMeter()
     
-    crossentropy_loss = nn.CrossEntropyLoss()
-    
     criterion = MultiTaskChessLoss(
         CONFIG,
         device=device
@@ -530,7 +528,7 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                             batch['categorical_result']), batch["lengths"].shape[0])
             
             if rank==0:
-                iterator.update(1)
+                iterator.update(i)
 
         if rank==0:
             # Log to tensorboard
