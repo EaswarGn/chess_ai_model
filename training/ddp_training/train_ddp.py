@@ -386,7 +386,7 @@ def train_epoch(
                 writer.add_scalar(tag="train/top3_accuracy", scalar_value=top3_accuracies.val, global_step=step)
                 writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
             
-            if step==1100:
+            if step==10100:
                 save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
             
             if step % steps_per_epoch == 0:
