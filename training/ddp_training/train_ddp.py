@@ -528,6 +528,7 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                             batch['categorical_result']), batch["lengths"].shape[0])
             
             if rank==0:
+                print(len(val_loader))
                 iterator.update(i)
 
         if rank==0:
