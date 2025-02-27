@@ -252,7 +252,6 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
-        print("yes")
         for key in batch:
             batch[key] = batch[key].to(device)
 
@@ -260,7 +259,6 @@ def train_epoch(
 
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
             predictions = model(batch)
-            print("predictions finished")
             
             loss, loss_details = criterion(predictions, batch)
             result_loss = loss_details['result_loss']
@@ -279,7 +277,7 @@ def train_epoch(
         if math.isnan(loss):
             sys.exit()
         
-        print("loss finished")
+        scaler.scale(loss).backward()
 
         losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
         result_losses.update(result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
@@ -314,8 +312,6 @@ def train_epoch(
                 ),
                 batch["lengths"].shape[0]
             )
-            
-        scaler.scale(loss).backward()
 
         if (i + 1) % CONFIG.BATCHES_PER_STEP == 0:
             scaler.step(optimizer)
