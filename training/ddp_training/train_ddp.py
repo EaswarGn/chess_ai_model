@@ -123,16 +123,22 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         print(f"\nLoaded checkpoint from step {step}.\n")
     
-    """# Compile model
+    # Loop through model's parameters and print their weights
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
+
+    
+    # Compile model
     compiled_model = torch.compile(
         model,
         mode=CONFIG.COMPILATION_MODE,
         dynamic=CONFIG.DYNAMIC_COMPILATION,
         disable=CONFIG.DISABLE_COMPILATION,
-    )"""
+    )
 
         
-    #model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
+    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -152,7 +158,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     train_loader = DataLoader(
         dataset=train_dataset,
-        batch_size=CONFIG.BATCH_SIZE,
+        batch_size=CONFIG.BATCH_SIZE // world_size,
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
@@ -160,7 +166,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     val_loader = DataLoader(
         dataset=val_dataset,
-        batch_size=CONFIG.BATCH_SIZE,
+        batch_size=CONFIG.BATCH_SIZE // world_size,
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
