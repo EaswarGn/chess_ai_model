@@ -261,6 +261,7 @@ def train_epoch(
 
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
             predictions = model(batch)
+            print("predictions finished")
             
             loss, loss_details = criterion(predictions, batch)
             result_loss = loss_details['result_loss']
