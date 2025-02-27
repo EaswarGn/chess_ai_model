@@ -441,97 +441,97 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
 
         CONFIG (dict): Configuration.
     """
-    print("\n")
-    model.eval()  # eval mode disables dropout
     
-    DEVICE = device
-    
-    losses = AverageMeter()  # loss
-    top1_accuracies = AverageMeter()  # top-1 accuracy of first move
-    top3_accuracies = AverageMeter()  # top-3 accuracy of first move
-    top5_accuracies = AverageMeter()  # top-5 accuracy of first move
-    result_losses = AverageMeter()
-    move_time_losses = AverageMeter()
-    move_losses = AverageMeter()
-    moves_until_end_losses = AverageMeter()
-    categorical_game_result_losses = AverageMeter()
-    categorical_game_result_accuracies = AverageMeter()
-    
-    criterion = MultiTaskChessLoss(
-        CONFIG,
-        device=device
-    )
-    criterion = criterion.to(DEVICE)
-    
-    iterator = tqdm(enumerate(val_loader), desc="Validating", total=len(val_loader))
+    if rank==0:
+        print("\n")
+        model.eval()  # eval mode disables dropout
+        
+        DEVICE = device
+        
+        losses = AverageMeter()  # loss
+        top1_accuracies = AverageMeter()  # top-1 accuracy of first move
+        top3_accuracies = AverageMeter()  # top-3 accuracy of first move
+        top5_accuracies = AverageMeter()  # top-5 accuracy of first move
+        result_losses = AverageMeter()
+        move_time_losses = AverageMeter()
+        move_losses = AverageMeter()
+        moves_until_end_losses = AverageMeter()
+        categorical_game_result_losses = AverageMeter()
+        categorical_game_result_accuracies = AverageMeter()
+        
+        crossentropy_loss = nn.CrossEntropyLoss()
+        
+        criterion = MultiTaskChessLoss(
+            CONFIG,
+            device=device
+        )
+        criterion = criterion.to(DEVICE)
 
-    # Prohibit gradient computation explicitly
-    with torch.no_grad():
-        # Batches
-        for i, batch in enumerate(val_loader):
-            # Move to default device
-            for key in batch:
-                batch[key] = batch[key].to(DEVICE)
-
-            with torch.autocast(
-                device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
+        # Prohibit gradient computation explicitly
+        with torch.no_grad():
+            # Batches
+            for i, batch in tqdm(
+                enumerate(val_loader), desc="Validating", total=len(val_loader)
             ):
+                # Move to default device
+                for key in batch:
+                    batch[key] = batch[key].to(DEVICE)
+
+                with torch.autocast(
+                    device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
+                ):
+                    
+                    predictions = model(
+                        batch
+                    )  # (N, 1, 64), (N, 1, 64)
+                    
+                    loss, loss_details = criterion(predictions, batch)
+                    result_loss = loss_details['result_loss']
+                    move_time_loss = loss_details['time_loss']
+                    move_loss = loss_details['move_loss']
+                    moves_until_end_loss = loss_details['moves_until_end_loss']
+                    categorical_game_result_loss = loss_details['categorical_game_result_loss']
+
+                losses.update(
+                    loss.item(), batch["lengths"].sum().item()
+                )
+                result_losses.update(
+                    result_loss.item(), batch["lengths"].sum().item()
+                )
+                move_time_losses.update(
+                    move_time_loss.item(), batch["lengths"].sum().item()
+                )
+                move_losses.update(
+                    move_loss.item(), batch["lengths"].sum().item()
+                )
+                moves_until_end_losses.update(
+                    moves_until_end_loss.item(), batch["lengths"].sum().item()
+                )
+                categorical_game_result_losses.update(
+                    categorical_game_result_loss.item(), batch["lengths"].sum().item()
+                )
+
+                if predictions['from_squares'] is None:
+                    top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+                else:
+                    top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            k=[1, 3, 5],
+                        )
                 
-                predictions = model(
-                    batch
-                )  # (N, 1, 64), (N, 1, 64)
+                top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+                top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+                top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
                 
-                loss, loss_details = criterion(predictions, batch)
-                result_loss = loss_details['result_loss']
-                move_time_loss = loss_details['time_loss']
-                move_loss = loss_details['move_loss']
-                moves_until_end_loss = loss_details['moves_until_end_loss']
-                categorical_game_result_loss = loss_details['categorical_game_result_loss']
+                if predictions['categorical_game_result'] is None:
+                    categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+                else:
+                    categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                                batch['categorical_result']), batch["lengths"].shape[0])
 
-            losses.update(
-                loss.item(), batch["lengths"].sum().item()
-            )
-            result_losses.update(
-                result_loss.item(), batch["lengths"].sum().item()
-            )
-            move_time_losses.update(
-                move_time_loss.item(), batch["lengths"].sum().item()
-            )
-            move_losses.update(
-                move_loss.item(), batch["lengths"].sum().item()
-            )
-            moves_until_end_losses.update(
-                moves_until_end_loss.item(), batch["lengths"].sum().item()
-            )
-            categorical_game_result_losses.update(
-                categorical_game_result_loss.item(), batch["lengths"].sum().item()
-            )
-
-            if predictions['from_squares'] is None:
-                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
-            else:
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                        targets=batch["from_squares"].squeeze(1),  # (N)
-                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                        other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        k=[1, 3, 5],
-                    )
-            
-            top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
-            top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
-            top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-            
-            if predictions['categorical_game_result'] is None:
-                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-            else:
-                categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                            batch['categorical_result']), batch["lengths"].shape[0])
-            
-            
-            iterator.update(1)
-
-        if rank==0:
             # Log to tensorboard
             writer.add_scalar(
                 tag="val/loss", scalar_value=losses.avg, global_step=epoch + 1
