@@ -15,7 +15,7 @@ class CONFIG:
         ############ Name #############
         ###############################
         self.NAME = "ddp_config"
-        self.NUM_GPUS = 2
+        self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
         ######### Dataloading #########
@@ -76,7 +76,8 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.CHECKPOINT_PATH = None
+        self.CHECKPOINT_PATH = '../../../1900_step_6000.pt'
+        self.USE_STRICT = False #use strict loading when loading a checkpoint?
 
         ###############################
         ########### Auxiliary Outputs ##########

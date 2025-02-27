@@ -74,7 +74,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
-        print(f"Training on {world_size} GPUs")
+        print(f"Training on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} workers for dataloading.")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
         writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
         tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log"])
@@ -114,7 +114,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             #new_key = new_key.replace('module.', '')
             new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=True)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
         if rank == 0:
@@ -381,7 +381,7 @@ def train_epoch(
                 epoch += 1
             
             
-            if CONFIG.N_STEPS == None:
+            if CONFIG.N_STEPS is None:
                 if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
                     cleanup_ddp()
                     sys.exit()
