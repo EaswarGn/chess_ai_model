@@ -122,15 +122,6 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
 
         print(f"\nLoaded checkpoint from step {step}.\n")
-    
-    # Loop through model's parameters and print their weights
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
-            
-    for name, param in model.named_parameters():
-        if 'bias' in name:
-            print(f"{name}: grad={param.grad}")
 
     
 
@@ -262,6 +253,12 @@ def train_epoch(
     for i, batch in enumerate(train_loader):
         for key in batch:
             batch[key] = batch[key].to(device)
+            
+        if i%5 == 0:
+            # Loop through model's parameters and print their weights
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
 
         data_time.update(time.time() - start_data_time)
 
