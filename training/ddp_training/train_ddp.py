@@ -131,7 +131,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         model,
         mode=CONFIG.COMPILATION_MODE,
         dynamic=CONFIG.DYNAMIC_COMPILATION,
-        disable=CONFIG.DISABLE_COMPILATION,
+        disable=True,
     )
 
         
