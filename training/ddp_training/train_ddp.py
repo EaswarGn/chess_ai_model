@@ -100,7 +100,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     epochs = total_steps//steps_per_epoch
 
     if CONFIG.CHECKPOINT_PATH is not None and rank == 0:
-        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
+        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE, weights_only=True,)
         step = checkpoint['step']
         step = int(step)
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
@@ -120,8 +120,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         for name, param in model.named_parameters():
             if param.grad is None:
                 print(f"No gradient for {name}")
-        for name, param in model.named_parameters():
-            print(f"{name} requires_grad: {param.requires_grad}")
 
         
         try:
