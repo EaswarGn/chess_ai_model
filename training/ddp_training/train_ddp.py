@@ -133,9 +133,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         step = 1
 
         print(f"\nLoaded checkpoint from step {step}.\n")
-        
-    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
-
+    
     # Compile model
     compiled_model = torch.compile(
         model,
@@ -143,6 +141,9 @@ def train_model_ddp(rank, world_size, CONFIG):
         dynamic=CONFIG.DYNAMIC_COMPILATION,
         disable=CONFIG.DISABLE_COMPILATION,
     )
+
+        
+    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -181,7 +182,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         world_size=world_size,
         train_loader=train_loader,
         val_loader=val_loader,
-        model=compiled_model,
+        model=model,
         criterion=criterion,
         optimizer=optimizer,
         scaler=scaler,
