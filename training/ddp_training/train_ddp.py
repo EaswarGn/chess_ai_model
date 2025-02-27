@@ -259,6 +259,7 @@ def train_epoch(
             for name, param in model.named_parameters():
                 if param.requires_grad:
                     print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
+            sys.exit()
 
         data_time.update(time.time() - start_data_time)
 
@@ -349,7 +350,7 @@ def train_epoch(
                     "Move loss {move_losses.val:.4f} ({move_losses.avg:.4f})---"
                     "Game result loss {result_losses.val:.4f} ({result_losses.avg:.4f})---"
                     "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
-                    "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
+                    "Moves until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
                     "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
                     "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_accuracies.avg:.4f})---"
                     "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
