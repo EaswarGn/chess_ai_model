@@ -528,7 +528,7 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                             batch['categorical_result']), batch["lengths"].shape[0])
             
             
-            iterator.update(i)
+            iterator.update(1)
 
         if rank==0:
             # Log to tensorboard
