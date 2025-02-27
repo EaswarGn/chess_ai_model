@@ -115,10 +115,10 @@ def train_model_ddp(rank, world_size, CONFIG):
             new_key = 'module.'+new_key
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        print(checkpoint["optimizer_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        
-        if rank == 0:
-            print(f"\nLoaded checkpoint from epoch {start_epoch}.\n")
+
+        print(f"\nLoaded checkpoint from step {step}.\n")
 
     # Compile model
     compiled_model = torch.compile(
