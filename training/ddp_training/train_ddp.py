@@ -466,12 +466,13 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
             device=device
         )
         criterion = criterion.to(DEVICE)
+        total_steps = CONFIG.VALIDATION_STEPS
 
         # Prohibit gradient computation explicitly
         with torch.no_grad():
             # Batches
             for i, batch in tqdm(
-                enumerate(val_loader), desc="Validating", total=len(val_loader)
+                enumerate(val_loader), desc="Validating", total=min(total_steps, len(val_loader))
             ):
                 # Move to default device
                 for key in batch:
@@ -531,6 +532,9 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                 else:
                     categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
                                 batch['categorical_result']), batch["lengths"].shape[0])
+                
+                if i>=total_steps:
+                    break
 
             # Log to tensorboard
             writer.add_scalar(

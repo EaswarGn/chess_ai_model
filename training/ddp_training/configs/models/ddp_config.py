@@ -78,6 +78,7 @@ class CONFIG:
         self.OPTIMIZER = torch.optim.Adam
         self.CHECKPOINT_PATH = '../../../1900_step_6000.pt'
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
+        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
