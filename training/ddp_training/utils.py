@@ -234,9 +234,6 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
             correct_predictions = (indices == targets) * (
                 other_indices == other_targets
             )  # (N, max(k))
-            
-            print("predictions:", indices)
-            print("targets: ",targets)
 
         else:
             # Get indices corresponding to top-max(k) scores
