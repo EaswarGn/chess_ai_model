@@ -84,8 +84,6 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-
-    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
     
     # Optimizer
     optimizer = torch.optim.Adam(
@@ -135,6 +133,8 @@ def train_model_ddp(rank, world_size, CONFIG):
         step = 1
 
         print(f"\nLoaded checkpoint from step {step}.\n")
+        
+    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
 
     # Compile model
     compiled_model = torch.compile(
