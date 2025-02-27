@@ -281,6 +281,7 @@ def train_epoch(
             sys.exit()
         
         scaler.scale(loss).backward()
+        print("loss finished")
 
         losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
         result_losses.update(result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
