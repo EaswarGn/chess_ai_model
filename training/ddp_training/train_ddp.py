@@ -527,9 +527,8 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                 categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
                             batch['categorical_result']), batch["lengths"].shape[0])
             
-            if rank==0:
-                print(len(val_loader))
-                iterator.update(i)
+            
+            iterator.update(i)
 
         if rank==0:
             # Log to tensorboard
