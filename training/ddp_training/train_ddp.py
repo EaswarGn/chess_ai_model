@@ -125,6 +125,8 @@ def train_model_ddp(rank, world_size, CONFIG):
             print("optimizer state dict not loaded likely because you are finetuning model with different weights")
             print(f"Error Message: {error_message}")
             
+        #TODO: remove
+        step = 1
 
         print(f"\nLoaded checkpoint from step {step}.\n")
 
