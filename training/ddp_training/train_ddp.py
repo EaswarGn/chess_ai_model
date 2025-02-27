@@ -126,16 +126,16 @@ def train_model_ddp(rank, world_size, CONFIG):
     
 
     
-    """# Compile model
+    # Compile model
     compiled_model = torch.compile(
         model,
         mode=CONFIG.COMPILATION_MODE,
         dynamic=CONFIG.DYNAMIC_COMPILATION,
         disable=CONFIG.DISABLE_COMPILATION,
-    )"""
+    )
 
         
-    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
+    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -170,7 +170,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    train_epoch(
+    """train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -186,9 +186,9 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )
+    )"""
     
-    """if rank==0:
+    if rank==0:
         #validation only
         validate_epoch(
             rank=rank,
@@ -201,7 +201,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             device=DEVICE
         )
         cleanup_ddp()
-        sys.exit()"""
+        sys.exit()
 
     cleanup_ddp()
 
