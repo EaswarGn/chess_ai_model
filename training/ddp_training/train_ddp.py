@@ -118,6 +118,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         for key in new_state_dict:
             print(key)
+            print(type(new_state_dict[key]))
         for name, param in model.named_parameters():
             if param.grad is None:
                 print(f"No gradient for {name}")
