@@ -229,7 +229,7 @@ def train_epoch(
     CONFIG,
     device
 ):
-    model.train()
+    model.eval()
 
     data_time = AverageMeter()
     step_time = AverageMeter()
