@@ -244,6 +244,8 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
 
             # Get correct predictions
             correct_predictions = indices == targets  # (N, max(k))
+            print(indices)
+            print(targets)
 
         # Calculate top-k accuracies
         topk_accuracies = [
