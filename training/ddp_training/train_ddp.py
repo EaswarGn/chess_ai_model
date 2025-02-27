@@ -84,11 +84,13 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-
-    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
     
     for param in model.board_encoder.encoder_layers.parameters():
         param.requires_grad = False
+
+    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
+    
+    
 
     # Optimizer
     optimizer = torch.optim.Adam(
