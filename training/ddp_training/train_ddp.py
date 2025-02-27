@@ -170,7 +170,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    """train_epoch(
+    train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -186,8 +186,10 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )"""
-    if rank == 0: 
+    )
+    
+    #validation only
+    """if rank == 0: 
         validate_epoch(
             rank=rank,
             val_loader=val_loader,
@@ -199,7 +201,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             device=DEVICE
         )
         cleanup_ddp()
-        sys.exit()
+        sys.exit()"""
 
     cleanup_ddp()
 
