@@ -143,6 +143,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     training_file_list = get_all_record_files('../../../1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
+    random.shuffle(training_file_list)
     
     rand_folder = random.randint(1, 3)
     testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
@@ -254,12 +255,12 @@ def train_epoch(
         for key in batch:
             batch[key] = batch[key].to(device)
             
-        if i%5 == 0:
+        """if i%5 == 0:
             # Loop through model's parameters and print their weights
             for name, param in model.named_parameters():
                 if param.requires_grad:
                     print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
-            sys.exit()
+            sys.exit()"""
 
         data_time.update(time.time() - start_data_time)
 
