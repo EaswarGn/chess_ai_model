@@ -299,6 +299,7 @@ def train_epoch(
                     other_targets=batch["to_squares"].squeeze(1),
                     k=[1, 3, 5],
                 )
+            print(top1_accuracy)
         
         top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
         top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
