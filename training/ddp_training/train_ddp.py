@@ -99,7 +99,43 @@ def train_model_ddp(rank, world_size, CONFIG):
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
     epochs = total_steps//steps_per_epoch
 
+    if CONFIG.CHECKPOINT_PATH is not None and rank == 0:
+        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
+        step = checkpoint['step']
+        step = int(step)
+        start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
+        
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key.replace('_orig_mod.', '')
+            new_key = new_key.replace('module.', '')
+            #new_key = 'module.'+new_key
+            new_state_dict[new_key] = value
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        
+        try:
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        except ValueError as e:
+            error_message = str(e)
+            print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
+            print(f"Error Message: {error_message}")
+            
+        #TODO: remove
+        step = 1
+
+        print(f"\nLoaded checkpoint from step {step}.\n")
     
+    # Compile model
+    compiled_model = torch.compile(
+        model,
+        mode=CONFIG.COMPILATION_MODE,
+        dynamic=CONFIG.DYNAMIC_COMPILATION,
+        disable=CONFIG.DISABLE_COMPILATION,
+    )
+
+        
+    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -132,58 +168,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
-    
-    for i, batch in enumerate(train_loader):
-        for key in batch:
-            batch[key] = batch[key].to(DEVICE)
-        predictions = model(batch)
-        break
-
-    if CONFIG.CHECKPOINT_PATH is not None and rank == 0:
-        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
-        step = checkpoint['step']
-        step = int(step)
-        start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
-        
-        state_dict = checkpoint['model_state_dict']
-        new_state_dict = {}
-        for key, value in state_dict.items():
-            new_key = key.replace('_orig_mod.', '')
-            new_key = new_key.replace('module.', '')
-            #new_key = 'module.'+new_key
-            new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-        
-        for key in new_state_dict:
-            print(key)
-            print(type(new_state_dict[key]))
-        for name, param in model.named_parameters():
-            if param.grad is None:
-                print(f"No gradient for {name}")
-
-        
-        try:
-            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        except ValueError as e:
-            error_message = str(e)
-            print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
-            print(f"Error Message: {error_message}")
-            
-        #TODO: remove
-        step = 1
-
-        print(f"\nLoaded checkpoint from step {step}.\n")
-    
-    # Compile model
-    compiled_model = torch.compile(
-        model,
-        mode=CONFIG.COMPILATION_MODE,
-        dynamic=CONFIG.DYNAMIC_COMPILATION,
-        disable=CONFIG.DISABLE_COMPILATION,
-    )
-
-        
-    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
 
     train_epoch(
         rank=rank,
