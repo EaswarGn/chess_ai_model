@@ -78,7 +78,7 @@ class CONFIG:
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
         self.CHECKPOINT_PATH = 'ddp_config/checkpoints/models/1900_step_4000.pt'
-        self.VALIDATION_STEPS = 1 #number of validation steps (each step has BATCH_SIZE samples)
+        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########

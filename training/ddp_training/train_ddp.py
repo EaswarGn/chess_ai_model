@@ -253,6 +253,7 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
+        print("yes")
         for key in batch:
             batch[key] = batch[key].to(device)
 
