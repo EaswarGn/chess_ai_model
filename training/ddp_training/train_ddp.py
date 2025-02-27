@@ -112,11 +112,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        print(new_state_dict)
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-        
-        print("\n\n\n\n\n")
-        print(model.state_dict())
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -256,6 +252,7 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
+        print("yes")
         for key in batch:
             batch[key] = batch[key].to(device)
 
