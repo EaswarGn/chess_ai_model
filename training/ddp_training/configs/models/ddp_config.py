@@ -106,5 +106,5 @@ class CONFIG:
         self.move_loss = self.CRITERION
         self.move_time_loss = nn.HuberLoss()
         self.moves_until_end_loss = nn.HuberLoss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss()
+        self.categorical_game_result_loss = nn.CrossEntropyLoss(label_smoothing=0.1)
 
