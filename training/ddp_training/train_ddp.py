@@ -397,6 +397,9 @@ def train_epoch(
             if step % steps_per_epoch == 0:
                 
                 if rank == 0: 
+                    time.sleep(5)
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                    
                     validate_epoch(
                         rank=rank,
                         val_loader=val_loader,
@@ -408,8 +411,7 @@ def train_epoch(
                         device=device
                     )
                     
-                    time.sleep(5)
-                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                    
                 
                 epoch += 1
             
