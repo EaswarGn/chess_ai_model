@@ -170,7 +170,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    train_epoch(
+    """train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -186,22 +186,21 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )
+    )"""
     
     #validation only
-    """if rank == 0: 
-        validate_epoch(
-            rank=rank,
-            val_loader=val_loader,
-            model=model,
-            criterion=criterion,
-            epoch=0,
-            writer=writer,
-            CONFIG=CONFIG,
-            device=DEVICE
-        )
-        cleanup_ddp()
-        sys.exit()"""
+    validate_epoch(
+        rank=rank,
+        val_loader=val_loader,
+        model=model,
+        criterion=criterion,
+        epoch=0,
+        writer=writer,
+        CONFIG=CONFIG,
+        device=DEVICE
+    )
+    cleanup_ddp()
+    sys.exit()
 
     cleanup_ddp()
 
@@ -228,197 +227,196 @@ def train_epoch(
     CONFIG,
     device
 ):
-    if rank ==0:
-        model.train()
+    model.train()
 
-        data_time = AverageMeter()
-        step_time = AverageMeter()
-        losses = AverageMeter()
-        top1_accuracies = AverageMeter()
-        top3_accuracies = AverageMeter()
-        top5_accuracies = AverageMeter()
-        result_losses = AverageMeter()
-        move_time_losses = AverageMeter()
-        move_losses = AverageMeter()
-        moves_until_end_losses = AverageMeter()
-        categorical_game_result_losses = AverageMeter()
-        categorical_game_result_accuracies = AverageMeter()
+    data_time = AverageMeter()
+    step_time = AverageMeter()
+    losses = AverageMeter()
+    top1_accuracies = AverageMeter()
+    top3_accuracies = AverageMeter()
+    top5_accuracies = AverageMeter()
+    result_losses = AverageMeter()
+    move_time_losses = AverageMeter()
+    move_losses = AverageMeter()
+    moves_until_end_losses = AverageMeter()
+    categorical_game_result_losses = AverageMeter()
+    categorical_game_result_accuracies = AverageMeter()
+
+    start_data_time = time.time()
+    start_step_time = time.time()
+    
+    crossentropy_loss = nn.CrossEntropyLoss()
+    
+    move_loss_criterion = criterion
+    criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
+
+    for i, batch in enumerate(train_loader):
+        for key in batch:
+            batch[key] = batch[key].to(device)
+
+        data_time.update(time.time() - start_data_time)
+
+        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
+            predictions = model(batch)
+            
+            loss, loss_details = criterion(predictions, batch)
+            result_loss = loss_details['result_loss']
+            move_time_loss = loss_details['time_loss']
+            move_loss = loss_details['move_loss']
+            moves_until_end_loss = loss_details['moves_until_end_loss']
+            categorical_game_result_loss = loss_details['categorical_game_result_loss']
+
+            loss = loss / CONFIG.BATCHES_PER_STEP
+            result_loss = result_loss / CONFIG.BATCHES_PER_STEP
+            move_time_loss = move_time_loss / CONFIG.BATCHES_PER_STEP
+            move_loss = move_loss / CONFIG.BATCHES_PER_STEP
+            moves_until_end_loss = moves_until_end_loss / CONFIG.BATCHES_PER_STEP
+            categorical_game_result_loss = categorical_game_result_loss / CONFIG.BATCHES_PER_STEP
+
+        if math.isnan(loss):
+            sys.exit()
+        
+        scaler.scale(loss).backward()
+
+        losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        result_losses.update(result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        move_time_losses.update(move_time_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        move_losses.update(move_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        moves_until_end_losses.update(moves_until_end_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        categorical_game_result_losses.update(categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
+        
+        if predictions['from_squares'] is None:
+            top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+        else:
+            top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                    logits=predictions['from_squares'][:, 0, :],
+                    targets=batch["from_squares"].squeeze(1),
+                    other_logits=predictions['to_squares'][:, 0, :],
+                    other_targets=batch["to_squares"].squeeze(1),
+                    k=[1, 3, 5],
+                )
+        
+        top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+        top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+        top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+        
+        if predictions['categorical_game_result'] is None:
+            categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+        else:
+            categorical_game_result_accuracies.update(
+                calculate_accuracy(
+                    predictions['categorical_game_result'].float(),
+                    batch['categorical_result']
+                ),
+                batch["lengths"].shape[0]
+            )
+
+        if (i + 1) % CONFIG.BATCHES_PER_STEP == 0:
+            scaler.step(optimizer)
+            scaler.update()
+            optimizer.zero_grad()
+
+            step += 1
+
+            change_lr(
+                optimizer,
+                new_lr=get_lr(
+                    step=step,
+                    d_model=CONFIG.D_MODEL,
+                    warmup_steps=CONFIG.WARMUP_STEPS,
+                    schedule=CONFIG.LR_SCHEDULE,
+                    decay=CONFIG.LR_DECAY,
+                    batch_size=CONFIG.BATCH_SIZE
+                ),
+            )
+
+            step_time.update(time.time() - start_step_time)
+
+            if step % CONFIG.PRINT_FREQUENCY == 0 and rank == 0:
+                print(
+                    "Epoch {0}/{1}---"
+                    "Batch {2}/{3}---"
+                    "Step {4}/{5}---"
+                    "Data Time {data_time.val:.3f} ({data_time.avg:.3f})---"
+                    "Step Time {step_time.val:.3f} ({step_time.avg:.3f})---"
+                    "Loss {losses.val:.4f} ({losses.avg:.4f})---"
+                    "Move loss {move_losses.val:.4f} ({move_losses.avg:.4f})---"
+                    "Game result loss {result_losses.val:.4f} ({result_losses.avg:.4f})---"
+                    "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
+                    "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
+                    "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
+                    "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_accuracies.avg:.4f})---"
+                    "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
+                    "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
+                    "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
+                        epoch,
+                        epochs,
+                        i + 1,
+                        len(train_loader),
+                        step,
+                        len(train_loader)//CONFIG.BATCHES_PER_STEP,
+                        step_time=step_time,
+                        data_time=data_time,
+                        losses=losses,
+                        move_losses=move_losses,
+                        result_losses=result_losses,
+                        move_time_losses=move_time_losses,
+                        moves_until_end_losses=moves_until_end_losses,
+                        categorical_game_result_losses=categorical_game_result_losses,
+                        categorical_game_result_accuracies=categorical_game_result_accuracies,
+                        top1s=top1_accuracies,
+                        top3s=top3_accuracies,
+                        top5s=top5_accuracies,
+                    )
+                )
+
+            if rank == 0:
+                writer.add_scalar(tag="train/loss", scalar_value=losses.val, global_step=step)
+                writer.add_scalar(tag="train/move_loss", scalar_value=move_losses.val, global_step=step)
+                writer.add_scalar(tag="train/result_loss", scalar_value=result_losses.val, global_step=step)
+                writer.add_scalar(tag="train/move_time_loss", scalar_value=move_time_losses.val, global_step=step)
+                writer.add_scalar(tag="train/moves_until_end_loss", scalar_value=moves_until_end_losses.val, global_step=step)
+                writer.add_scalar(tag="train/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step)
+                writer.add_scalar(tag="train/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=step)
+                writer.add_scalar(tag="train/lr", scalar_value=optimizer.param_groups[0]["lr"], global_step=step)
+                writer.add_scalar(tag="train/data_time", scalar_value=data_time.val, global_step=step)
+                writer.add_scalar(tag="train/step_time", scalar_value=step_time.val, global_step=step)
+                writer.add_scalar(tag="train/top1_accuracy", scalar_value=top1_accuracies.val, global_step=step)
+                writer.add_scalar(tag="train/top3_accuracy", scalar_value=top3_accuracies.val, global_step=step)
+                writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
+            
+            if step % steps_per_epoch == 0:
+                
+                if rank == 0: 
+                    validate_epoch(
+                        rank=rank,
+                        val_loader=val_loader,
+                        model=model,
+                        criterion=move_loss_criterion,
+                        epoch=epoch,
+                        writer=writer,
+                        CONFIG=CONFIG,
+                        device=device
+                    )
+                    
+                    time.sleep(5)
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                
+                epoch += 1
+            
+            
+            if CONFIG.N_STEPS is None:
+                if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
+                    cleanup_ddp()
+                    sys.exit()
+            else:
+                if step >= CONFIG.N_STEPS:
+                    cleanup_ddp()
+                    sys.exit()
+
+            start_step_time = time.time()
 
         start_data_time = time.time()
-        start_step_time = time.time()
-        
-        crossentropy_loss = nn.CrossEntropyLoss()
-        
-        move_loss_criterion = criterion
-        criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
-
-        for i, batch in enumerate(train_loader):
-            for key in batch:
-                batch[key] = batch[key].to(device)
-
-            data_time.update(time.time() - start_data_time)
-
-            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
-                predictions = model(batch)
-                
-                loss, loss_details = criterion(predictions, batch)
-                result_loss = loss_details['result_loss']
-                move_time_loss = loss_details['time_loss']
-                move_loss = loss_details['move_loss']
-                moves_until_end_loss = loss_details['moves_until_end_loss']
-                categorical_game_result_loss = loss_details['categorical_game_result_loss']
-
-                loss = loss / CONFIG.BATCHES_PER_STEP
-                result_loss = result_loss / CONFIG.BATCHES_PER_STEP
-                move_time_loss = move_time_loss / CONFIG.BATCHES_PER_STEP
-                move_loss = move_loss / CONFIG.BATCHES_PER_STEP
-                moves_until_end_loss = moves_until_end_loss / CONFIG.BATCHES_PER_STEP
-                categorical_game_result_loss = categorical_game_result_loss / CONFIG.BATCHES_PER_STEP
-
-            if math.isnan(loss):
-                sys.exit()
-            
-            scaler.scale(loss).backward()
-
-            losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            result_losses.update(result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            move_time_losses.update(move_time_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            move_losses.update(move_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            moves_until_end_losses.update(moves_until_end_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            categorical_game_result_losses.update(categorical_game_result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
-            
-            if predictions['from_squares'] is None:
-                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
-            else:
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                        logits=predictions['from_squares'][:, 0, :],
-                        targets=batch["from_squares"].squeeze(1),
-                        other_logits=predictions['to_squares'][:, 0, :],
-                        other_targets=batch["to_squares"].squeeze(1),
-                        k=[1, 3, 5],
-                    )
-            
-            top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
-            top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
-            top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-            
-            if predictions['categorical_game_result'] is None:
-                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-            else:
-                categorical_game_result_accuracies.update(
-                    calculate_accuracy(
-                        predictions['categorical_game_result'].float(),
-                        batch['categorical_result']
-                    ),
-                    batch["lengths"].shape[0]
-                )
-
-            if (i + 1) % CONFIG.BATCHES_PER_STEP == 0:
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
-
-                step += 1
-
-                change_lr(
-                    optimizer,
-                    new_lr=get_lr(
-                        step=step,
-                        d_model=CONFIG.D_MODEL,
-                        warmup_steps=CONFIG.WARMUP_STEPS,
-                        schedule=CONFIG.LR_SCHEDULE,
-                        decay=CONFIG.LR_DECAY,
-                        batch_size=CONFIG.BATCH_SIZE
-                    ),
-                )
-
-                step_time.update(time.time() - start_step_time)
-
-                if step % CONFIG.PRINT_FREQUENCY == 0 and rank == 0:
-                    print(
-                        "Epoch {0}/{1}---"
-                        "Batch {2}/{3}---"
-                        "Step {4}/{5}---"
-                        "Data Time {data_time.val:.3f} ({data_time.avg:.3f})---"
-                        "Step Time {step_time.val:.3f} ({step_time.avg:.3f})---"
-                        "Loss {losses.val:.4f} ({losses.avg:.4f})---"
-                        "Move loss {move_losses.val:.4f} ({move_losses.avg:.4f})---"
-                        "Game result loss {result_losses.val:.4f} ({result_losses.avg:.4f})---"
-                        "Move time loss {move_time_losses.val:.4f} ({move_time_losses.avg:.4f})---"
-                        "Move until end loss {moves_until_end_losses.val:.4f} ({moves_until_end_losses.avg:.4f})---"
-                        "Categorical Game result loss {categorical_game_result_losses.val:.4f} ({categorical_game_result_losses.avg:.4f})---"
-                        "Categorical Game result accuracy {categorical_game_result_accuracies.val:.4f} ({categorical_game_result_accuracies.avg:.4f})---"
-                        "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
-                        "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
-                        "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
-                            epoch,
-                            epochs,
-                            i + 1,
-                            len(train_loader),
-                            step,
-                            len(train_loader)//CONFIG.BATCHES_PER_STEP,
-                            step_time=step_time,
-                            data_time=data_time,
-                            losses=losses,
-                            move_losses=move_losses,
-                            result_losses=result_losses,
-                            move_time_losses=move_time_losses,
-                            moves_until_end_losses=moves_until_end_losses,
-                            categorical_game_result_losses=categorical_game_result_losses,
-                            categorical_game_result_accuracies=categorical_game_result_accuracies,
-                            top1s=top1_accuracies,
-                            top3s=top3_accuracies,
-                            top5s=top5_accuracies,
-                        )
-                    )
-
-                if rank == 0:
-                    writer.add_scalar(tag="train/loss", scalar_value=losses.val, global_step=step)
-                    writer.add_scalar(tag="train/move_loss", scalar_value=move_losses.val, global_step=step)
-                    writer.add_scalar(tag="train/result_loss", scalar_value=result_losses.val, global_step=step)
-                    writer.add_scalar(tag="train/move_time_loss", scalar_value=move_time_losses.val, global_step=step)
-                    writer.add_scalar(tag="train/moves_until_end_loss", scalar_value=moves_until_end_losses.val, global_step=step)
-                    writer.add_scalar(tag="train/categorical_game_result_loss", scalar_value=categorical_game_result_losses.val, global_step=step)
-                    writer.add_scalar(tag="train/categorical_game_result_accuracy", scalar_value=categorical_game_result_accuracies.val, global_step=step)
-                    writer.add_scalar(tag="train/lr", scalar_value=optimizer.param_groups[0]["lr"], global_step=step)
-                    writer.add_scalar(tag="train/data_time", scalar_value=data_time.val, global_step=step)
-                    writer.add_scalar(tag="train/step_time", scalar_value=step_time.val, global_step=step)
-                    writer.add_scalar(tag="train/top1_accuracy", scalar_value=top1_accuracies.val, global_step=step)
-                    writer.add_scalar(tag="train/top3_accuracy", scalar_value=top3_accuracies.val, global_step=step)
-                    writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
-                
-                if step % steps_per_epoch == 0:
-                    
-                    if rank == 0: 
-                        validate_epoch(
-                            rank=rank,
-                            val_loader=val_loader,
-                            model=model,
-                            criterion=move_loss_criterion,
-                            epoch=epoch,
-                            writer=writer,
-                            CONFIG=CONFIG,
-                            device=device
-                        )
-                        
-                        time.sleep(5)
-                        save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
-                    
-                    epoch += 1
-                
-                
-                if CONFIG.N_STEPS is None:
-                    if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
-                        cleanup_ddp()
-                        sys.exit()
-                else:
-                    if step >= CONFIG.N_STEPS:
-                        cleanup_ddp()
-                        sys.exit()
-
-                start_step_time = time.time()
-
-            start_data_time = time.time()
      
      
 #def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, device):   
@@ -442,97 +440,99 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
 
         CONFIG (dict): Configuration.
     """
+    print("\n")
+    model.eval()  # eval mode disables dropout
     
-    if rank==0:
-        print("\n")
-        model.eval()  # eval mode disables dropout
-        
-        DEVICE = device
-        
-        losses = AverageMeter()  # loss
-        top1_accuracies = AverageMeter()  # top-1 accuracy of first move
-        top3_accuracies = AverageMeter()  # top-3 accuracy of first move
-        top5_accuracies = AverageMeter()  # top-5 accuracy of first move
-        result_losses = AverageMeter()
-        move_time_losses = AverageMeter()
-        move_losses = AverageMeter()
-        moves_until_end_losses = AverageMeter()
-        categorical_game_result_losses = AverageMeter()
-        categorical_game_result_accuracies = AverageMeter()
-        
-        crossentropy_loss = nn.CrossEntropyLoss()
-        
-        criterion = MultiTaskChessLoss(
-            CONFIG,
-            device=device
-        )
-        criterion = criterion.to(DEVICE)
+    DEVICE = device
+    
+    losses = AverageMeter()  # loss
+    top1_accuracies = AverageMeter()  # top-1 accuracy of first move
+    top3_accuracies = AverageMeter()  # top-3 accuracy of first move
+    top5_accuracies = AverageMeter()  # top-5 accuracy of first move
+    result_losses = AverageMeter()
+    move_time_losses = AverageMeter()
+    move_losses = AverageMeter()
+    moves_until_end_losses = AverageMeter()
+    categorical_game_result_losses = AverageMeter()
+    categorical_game_result_accuracies = AverageMeter()
+    
+    crossentropy_loss = nn.CrossEntropyLoss()
+    
+    criterion = MultiTaskChessLoss(
+        CONFIG,
+        device=device
+    )
+    criterion = criterion.to(DEVICE)
+    
+    iterator = tqdm(enumerate(val_loader), desc="Validating", total=len(val_loader))
 
-        # Prohibit gradient computation explicitly
-        with torch.no_grad():
-            # Batches
-            for i, batch in tqdm(
-                enumerate(val_loader), desc="Validating", total=len(val_loader)
+    # Prohibit gradient computation explicitly
+    with torch.no_grad():
+        # Batches
+        for i, batch in enumerate(val_loader):
+            # Move to default device
+            for key in batch:
+                batch[key] = batch[key].to(DEVICE)
+
+            with torch.autocast(
+                device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
             ):
-                # Move to default device
-                for key in batch:
-                    batch[key] = batch[key].to(DEVICE)
-
-                with torch.autocast(
-                    device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
-                ):
-                    
-                    predictions = model(
-                        batch
-                    )  # (N, 1, 64), (N, 1, 64)
-                    
-                    loss, loss_details = criterion(predictions, batch)
-                    result_loss = loss_details['result_loss']
-                    move_time_loss = loss_details['time_loss']
-                    move_loss = loss_details['move_loss']
-                    moves_until_end_loss = loss_details['moves_until_end_loss']
-                    categorical_game_result_loss = loss_details['categorical_game_result_loss']
-
-                losses.update(
-                    loss.item(), batch["lengths"].sum().item()
-                )
-                result_losses.update(
-                    result_loss.item(), batch["lengths"].sum().item()
-                )
-                move_time_losses.update(
-                    move_time_loss.item(), batch["lengths"].sum().item()
-                )
-                move_losses.update(
-                    move_loss.item(), batch["lengths"].sum().item()
-                )
-                moves_until_end_losses.update(
-                    moves_until_end_loss.item(), batch["lengths"].sum().item()
-                )
-                categorical_game_result_losses.update(
-                    categorical_game_result_loss.item(), batch["lengths"].sum().item()
-                )
-
-                if predictions['from_squares'] is None:
-                    top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
-                else:
-                    top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                            targets=batch["from_squares"].squeeze(1),  # (N)
-                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                            other_targets=batch["to_squares"].squeeze(1),  # (N)
-                            k=[1, 3, 5],
-                        )
                 
-                top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
-                top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
-                top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+                predictions = model(
+                    batch
+                )  # (N, 1, 64), (N, 1, 64)
                 
-                if predictions['categorical_game_result'] is None:
-                    categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-                else:
-                    categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                                batch['categorical_result']), batch["lengths"].shape[0])
+                loss, loss_details = criterion(predictions, batch)
+                result_loss = loss_details['result_loss']
+                move_time_loss = loss_details['time_loss']
+                move_loss = loss_details['move_loss']
+                moves_until_end_loss = loss_details['moves_until_end_loss']
+                categorical_game_result_loss = loss_details['categorical_game_result_loss']
 
+            losses.update(
+                loss.item(), batch["lengths"].sum().item()
+            )
+            result_losses.update(
+                result_loss.item(), batch["lengths"].sum().item()
+            )
+            move_time_losses.update(
+                move_time_loss.item(), batch["lengths"].sum().item()
+            )
+            move_losses.update(
+                move_loss.item(), batch["lengths"].sum().item()
+            )
+            moves_until_end_losses.update(
+                moves_until_end_loss.item(), batch["lengths"].sum().item()
+            )
+            categorical_game_result_losses.update(
+                categorical_game_result_loss.item(), batch["lengths"].sum().item()
+            )
+
+            if predictions['from_squares'] is None:
+                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+            else:
+                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                        targets=batch["from_squares"].squeeze(1),  # (N)
+                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                        other_targets=batch["to_squares"].squeeze(1),  # (N)
+                        k=[1, 3, 5],
+                    )
+            
+            top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+            top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+            top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+            
+            if predictions['categorical_game_result'] is None:
+                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+            else:
+                categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                            batch['categorical_result']), batch["lengths"].shape[0])
+            
+            if rank==0:
+                iterator.update(1)
+
+        if rank==0:
             # Log to tensorboard
             writer.add_scalar(
                 tag="val/loss", scalar_value=losses.avg, global_step=epoch + 1
