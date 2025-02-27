@@ -188,19 +188,20 @@ def train_model_ddp(rank, world_size, CONFIG):
         device=DEVICE
     )"""
     
-    #validation only
-    validate_epoch(
-        rank=rank,
-        val_loader=val_loader,
-        model=model,
-        criterion=criterion,
-        epoch=0,
-        writer=writer,
-        CONFIG=CONFIG,
-        device=DEVICE
-    )
-    cleanup_ddp()
-    sys.exit()
+    if rank==0:
+        #validation only
+        validate_epoch(
+            rank=rank,
+            val_loader=val_loader,
+            model=model,
+            criterion=criterion,
+            epoch=0,
+            writer=writer,
+            CONFIG=CONFIG,
+            device=DEVICE
+        )
+        cleanup_ddp()
+        sys.exit()
 
     cleanup_ddp()
 
