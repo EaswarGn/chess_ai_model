@@ -127,6 +127,12 @@ def train_model_ddp(rank, world_size, CONFIG):
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(f"Name: {name}, Shape: {param.shape}, Weights: {param.data}")
+            
+    for name, param in model.named_parameters():
+        if 'bias' in name:
+            print(f"{name}: grad={param.grad}")
+
+    
 
     
     # Compile model
