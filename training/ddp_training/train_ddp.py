@@ -264,6 +264,7 @@ def train_epoch(
             print("predictions finished")
             
             loss, loss_details = criterion(predictions, batch)
+            print("loss finished")
             result_loss = loss_details['result_loss']
             move_time_loss = loss_details['time_loss']
             move_loss = loss_details['move_loss']
@@ -281,7 +282,6 @@ def train_epoch(
             sys.exit()
         
         scaler.scale(loss).backward()
-        print("loss finished")
 
         losses.update(loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
         result_losses.update(result_loss.item() * CONFIG.BATCHES_PER_STEP, batch["lengths"].sum().item())
