@@ -252,10 +252,6 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
-        print(f"Rank {rank}: Starting batch {i}")
-        # After key operations
-        print(f"Rank {rank}: Completed forward pass for batch {i}")
-        print(f"Rank {rank}: Completed backward pass for batch {i}")
         for key in batch:
             batch[key] = batch[key].to(device)
 
@@ -300,7 +296,6 @@ def train_epoch(
                     other_targets=batch["to_squares"].squeeze(1),
                     k=[1, 3, 5],
                 )
-            print("top 1 accuracy: ",top1_accuracy)
         
         top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
         top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
