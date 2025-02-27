@@ -117,9 +117,14 @@ def train_model_ddp(rank, world_size, CONFIG):
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         for key in checkpoint["optimizer_state_dict"]:
             print(key)
-        """
-        print(checkpoint["optimizer_state_dict"])"""
-        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        
+        try:
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        except ValueError as e:
+            error_message = str(e)
+            print("optimizer state dict not loaded likely because you are finetuning model with different weights")
+            print(f"Error Message: {error_message}")
+            
 
         print(f"\nLoaded checkpoint from step {step}.\n")
 
