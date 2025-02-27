@@ -152,7 +152,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     train_loader = DataLoader(
         dataset=train_dataset,
-        batch_size=CONFIG.BATCH_SIZE // world_size,
+        batch_size=CONFIG.BATCH_SIZE,
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
@@ -160,7 +160,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     val_loader = DataLoader(
         dataset=val_dataset,
-        batch_size=CONFIG.BATCH_SIZE // world_size,
+        batch_size=CONFIG.BATCH_SIZE,
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
