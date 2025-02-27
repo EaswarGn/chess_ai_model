@@ -252,7 +252,10 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
-        print("yes")
+        print(f"Rank {rank}: Starting batch {i}")
+        # After key operations
+        print(f"Rank {rank}: Completed forward pass for batch {i}")
+        print(f"Rank {rank}: Completed backward pass for batch {i}")
         for key in batch:
             batch[key] = batch[key].to(device)
 
