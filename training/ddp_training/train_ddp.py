@@ -84,18 +84,9 @@ def train_model_ddp(rank, world_size, CONFIG):
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-    
-    for param in model.board_encoder.encoder_layers.parameters():
-        param.requires_grad = False
-    for param in model.from_squares.parameters():
-        param.requires_grad = False  # Freeze from_squares head
-    for param in model.to_squares.parameters():
-        param.requires_grad = False
 
     model = DDP(model, device_ids=[rank], find_unused_parameters=True)
     
-    
-
     # Optimizer
     optimizer = torch.optim.Adam(
         params=[p for p in model.parameters() if p.requires_grad],
@@ -135,7 +126,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
             
         #TODO: remove
-        #step = 1
+        step = 1
 
         print(f"\nLoaded checkpoint from step {step}.\n")
 
