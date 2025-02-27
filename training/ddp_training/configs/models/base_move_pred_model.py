@@ -76,6 +76,7 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
+        self.USE_STRICT = False #use strict loading when loading a checkpoint?
         self.CHECKPOINT_PATH = '../../../1900_step_6000.pt'
 
         ###############################
