@@ -126,16 +126,16 @@ def train_model_ddp(rank, world_size, CONFIG):
     
 
     
-    # Compile model
+    """# Compile model
     compiled_model = torch.compile(
         model,
         mode=CONFIG.COMPILATION_MODE,
         dynamic=CONFIG.DYNAMIC_COMPILATION,
-        disable=True,
-    )
+        disable=CONFIG.DISABLE_COMPILATION,
+    )"""
 
         
-    model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
+    model = DDP(model, device_ids=[rank], find_unused_parameters=True)
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
