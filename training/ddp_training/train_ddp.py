@@ -122,7 +122,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         except ValueError as e:
             error_message = str(e)
-            print("optimizer state dict not loaded likely because you are finetuning model with different weights")
+            print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
             print(f"Error Message: {error_message}")
             
         #TODO: remove
@@ -170,7 +170,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    train_epoch(
+    """train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -186,7 +186,20 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )
+    )"""
+    if rank == 0: 
+        validate_epoch(
+            rank=rank,
+            val_loader=val_loader,
+            model=model,
+            criterion=criterion,
+            epoch=0,
+            writer=writer,
+            CONFIG=CONFIG,
+            device=DEVICE
+        )
+        cleanup_ddp()
+        sys.exit()
 
     cleanup_ddp()
 
