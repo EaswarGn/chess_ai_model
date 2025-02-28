@@ -99,7 +99,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
     epochs = total_steps//steps_per_epoch
 
-    if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
+    if CONFIG.CHECKPOINT_PATH is not None and rank == 0:
         checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
         step = checkpoint['step']
         step = int(step)
