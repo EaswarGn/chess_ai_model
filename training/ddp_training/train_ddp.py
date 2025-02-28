@@ -551,6 +551,17 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                 
                 if i>=total_steps:
                     break
+                
+            print("\nValidation loss: %.3f" % losses.avg)
+            print("\nValidation move loss: %.3f" % move_losses.avg)
+            print("\nValidation result loss: %.3f" % result_losses.avg)
+            print("\nValidation move time loss: %.3f" % move_time_losses.avg)
+            print("\nValidation moves until end loss: %.3f" % moves_until_end_losses.avg)
+            print("\nValidation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
+            print("\nValidation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
+            print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
+            print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
+            print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)
 
             # Log to tensorboard
             writer.add_scalar(
@@ -589,17 +600,6 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
                 scalar_value=top5_accuracies.avg,
                 global_step=epoch + 1,
             )
-
-            print("\nValidation loss: %.3f" % losses.avg)
-            print("\nValidation move loss: %.3f" % move_losses.avg)
-            print("\nValidation result loss: %.3f" % result_losses.avg)
-            print("\nValidation move time loss: %.3f" % move_time_losses.avg)
-            print("\nValidation moves until end loss: %.3f" % moves_until_end_losses.avg)
-            print("\nValidation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
-            print("\nValidation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
-            print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
-            print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
-            print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
