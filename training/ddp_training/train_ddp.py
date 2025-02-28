@@ -123,22 +123,6 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
 
         print(f"\nLoaded checkpoint from step {step}.\n")
-        
-        
-        # After loading checkpoint and initializing DDP
-        """if rank == 0:
-            params = [p.data.clone() for p in model.parameters()]
-        else:
-            params = [torch.zeros_like(p.data) for p in model.parameters()]
-
-        for i, p in enumerate(params):
-            dist.broadcast(p, src=0)
-            
-        # Check if parameters match across GPUs
-        if rank > 0:
-            for i, (p1, p2) in enumerate(zip(params, model.parameters())):
-                if not torch.allclose(p1, p2.data):
-                    print(f"Parameter {i} doesn't match on rank {rank}")"""
 
     
 
@@ -153,6 +137,20 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
+    
+    if rank == 0:
+        params = [p.data.clone() for p in model.parameters()]
+    else:
+        params = [torch.zeros_like(p.data) for p in model.parameters()]
+
+    for i, p in enumerate(params):
+        dist.broadcast(p, src=0)
+        
+    # Check if parameters match across GPUs
+    if rank > 0:
+        for i, (p1, p2) in enumerate(zip(params, model.parameters())):
+            if not torch.allclose(p1, p2.data):
+                print(f"Parameter {i} doesn't match on rank {rank}")
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
