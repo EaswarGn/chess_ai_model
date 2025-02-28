@@ -184,7 +184,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             for key in fixed_input:
                 fixed_input[key] = fixed_input[key].to(DEVICE)
             fixed_output = model(fixed_input)
-        print(fixed_input)
+        #print(fixed_input)
         print(fixed_output)
         torch.save({'input': fixed_input, 'output': fixed_output}, 'fixed_io.pt')
         model.train()
@@ -194,6 +194,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         model.eval()
         with torch.no_grad():
             new_output = model(loaded_io['input'])
+            new_output = {k: v for k, v in new_output.items() if v is not None}
         for k in new_output:
             if k in loaded_io['output']:
                 if not torch.allclose(new_output[k], loaded_io['output'][k], rtol=1e-3):
