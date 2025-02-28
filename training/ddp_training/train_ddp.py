@@ -98,30 +98,6 @@ def train_model_ddp(rank, world_size, CONFIG):
     total_steps = CONFIG.N_STEPS
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
     epochs = total_steps//steps_per_epoch
-
-    if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
-        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
-        step = checkpoint['step']
-        step = int(step)
-        start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
-        
-        state_dict = checkpoint['model_state_dict']
-        new_state_dict = {}
-        for key, value in state_dict.items():
-            new_key = key.replace('_orig_mod.', '')
-            new_key = new_key.replace('module.', '')
-            #new_key = 'module.'+new_key
-            new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-        
-        try:
-            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        except ValueError as e:
-            error_message = str(e)
-            print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
-            print(f"Error Message: {error_message}")
-
-        print(f"\nLoaded checkpoint from step {step}.\n")
         
     # Compile model
     compiled_model = torch.compile(
@@ -133,6 +109,39 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
+    
+    
+    if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
+        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
+        step = checkpoint['step']
+        step = int(step)
+        start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
+        
+        state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            #new_key = 'module.'+key
+            new_key = key
+            new_state_dict[new_key] = value
+        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        
+        """state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key.replace('_orig_mod.', '')
+            new_key = new_key.replace('module.', '')
+            #new_key = 'module.'+new_key
+            new_state_dict[new_key] = value
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
+        
+        try:
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        except ValueError as e:
+            error_message = str(e)
+            print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
+            print(f"Error Message: {error_message}")
+
+        print(f"\nLoaded checkpoint from step {step}.\n")
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -365,6 +374,7 @@ def train_epoch(
                         top5s=top5_accuracies,
                     )
                 )
+                print()
 
             if rank == 0:
                 writer.add_scalar(tag="train/loss", scalar_value=losses.val, global_step=step)
@@ -399,7 +409,7 @@ def train_epoch(
                         device=device
                     )
                 
-                    print("loading model weights")
+                    """print("loading model weights")
                     checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
 
                     state_dict = checkpoint['model_state_dict']
@@ -421,7 +431,7 @@ def train_epoch(
                             writer=writer,
                             CONFIG=CONFIG,
                             device=device
-                        )
+                        )"""
                     
                     
                 
