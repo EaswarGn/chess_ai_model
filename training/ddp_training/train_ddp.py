@@ -113,6 +113,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        print(model.training)
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
