@@ -458,7 +458,7 @@ def validate_epoch(rank, val_loader, model, criterion, epoch, writer, CONFIG, de
         CONFIG (dict): Configuration.
     """
     
-    if True:
+    if rank==1:
         print("\n")
         model.eval()  # eval mode disables dropout
         
