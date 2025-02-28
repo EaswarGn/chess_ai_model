@@ -112,7 +112,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -420,7 +420,7 @@ def train_epoch(
                     new_key = new_key.replace('module.', '')
                     #new_key = 'module.'+new_key
                     new_state_dict[new_key] = value
-                model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+                model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
                 print("model state dict loaded")
                 print("validating epoch after loading model state dict")
                 
