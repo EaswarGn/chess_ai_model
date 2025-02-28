@@ -322,7 +322,14 @@ def train_epoch(
             optimizer.zero_grad()
 
             step += 1
-
+            print(get_lr(
+                    step=step,
+                    d_model=CONFIG.D_MODEL,
+                    warmup_steps=CONFIG.WARMUP_STEPS,
+                    schedule=CONFIG.LR_SCHEDULE,
+                    decay=CONFIG.LR_DECAY,
+                    batch_size=CONFIG.BATCH_SIZE
+                ))
             change_lr(
                 optimizer,
                 new_lr=get_lr(
