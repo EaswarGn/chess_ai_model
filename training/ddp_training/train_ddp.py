@@ -175,7 +175,10 @@ def train_model_ddp(rank, world_size, CONFIG):
     )
     
     if rank==0:
-        fixed_input = {k: v[:1].clone() for k, v in next(iter(train_loader)).items()}
+        fixed_input = None
+        for i in enumerate(train_loader):
+            fixed_input = i
+            break
         model.eval()
         with torch.no_grad():
             for key in fixed_input:
