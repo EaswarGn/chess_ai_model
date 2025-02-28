@@ -200,6 +200,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 if not torch.allclose(new_output[k], loaded_io['output'][k], rtol=1e-3):
                     print(f"Mismatch in {k}: {torch.max(torch.abs(new_output[k] - loaded_io['output'][k]))}")
         model.train()
+        print(new_output)
         sys.exit()
 
     train_epoch(
