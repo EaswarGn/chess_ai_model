@@ -99,7 +99,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
     epochs = total_steps//steps_per_epoch
 
-    if CONFIG.CHECKPOINT_PATH is not None and rank == 0:
+    if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
         checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
         step = checkpoint['step']
         step = int(step)
@@ -112,8 +112,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-        print(model.training)
+        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -124,12 +123,6 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         print(f"\nLoaded checkpoint from step {step}.\n")
         
-        
-        # Before saving
-
-    
-
-    
     # Compile model
     compiled_model = torch.compile(
         model,
@@ -174,7 +167,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    """train_epoch(
+    train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -190,21 +183,22 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )"""
-    
-    #validation only
-    validate_epoch(
-        rank=rank,
-        val_loader=val_loader,
-        model=model,
-        criterion=criterion,
-        epoch=0,
-        writer=writer,
-        CONFIG=CONFIG,
-        device=DEVICE
     )
-    cleanup_ddp()
-    sys.exit()
+    
+    """#validation only
+    if rank==0:
+        validate_epoch(
+            rank=rank,
+            val_loader=val_loader,
+            model=model,
+            criterion=criterion,
+            epoch=0,
+            writer=writer,
+            CONFIG=CONFIG,
+            device=DEVICE
+        )
+        cleanup_ddp()
+        sys.exit()"""
 
     cleanup_ddp()
 
@@ -249,8 +243,6 @@ def train_epoch(
     start_data_time = time.time()
     start_step_time = time.time()
     
-    crossentropy_loss = nn.CrossEntropyLoss()
-    
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
@@ -260,7 +252,7 @@ def train_epoch(
 
         data_time.update(time.time() - start_data_time)
 
-        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
+        with torch.autocast(device_type=device.type, dtype=torch.float32, enabled=CONFIG.USE_AMP):
             predictions = model(batch)
             
             loss, loss_details = criterion(predictions, batch)
@@ -398,15 +390,41 @@ def train_epoch(
                 writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
             
             if step==10100:
-                save_checkpoint(rating, step, model, optimizer, CONFIG.NAME, "checkpoints/models")
+                save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
             
             if step % steps_per_epoch == 0:
                 
                 if rank == 0: 
                     time.sleep(5)
-                    save_checkpoint(rating, step, model, optimizer, CONFIG.NAME, "checkpoints/models")
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
+                    dist.barrier()
                     
                     validate_epoch(
+                        rank=rank,
+                        val_loader=val_loader,
+                        model=model,
+                        criterion=move_loss_criterion,
+                        epoch=epoch,
+                        writer=writer,
+                        CONFIG=CONFIG,
+                        device=device
+                    )
+                
+                print("loading model weights")
+                checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
+
+                state_dict = checkpoint['model_state_dict']
+                new_state_dict = {}
+                for key, value in state_dict.items():
+                    new_key = key.replace('_orig_mod.', '')
+                    new_key = new_key.replace('module.', '')
+                    #new_key = 'module.'+new_key
+                    new_state_dict[new_key] = value
+                model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+                print("model state dict loaded")
+                print("validating epoch after loading model state dict")
+                
+                validate_epoch(
                         rank=rank,
                         val_loader=val_loader,
                         model=model,

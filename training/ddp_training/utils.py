@@ -104,12 +104,22 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         prefix (str, optional): The checkpoint filename prefix. Defaults
         to "".
     """
+    model_state_dict = {k: v.cpu() for k, v in model.state_dict().items()}
+    optimizer_state_dict = {}
+    for key, value in optimizer.state_dict().items():
+        if isinstance(value, torch.Tensor):
+            optimizer_state_dict[key] = value.cpu()
+        elif isinstance(value, dict):
+            optimizer_state_dict[key] = {k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in value.items()}
+        else:
+            optimizer_state_dict[key] = value
+    
     rating = str(rating)
     step = str(step)
     state = {
         "step": step,
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
+        "model_state_dict": model_state_dict,
+        "optimizer_state_dict": optimizer_state_dict,
     }
     checkpoint_folder = f'{config_name}/{checkpoint_folder}'
     pathlib.Path(checkpoint_folder).mkdir(parents=True, exist_ok=True)
