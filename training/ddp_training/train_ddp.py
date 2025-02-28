@@ -321,7 +321,6 @@ def train_epoch(
                     decay=CONFIG.LR_DECAY,
                     batch_size=CONFIG.BATCH_SIZE
                 )
-            print(f" rank {rank}: {lr} ,step:{step}")
             change_lr(
                 optimizer,
                 new_lr=get_lr(
