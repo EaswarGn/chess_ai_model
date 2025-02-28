@@ -174,25 +174,27 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
     
-    
-    fixed_input = {k: v[:1].clone().cpu() for k, v in next(iter(train_loader)).items()}
-    model.eval()
-    with torch.no_grad():
-        fixed_output = model(fixed_input)
-    torch.save({'input': fixed_input, 'output': fixed_output}, 'fixed_io.pt')
-    model.train()
+    if rank==0:
+        fixed_input = {k: v[:1].clone() for k, v in next(iter(train_loader)).items()}
+        model.eval()
+        with torch.no_grad():
+            for key in fixed_input:
+                fixed_input[key] = fixed_input[key].to(DEVICE)
+            fixed_output = model(fixed_input)
+        torch.save({'input': fixed_input, 'output': fixed_output}, 'fixed_io.pt')
+        model.train()
 
-    # After loading
-    loaded_io = torch.load('fixed_io.pt')
-    model.eval()
-    with torch.no_grad():
-        new_output = model(loaded_io['input'])
-    for k in new_output:
-        if k in loaded_io['output']:
-            if not torch.allclose(new_output[k], loaded_io['output'][k], rtol=1e-3):
-                print(f"Mismatch in {k}: {torch.max(torch.abs(new_output[k] - loaded_io['output'][k]))}")
-    model.train()
-    sys.exit()
+        # After loading
+        loaded_io = torch.load('fixed_io.pt')
+        model.eval()
+        with torch.no_grad():
+            new_output = model(loaded_io['input'])
+        for k in new_output:
+            if k in loaded_io['output']:
+                if not torch.allclose(new_output[k], loaded_io['output'][k], rtol=1e-3):
+                    print(f"Mismatch in {k}: {torch.max(torch.abs(new_output[k] - loaded_io['output'][k]))}")
+        model.train()
+        sys.exit()
 
     train_epoch(
         rank=rank,
