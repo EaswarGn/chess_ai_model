@@ -126,7 +126,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         
         # After loading checkpoint and initializing DDP
-        if rank == 0:
+        """if rank == 0:
             params = [p.data.clone() for p in model.parameters()]
         else:
             params = [torch.zeros_like(p.data) for p in model.parameters()]
@@ -138,7 +138,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         if rank > 0:
             for i, (p1, p2) in enumerate(zip(params, model.parameters())):
                 if not torch.allclose(p1, p2.data):
-                    print(f"Parameter {i} doesn't match on rank {rank}")
+                    print(f"Parameter {i} doesn't match on rank {rank}")"""
 
     
 
