@@ -252,7 +252,7 @@ def train_epoch(
 
         data_time.update(time.time() - start_data_time)
 
-        with torch.autocast(device_type=device.type, dtype=torch.float32, enabled=CONFIG.USE_AMP):
+        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
             predictions = model(batch)
             
             loss, loss_details = criterion(predictions, batch)
@@ -313,14 +313,7 @@ def train_epoch(
             optimizer.zero_grad()
 
             step += 1
-            lr = get_lr(
-                    step=step,
-                    d_model=CONFIG.D_MODEL,
-                    warmup_steps=CONFIG.WARMUP_STEPS,
-                    schedule=CONFIG.LR_SCHEDULE,
-                    decay=CONFIG.LR_DECAY,
-                    batch_size=CONFIG.BATCH_SIZE
-                )
+            
             change_lr(
                 optimizer,
                 new_lr=get_lr(
