@@ -176,12 +176,11 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     if rank==0:
         fixed_input = None
-        for i in enumerate(train_loader):
-            fixed_input = i
+        for i, batch in enumerate(train_loader):
+            fixed_input = batch
             break
         model.eval()
         with torch.no_grad():
-            print(fixed_input)
             for key in fixed_input:
                 fixed_input[key] = fixed_input[key].to(DEVICE)
             fixed_output = model(fixed_input)
