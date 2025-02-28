@@ -403,13 +403,7 @@ def train_epoch(
                     checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
 
                     state_dict = checkpoint['model_state_dict']
-                    new_state_dict = {}
-                    for key, value in state_dict.items():
-                        new_key = key.replace('_orig_mod.', '')
-                        new_key = new_key.replace('module.', '')
-                        #new_key = 'module.'+new_key
-                        new_state_dict[new_key] = value
-                    model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+                    model.load_state_dict(state_dict, strict=CONFIG.USE_STRICT)
                     print("model state dict loaded")
                     print("validating epoch after loading model state dict")
                     
