@@ -57,7 +57,7 @@ class CONFIG:
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = 10000
-        self.STEPS_PER_EPOCH = 500
+        self.STEPS_PER_EPOCH = 2000
         self.WARMUP_STEPS = 3000
         self.STEP = 1
         self.LR_SCHEDULE = "exp_decay"
