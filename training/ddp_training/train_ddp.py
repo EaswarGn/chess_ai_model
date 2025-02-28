@@ -181,6 +181,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             break
         model.eval()
         with torch.no_grad():
+            print(fixed_input)
             for key in fixed_input:
                 fixed_input[key] = fixed_input[key].to(DEVICE)
             fixed_output = model(fixed_input)
