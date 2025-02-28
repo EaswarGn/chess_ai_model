@@ -184,6 +184,8 @@ def train_model_ddp(rank, world_size, CONFIG):
             for key in fixed_input:
                 fixed_input[key] = fixed_input[key].to(DEVICE)
             fixed_output = model(fixed_input)
+        print(fixed_input)
+        print(fixed_output)
         torch.save({'input': fixed_input, 'output': fixed_output}, 'fixed_io.pt')
         model.train()
 
