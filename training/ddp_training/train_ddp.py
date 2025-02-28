@@ -121,7 +121,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         new_state_dict = {}
         for key, value in state_dict.items():
             #new_key = 'module.'+key
-            new_key = key
+            new_key = key.replace('module.','')
             new_state_dict[new_key] = value
         model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
