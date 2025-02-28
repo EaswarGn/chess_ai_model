@@ -409,7 +409,7 @@ def train_epoch(
                         device=device
                     )
                 
-                    """print("loading model weights")
+                    print("loading model weights")
                     checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
 
                     state_dict = checkpoint['model_state_dict']
@@ -431,7 +431,7 @@ def train_epoch(
                             writer=writer,
                             CONFIG=CONFIG,
                             device=device
-                        )"""
+                        )
                     
                     
                 
