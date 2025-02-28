@@ -389,9 +389,6 @@ def train_epoch(
                 writer.add_scalar(tag="train/top3_accuracy", scalar_value=top3_accuracies.val, global_step=step)
                 writer.add_scalar(tag="train/top5_accuracy", scalar_value=top5_accuracies.val, global_step=step)
             
-            if step==10100:
-                save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
-            
             if step % steps_per_epoch == 0:
                 
                 if rank == 0: 
@@ -410,30 +407,30 @@ def train_epoch(
                         device=device
                     )
                 
-                print("loading model weights")
-                checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
+                    print("loading model weights")
+                    checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
 
-                state_dict = checkpoint['model_state_dict']
-                new_state_dict = {}
-                for key, value in state_dict.items():
-                    new_key = key.replace('_orig_mod.', '')
-                    new_key = new_key.replace('module.', '')
-                    #new_key = 'module.'+new_key
-                    new_state_dict[new_key] = value
-                model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-                print("model state dict loaded")
-                print("validating epoch after loading model state dict")
-                
-                validate_epoch(
-                        rank=rank,
-                        val_loader=val_loader,
-                        model=model,
-                        criterion=move_loss_criterion,
-                        epoch=epoch,
-                        writer=writer,
-                        CONFIG=CONFIG,
-                        device=device
-                    )
+                    state_dict = checkpoint['model_state_dict']
+                    new_state_dict = {}
+                    for key, value in state_dict.items():
+                        new_key = key.replace('_orig_mod.', '')
+                        new_key = new_key.replace('module.', '')
+                        #new_key = 'module.'+new_key
+                        new_state_dict[new_key] = value
+                    model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+                    print("model state dict loaded")
+                    print("validating epoch after loading model state dict")
+                    
+                    validate_epoch(
+                            rank=rank,
+                            val_loader=val_loader,
+                            model=model,
+                            criterion=move_loss_criterion,
+                            epoch=epoch,
+                            writer=writer,
+                            CONFIG=CONFIG,
+                            device=device
+                        )
                     
                     
                 
