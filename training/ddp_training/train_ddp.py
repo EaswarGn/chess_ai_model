@@ -120,10 +120,18 @@ def train_model_ddp(rank, world_size, CONFIG):
         state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
+            new_key = 'module.'+key
+            #new_key = key
+            new_state_dict[new_key] = value
+        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        
+        """state_dict = checkpoint['model_state_dict']
+        new_state_dict = {}
+        for key, value in state_dict.items():
             #new_key = 'module.'+key
             new_key = key.replace('module.','')
             new_state_dict[new_key] = value
-        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.module.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
         
         """state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
@@ -142,6 +150,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
 
         print(f"\nLoaded checkpoint from step {step}.\n")
+    dist.barrier()
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
@@ -410,7 +419,7 @@ def train_epoch(
                     )
                 
                 dist.barrier()
-                print("loading model weights")
+                """print("loading model weights")
                 checkpoint = torch.load(f'{CONFIG.NAME}/checkpoints/models/1900_step_{step}.pt', map_location=device)
 
                 state_dict = checkpoint['model_state_dict']
@@ -434,7 +443,7 @@ def train_epoch(
                             CONFIG=CONFIG,
                             device=device
                         )
-                dist.barrier()
+                dist.barrier()"""
                         
                     
                 
