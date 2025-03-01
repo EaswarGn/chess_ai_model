@@ -70,7 +70,7 @@ BATCHES_PER_STEP = (
     4  # perform a training step, i.e. update parameters, once every so many batches
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
-N_STEPS = 10000  # number of training steps
+N_STEPS = 20000  # number of training steps
 STEPS_PER_EPOCH = 2000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
