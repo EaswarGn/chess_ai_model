@@ -70,6 +70,7 @@ OUTPUTS = {
 ########### Training ##########
 ###############################
 
+USE_STRICT = False #use strict loading when loading weights into model?
 BATCHES_PER_STEP = (
     4  # perform a training step, i.e. update parameters, once every so many batches
 )

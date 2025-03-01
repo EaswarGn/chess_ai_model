@@ -112,7 +112,7 @@ def train_model(CONFIG):
             new_key = key.replace('_orig_mod.', '')  # remove the '_orig_mod' prefix
             new_key = new_key.replace('module.', '')
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=True)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
         print("\nLoaded checkpoint from step %d.\n" % step)
