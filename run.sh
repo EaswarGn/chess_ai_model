@@ -10,7 +10,7 @@ ls
 pip install -r requirements.txt
 pip install -U "huggingface_hub[cli]"
 cd ~
-huggingface-cli login
+huggingface-cli login --token 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
 huggingface-cli download codingmonster1234/test-repo --repo-type dataset --local-dir .
 chmod +x ~/chess_ai_model/data_saving/c++/unzip_files.sh
 cd ~/1900_zipped_training_chunks

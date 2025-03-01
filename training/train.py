@@ -68,7 +68,7 @@ def train_model(CONFIG):
     DEVICE = torch.device(
         f"cuda:{CONFIG.GPU_ID}" if torch.cuda.is_available() else "cpu"
     )  # CPU isn't really practical here
-    print(f"training on {DEVICE}")
+    print(f"training on {DEVICE} with {CONFIG.NUM_WORKERS} workers for dataloading.")
     
     
     os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
