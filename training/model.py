@@ -5,7 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules import BoardEncoder, MoveDecoder, OGBoardEncoder
+from modules import BoardEncoder
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
