@@ -1,7 +1,7 @@
 import torch
 import pathlib
-import multiprocessing as mp
 from torch import nn
+import multiprocessing as mp
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
 from .utils.criteria import LabelSmoothedCE
@@ -12,7 +12,7 @@ from .utils.time_controls import time_controls_encoded
 ############ Name #############
 ###############################
 
-NAME = "ablation_1"  # name and identifier for this configuration
+NAME = "base_move_pred_model"  # name and identifier for this configuration
 GPU_ID = 0
 
 ###############################
@@ -21,7 +21,7 @@ GPU_ID = 0
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 512  # batch size
-NUM_WORKERS = mp.cpu_count() # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -57,10 +57,7 @@ OUTPUTS = {
     'game_result': None,
     'move_time': None, 
     'moves_until_end': None,
-    'categorical_game_result': nn.Sequential(
-        nn.Linear(D_MODEL, 3),
-        nn.Softmax(dim=-1)  # Changed to Softmax to output probabilities
-    )
+    'categorical_game_result': None
 }
 #MODEL = ChessTransformerEncoderFT  # custom PyTorch model to train
 
@@ -72,7 +69,7 @@ BATCHES_PER_STEP = (
     4  # perform a training step, i.e. update parameters, once every so many batches
 )
 PRINT_FREQUENCY = 1  # print status once every so many steps
-N_STEPS = 1000  # number of training steps
+N_STEPS = 10000  # number of training steps
 STEPS_PER_EPOCH = 2000
 WARMUP_STEPS = 3000  # number of warmup steps where learning rate is increased linearly; twice the value in the paper, as in the official transformer repo.
 STEP = 1  # the step number, start from 1 to prevent math error in the 'LR' line
@@ -103,10 +100,10 @@ LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
-    #'move_time_loss': nn.L1Loss(),
+    #'move_time_loss': nn.HuberLoss(),
     #'game_result_loss': nn.L1Loss(),
-    #'moves_until_end_loss': nn.L1Loss()
-    'categorical_game_result_loss': nn.CrossEntropyLoss()
+    #'moves_until_end_loss': nn.HuberLoss(),
+    #'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
 CHECKPOINT_PATH = '../../1900_step_7500.pt'
