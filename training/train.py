@@ -114,6 +114,7 @@ def train_model(CONFIG):
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        print(new_state_dict)
         
         print("\nLoaded checkpoint from step %d.\n" % step)
 
