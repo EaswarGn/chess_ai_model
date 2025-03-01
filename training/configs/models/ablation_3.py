@@ -57,11 +57,9 @@ OUTPUTS = {
     'game_result': None,
     'move_time': nn.Sequential(
         nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()  # Ensures output is between 0 and 1
     ), 
     'moves_until_end': nn.Sequential(
         nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()
     ),
     'categorical_game_result': nn.Sequential(
         nn.Linear(D_MODEL, 3),
@@ -109,10 +107,10 @@ LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
-    'move_time_loss': nn.L1Loss(),
+    'move_time_loss': nn.HuberLoss(),
     #'game_result_loss': nn.L1Loss(),
-    'moves_until_end_loss': nn.L1Loss(),
+    'moves_until_end_loss': nn.HuberLoss(),
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer
-CHECKPOINT_PATH = None
+CHECKPOINT_PATH = '../../1900_step_10000.pt'

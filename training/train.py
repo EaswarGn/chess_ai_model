@@ -25,6 +25,7 @@ import random
 
 DEVICE = None
 cudnn.benchmark = False
+rating = 1900
 
 record_dtype = np.dtype([
     ("turn", np.int8),
@@ -53,8 +54,6 @@ record_dtype = np.dtype([
     ("material_difference", np.int16),
     ("moves_until_end", np.float16)
 ])
-
-rating = 1900
 
 
 def train_model(CONFIG):
@@ -116,7 +115,7 @@ def train_model(CONFIG):
         model.load_state_dict(new_state_dict, strict=True)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         
-        print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
+        print("\nLoaded checkpoint from step %d.\n" % step)
 
     # Compile model
     compiled_model = torch.compile(
@@ -135,12 +134,12 @@ def train_model(CONFIG):
     # AMP scaler
     scaler = GradScaler(device=DEVICE, enabled=CONFIG.USE_AMP)
     
-    training_file_list = get_all_record_files('~/1900_zipped_training_chunks')
+    training_file_list = get_all_record_files('../../1900_zipped_training_chunks')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
     
     rand_folder = random.randint(1, 3)
-    testing_file_list = get_all_record_files(f'~/ranged_chunks_zipped/1900/{rand_folder}_chunks')
+    testing_file_list = get_all_record_files(f'../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
@@ -250,8 +249,6 @@ def train_epoch(
     # Starting time
     start_data_time = time.time()
     start_step_time = time.time()
-    
-    crossentropy_loss = nn.CrossEntropyLoss()
     
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(
