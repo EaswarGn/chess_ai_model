@@ -13,7 +13,7 @@ from .utils.time_controls import time_controls_encoded
 ###############################
 
 NAME = "ablation_3_reduced"  # name and identifier for this configuration
-GPU_ID = [0,1]
+GPU_ID = 0
 
 ###############################
 ######### Dataloading #########
@@ -21,7 +21,7 @@ GPU_ID = [0,1]
 
 #DATASET = ChessDatasetFT  # custom PyTorch dataset
 BATCH_SIZE = 512  # batch size
-NUM_WORKERS = mp.cpu_count()//len(GPU_ID)  # number of workers to use for dataloading
+NUM_WORKERS = mp.cpu_count()  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
@@ -57,11 +57,9 @@ OUTPUTS = {
     'game_result': None,
     'move_time': nn.Sequential(
         nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()  # Ensures output is between 0 and 1
     ), 
     'moves_until_end': nn.Sequential(
         nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()
     ),
     'categorical_game_result': nn.Sequential(
         nn.Linear(D_MODEL, 3),
@@ -109,9 +107,9 @@ LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
-    'move_time_loss': nn.L1Loss(),
-    #'game_result_loss': nn.L1Loss(),
-    'moves_until_end_loss': nn.L1Loss(),
+    'move_time_loss': nn.HuberLoss(),
+    #'game_result_loss': nn.HuberLoss(),
+    'moves_until_end_loss': nn.HuberLoss(),
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer

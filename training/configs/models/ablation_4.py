@@ -12,7 +12,7 @@ from .utils.time_controls import time_controls_encoded
 ############ Name #############
 ###############################
 
-NAME = "ablation_1"  # name and identifier for this configuration
+NAME = "ablation_4"  # name and identifier for this configuration
 GPU_ID = 0
 
 ###############################
@@ -57,7 +57,6 @@ OUTPUTS = {
     'game_result': None,
     'move_time': nn.Sequential(
         nn.Linear(D_MODEL, 1),
-        nn.Sigmoid()  # Ensures output is between 0 and 1
     ), 
     'moves_until_end': None,
     'categorical_game_result': nn.Sequential(
@@ -106,9 +105,9 @@ LOSSES = {
     'move_loss': CRITERION(
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
-    'move_time_loss': nn.L1Loss(),
-    #'game_result_loss': nn.L1Loss(),
-    #'moves_until_end_loss': nn.L1Loss()
+    'move_time_loss': nn.HuberLoss(),
+    #'game_result_loss': nn.HuberLoss(),
+    #'moves_until_end_loss': nn.HuberLoss(),
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
 OPTIMIZER = torch.optim.Adam  # optimizer

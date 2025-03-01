@@ -108,7 +108,7 @@ LOSSES = {
         eps=LABEL_SMOOTHING, n_predictions=N_MOVES
     ),
     'move_time_loss': nn.HuberLoss(),
-    #'game_result_loss': nn.L1Loss(),
+    #'game_result_loss': nn.HuberLoss(),
     'moves_until_end_loss': nn.HuberLoss(),
     'categorical_game_result_loss': nn.CrossEntropyLoss()
 }
