@@ -145,7 +145,7 @@ def train_model(CONFIG):
             val_loader=val_loader,
             model=compiled_model,
             criterion=criterion,
-            epoch=epoch,
+            epoch=0,
             writer=writer,
             CONFIG=CONFIG,
         )
