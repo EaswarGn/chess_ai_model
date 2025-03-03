@@ -394,17 +394,6 @@ def train_epoch(
             # Reset step time
             start_step_time = time.time()
 
-            # If this step is marked for saving a checkpoint for averaging, save checkpoint
-            if step in CONFIG.AVERAGE_STEPS:
-                save_checkpoint(
-                    epoch,
-                    model,
-                    optimizer,
-                    CONFIG.NAME,
-                    CONFIG.CHECKPOINT_FOLDER,
-                    prefix="step" + str(step) + "_",
-                )
-
         # Reset data time
         start_data_time = time.time()
 
