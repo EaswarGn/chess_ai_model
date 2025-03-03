@@ -5,7 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules import BoardEncoder
+from modules import BoardEncoder, OGBoardEncoder
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -233,7 +233,7 @@ class ChessTransformerEncoderFT(nn.Module):
         self.dropout = CONFIG.DROPOUT
 
         # Encoder
-        self.board_encoder = BoardEncoder(
+        self.board_encoder = OGBoardEncoder(
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
             n_heads=self.n_heads,
