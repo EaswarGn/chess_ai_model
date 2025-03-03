@@ -474,9 +474,8 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     )  # (N, 1, 64), (N, 1, 64)
                     print(predicted_from_squares[0])
                     print(predicted_to_squares[0])
-                    print(batch)
-                    print(batch[0]['from_squares'])
-                    print(batch[0]['to_squares'])
+                    print(batch['from_squares'][0])
+                    print(batch['to_squares'][0])
                     import sys
                     sys.exit()
                     
