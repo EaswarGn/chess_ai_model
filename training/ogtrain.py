@@ -478,8 +478,8 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     prob2 = torch.nn.functional.softmax(predicted_to_squares[0], dim=1)
 
                     # Print probabilities
-                    print(prob1)
-                    print(prob2)
+                    print(torch.argmax(prob1))
+                    print(torch.argmax(prob2))
                     print(batch['from_squares'][0])
                     print(batch['to_squares'][0])
                     import sys
