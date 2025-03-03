@@ -18,7 +18,7 @@ NAME = "CT-EFT-20"  # name and identifier for this configuration
 ###############################
 
 BATCH_SIZE = 512  # batch size
-NUM_WORKERS = 8  # number of workers to use for dataloading
+NUM_WORKERS = 4  # number of workers to use for dataloading
 PREFETCH_FACTOR = 2  # number of batches to prefetch per worker
 PIN_MEMORY = False  # pin to GPU memory when dataloading?
 
