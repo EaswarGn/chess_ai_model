@@ -647,7 +647,7 @@ class OGBoardEncoder(nn.Module):
 
             dropout (float): The dropout probability.
         """
-        super(BoardEncoder, self).__init__()
+        super(OGBoardEncoder, self).__init__()
 
         self.vocab_sizes = vocab_sizes
         self.d_model = d_model
