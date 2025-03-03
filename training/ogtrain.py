@@ -73,7 +73,7 @@ def train_model(CONFIG):
     testing_file_list = get_all_record_files(f'../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
-    testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
+    testing_file_list = random.sample(testing_file_list, min(3, len(testing_file_list)))
     
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
