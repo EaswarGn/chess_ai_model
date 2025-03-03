@@ -141,6 +141,15 @@ def train_model(CONFIG):
     # Find total epochs to train
     epochs = (CONFIG.N_STEPS // (len(train_loader) // CONFIG.BATCHES_PER_STEP)) + 1
 
+    validate_epoch(
+            val_loader=val_loader,
+            model=compiled_model,
+            criterion=criterion,
+            epoch=epoch,
+            writer=writer,
+            CONFIG=CONFIG,
+        )
+
     # Epochs
     for epoch in range(start_epoch, epochs):
         # Step
