@@ -10,6 +10,7 @@ from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 ############ Name #############
 ###############################
 
+GPU_ID = 0
 NAME = "CT-EFT-20"  # name and identifier for this configuration
 
 ###############################
