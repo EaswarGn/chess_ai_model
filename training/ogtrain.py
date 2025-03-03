@@ -472,8 +472,14 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     predicted_from_squares, predicted_to_squares = model(
                         batch
                     )  # (N, 1, 64), (N, 1, 64)
-                    print(predicted_from_squares[0])
-                    print(predicted_to_squares[0])
+                    #print(predicted_from_squares[0])
+                    #print(predicted_to_squares[0])
+                    prob1 = torch.nn.functional.softmax(predicted_from_squares[0], dim=1)
+                    prob2 = torch.nn.functional.softmax(predicted_to_squares[0], dim=1)
+
+                    # Print probabilities
+                    print(prob1)
+                    print(prob2)
                     print(batch['from_squares'][0])
                     print(batch['to_squares'][0])
                     import sys
