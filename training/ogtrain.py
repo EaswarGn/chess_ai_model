@@ -116,6 +116,8 @@ def train_model(CONFIG):
         )
         #start_epoch = checkpoint["epoch"] + 1
         print(checkpoint["model_state_dict"])
+        import sys
+        sys.exit()
         model.load_state_dict(checkpoint["model_state_dict"])
         #optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
