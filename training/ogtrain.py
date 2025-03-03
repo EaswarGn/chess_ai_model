@@ -107,13 +107,14 @@ def train_model(CONFIG):
         eps=CONFIG.EPSILON,
     )
 
+    start_epoch = 0
     # Load checkpoint if available
     if CONFIG.TRAINING_CHECKPOINT is not None:
         checkpoint = torch.load(
             CONFIG.TRAINING_CHECKPOINT,
             weights_only=True,
         )
-        start_epoch = checkpoint["epoch"] + 1
+        #start_epoch = checkpoint["epoch"] + 1
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         print("\nLoaded checkpoint from epoch %d.\n" % start_epoch)
