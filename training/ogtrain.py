@@ -346,6 +346,8 @@ def train_epoch(
                     "Data Time {data_time.val:.3f} ({data_time.avg:.3f})---"
                     "Step Time {step_time.val:.3f} ({step_time.avg:.3f})---"
                     "Loss {losses.val:.4f} ({losses.avg:.4f})---"
+                    "Top-1 {top1s.val:.4f} ({top1s.avg:.4f})"
+                    "Top-3 {top3s.val:.4f} ({top3s.avg:.4f})"
                     "Top-5 {top5s.val:.4f} ({top5s.avg:.4f})".format(
                         epoch + 1,
                         epochs,
@@ -356,6 +358,8 @@ def train_epoch(
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
+                        top1s=top1_accuracies,
+                        top3s=top3_accuracies,
                         top5s=top5_accuracies,
                     )
                 )
