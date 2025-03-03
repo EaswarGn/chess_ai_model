@@ -472,8 +472,12 @@ def validate_epoch(val_loader, model, criterion, epoch, writer, CONFIG):
                     predicted_from_squares, predicted_to_squares = model(
                         batch
                     )  # (N, 1, 64), (N, 1, 64)
-                    print(predicted_from_squares)
-                    print(predicted_to_squares)
+                    print(predicted_from_squares[0])
+                    print(predicted_to_squares[0])
+                    print(batch[0]['from_squares'])
+                    print(batch[0]['to_squares'])
+                    import sys
+                    sys.exit()
                     
 
                     # Loss
