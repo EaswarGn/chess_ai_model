@@ -335,12 +335,12 @@ class ChessTransformerEncoderFT(nn.Module):
         """
         # Encoder
         boards = self.board_encoder(
-            batch["turns"],
+            batch["turn"],
             batch["white_kingside_castling_rights"],
             batch["white_queenside_castling_rights"],
             batch["black_kingside_castling_rights"],
             batch["black_queenside_castling_rights"],
-            batch["board_positions"],
+            batch["board_position"],
         )  # (N, BOARD_STATUS_LENGTH, d_model)
 
         # Find logits over vocabulary at the "turn" token
