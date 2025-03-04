@@ -110,14 +110,45 @@ def train_model_ddp(rank, world_size, CONFIG):
             print("step is not specified state dict")
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        state_dict = checkpoint['model_state_dict']
+        """state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
+        
+        
+        
+        model_state_dict = model.state_dict()
+        # Iterate through checkpoint params
+        for name, param in checkpoint['model_stat_dict'].items():
+            if name in model_state_dict:
+                if model_state_dict[name].shape == param.shape:
+                    # Shapes match, directly load
+                    model_state_dict[name] = param
+                else:
+                    # Shapes mismatch, manually adjust
+                    print(f"Resizing parameter: {name}")
+                    new_param = model_state_dict[name]  # Get the current param shape
+                    min_shape = min(new_param.shape[0], param.shape[0])  # Find the common dimension
+
+                    # Copy existing values
+                    new_param[:min_shape] = param[:min_shape]
+                    
+                    # Fill remaining values with zeros
+                    if new_param.shape[0] > min_shape:
+                        new_param[min_shape:] = torch.zeros_like(new_param[min_shape:])
+                    
+                    # Assign the updated param
+                    model_state_dict[name] = new_param
+            else:
+                print(f"Skipping unknown parameter: {name}")
+
+        # Load the modified state_dict into the model
+        model.load_state_dict(model_state_dict)
+        
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -127,6 +158,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
 
         print(f"\nLoaded checkpoint from step {step}.\n")
+        sys.exit()
     
     
     # Compile model
