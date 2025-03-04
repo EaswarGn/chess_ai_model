@@ -14,8 +14,8 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "ddp_config"
-        self.NUM_GPUS = 2
+        self.NAME = "ablation_1"
+        self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
         ######### Dataloading #########
@@ -76,7 +76,9 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.CHECKPOINT_PATH = None
+        self.USE_STRICT = False #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../../1900_step_10000.pt'
+        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
