@@ -63,7 +63,7 @@ class CONFIG:
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
-            step=self.STEP,
+            step=1,
             d_model=self.D_MODEL,
             warmup_steps=self.WARMUP_STEPS,
             schedule=self.LR_SCHEDULE,
