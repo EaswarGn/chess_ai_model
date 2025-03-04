@@ -107,7 +107,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             step = checkpoint['step']
             step = int(step)
         except KeyError:
-            print("step is not specified state dict")
+            print("step is not specified in state dict")
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
         """state_dict = checkpoint['model_state_dict']
@@ -123,7 +123,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         model_state_dict = model.state_dict()
         # Iterate through checkpoint params
-        for name, param in checkpoint['model_stat_dict'].items():
+        for name, param in checkpoint['model_state_dict'].items():
             if name in model_state_dict:
                 if model_state_dict[name].shape == param.shape:
                     # Shapes match, directly load
