@@ -556,13 +556,7 @@ class BoardEncoder(nn.Module):
             torch.FloatTensor: Encoded board representation
         """
         batch_size = turns.size(0)
-        print("1:",time_control.unsqueeze(-1).to(torch.float32).shape)
-        print("2:",self.time_control_projection(time_control).shape)
-        print("3:",self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)).shape)
-        print("4:", move_number.unsqueeze(-1).to(torch.float32).shape)
         
-        sys.exit()
-
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
@@ -572,7 +566,7 @@ class BoardEncoder(nn.Module):
                 self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
-                self.time_control_projection(time_control.unsqueeze(-1).to(torch.float32)),
+                self.time_control_projection(time_control).unsqueeze(1) ,
                 self.phase_embeddings(phase),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
