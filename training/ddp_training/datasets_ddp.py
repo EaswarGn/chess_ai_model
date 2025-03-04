@@ -138,6 +138,11 @@ class ChunkLoader(IterableDataset):
                     except KeyError:
                         continue
 
+                    if int(record["turn"]) == 0:
+                        record["turn"] = 1
+                    else:
+                        record["turn"] = 0
+
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
                         "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).long(),
