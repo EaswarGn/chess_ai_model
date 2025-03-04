@@ -14,8 +14,8 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "ddp_config"
-        self.NUM_GPUS = torch.cuda.device_count()
+        self.NAME = "base_move_pred_model"
+        self.NUM_GPUS = torch.cuda.device_count() #uses all available GPU's on system
 
         ###############################
         ######### Dataloading #########
@@ -36,20 +36,20 @@ class CONFIG:
             "black_kingside_castling_rights": len(BOOL),
             "black_queenside_castling_rights": len(BOOL),
             "board_position": len(PIECES),
-            "time_controls": len(time_controls_encoded),
-        }
-        self.D_MODEL = 384
-        self.N_HEADS = 8
-        self.D_QUERIES = 64
-        self.D_VALUES = 64
-        self.D_INNER = 4 * self.D_MODEL
-        self.N_LAYERS = 12
-        self.DROPOUT = 0.2
-        self.N_MOVES = 1
-        self.DISABLE_COMPILATION = False
-        self.COMPILATION_MODE = "default"
-        self.DYNAMIC_COMPILATION = True
-        self.SAMPLING_K = 1
+            "time_controls": len(time_controls_encoded)
+        }  # vocabulary sizes
+        self.D_MODEL = 512  # size of vectors throughout the transformer model
+        self.N_HEADS = 8  # number of heads in the multi-head attention
+        self.D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
+        self.D_VALUES = 64  # size of value vectors in the multi-head attention
+        self.D_INNER = 2048  # an intermediate size in the position-wise FC
+        self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
+        self.DROPOUT = 0.1  # dropout probability
+        self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
+        self.DISABLE_COMPILATION = False  # disable model compilation?
+        self.COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
+        self.DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
+        self.SAMPLING_K = 1  # k in top-k sampling model predictions during play
 
         ###############################
         ########### Training ##########
@@ -77,7 +77,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = 'ddp_config/checkpoints/models/1900_step_2000.pt'#'../../../1900_step_1500.pt'
+        self.CHECKPOINT_PATH = '../../../averaged_CT-EFT-20.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
