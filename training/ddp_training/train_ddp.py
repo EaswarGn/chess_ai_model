@@ -158,7 +158,6 @@ def train_model_ddp(rank, world_size, CONFIG):
             print(f"Error Message: {error_message}")
 
         print(f"\nLoaded checkpoint from step {step}.\n")
-        sys.exit()
     
     
     # Compile model
