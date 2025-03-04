@@ -1,6 +1,7 @@
 import math
 import torch
 from torch import nn
+import sys
 
 
 class MultiHeadAttention(nn.Module):
@@ -555,10 +556,10 @@ class BoardEncoder(nn.Module):
             torch.FloatTensor: Encoded board representation
         """
         batch_size = turns.size(0)
-        print(time_control.unsqueeze(-1).to(torch.float32))
+        print(time_control.unsqueeze(-1).to(torch.float32).shape)
         print(self.time_control_projection(time_control).shape)
         print(self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)).shape)
-        import sys
+        
         sys.exit()
 
         # Ensure all tensors have the same dtype, e.g., float32
