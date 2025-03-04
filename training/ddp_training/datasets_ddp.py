@@ -168,6 +168,8 @@ class ChunkLoader(IterableDataset):
                         "black_material_value": torch.tensor([record["black_material_value"]]).long(),
                         "material_difference": torch.tensor([record["material_difference"]]).long(),
                         "moves_until_end": torch.tensor([record["moves_until_end"]]).long(),
+                        "base_time": torch.tensor([record["base_time"]]).long(),
+                        "increment_time": torch.tensor([record["increment_time"]]).long(),
                     }
 
 

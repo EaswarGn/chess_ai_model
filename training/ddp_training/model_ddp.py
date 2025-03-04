@@ -114,6 +114,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             self.game_result_cls_token.expand(batch_size, 1, self.d_model),
             self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
         ], dim=1)
+        time_control = torch.cat([batch["base_time"], batch["increment_time"]], dim=-1)
         
         # Encoder
         boards = self.board_encoder(
@@ -134,6 +135,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["white_material_value"],
             batch["black_material_value"],
             batch["material_difference"],
+            time_control,
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         

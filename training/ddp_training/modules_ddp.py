@@ -404,12 +404,20 @@ class BoardEncoder(nn.Module):
         self.seq_length = 78 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
-        # New Temporal and Contextual Embeddings
+        """# New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
             vocab_sizes.get("time_control", 458), d_model, dtype=torch.float
-        )
+        )"""
+        
+        
         
         # Continuous Feature Projections (ensure output remains float)
+        self.time_control_projection = nn.Sequential(
+            nn.Linear(2, d_model),  # Input size is 2 (initial time + increment time)
+            nn.ReLU(),
+            nn.Linear(d_model, d_model),
+        )
+        
         self.move_number_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
             nn.ReLU(),
@@ -515,7 +523,7 @@ class BoardEncoder(nn.Module):
         black_queenside_castling_rights,
         board_positions,
         # New input parameters for temporal features
-        time_control,
+        categorical_time_control,
         move_number,
         num_legal_moves,
         white_remaining_time,
@@ -526,6 +534,7 @@ class BoardEncoder(nn.Module):
         white_material_value,
         black_material_value,
         material_difference,
+        time_control,
         cls_tokens
     ):
         """
@@ -556,7 +565,7 @@ class BoardEncoder(nn.Module):
                 self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
-                self.time_control_embeddings(time_control),
+                self.time_control_projection(time_control),
                 self.phase_embeddings(phase),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),

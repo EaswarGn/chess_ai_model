@@ -110,18 +110,18 @@ def train_model_ddp(rank, world_size, CONFIG):
             print("step is not specified in state dict")
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        """state_dict = checkpoint['model_state_dict']
+        state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
         
         
-        model_state_dict = model.state_dict()
+        """model_state_dict = model.state_dict()
         # Iterate through checkpoint params
         for name, param in checkpoint['model_state_dict'].items():
             if name in model_state_dict:
@@ -147,7 +147,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 print(f"Skipping unknown parameter: {name}")
 
         # Load the modified state_dict into the model
-        model.load_state_dict(model_state_dict)
+        model.load_state_dict(model_state_dict)"""
         
         
         try:
