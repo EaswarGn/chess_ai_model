@@ -152,7 +152,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             error_message = str(e)
             print("WARNING: optimizer state dict not loaded likely because you are finetuning model with different weights, but proceed with caution")
             print(f"Error Message: {error_message}")
