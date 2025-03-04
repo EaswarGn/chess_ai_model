@@ -130,7 +130,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
     os.makedirs(f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}", exist_ok=True)
     shutil.copy(f"{config_name}/logs/main_log/{os.listdir(f'{config_name}/logs/main_log')[0]}", f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}")
     
-    """try:
+    try:
         api.upload_folder(
             folder_path=f"{config_name}",
             repo_id=f"codingmonster1234/{config_name}",
@@ -144,7 +144,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
             repo_id=f"codingmonster1234/{config_name}",
             repo_type="dataset",
             ignore_patterns="**/logs/*.txt", # Ignore all text logs
-        )"""
+        )
     
     print("Checkpoint saved.\n")
 
