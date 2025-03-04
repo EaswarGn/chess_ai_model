@@ -49,7 +49,7 @@ def get_all_record_files(directory: str):
 
 
 class ChunkLoader(IterableDataset):
-    def __init__(self, file_list, record_dtype, rank, world_size):
+    def __init__(self, file_list, record_dtype, rank, world_size, is_val):
         self.file_list = file_list
         self.record_dtype = record_dtype
         self.record_size = record_dtype.itemsize
@@ -60,6 +60,7 @@ class ChunkLoader(IterableDataset):
         # Get rank and world size for distributed training
         self.rank = rank
         self.world_size = world_size
+        self.is_val = is_val
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -142,6 +143,10 @@ class ChunkLoader(IterableDataset):
                         record["turn"] = 1
                     else:
                         record["turn"] = 0
+                        
+                    if self.is_val==True:
+                        if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
+                            continue
 
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
