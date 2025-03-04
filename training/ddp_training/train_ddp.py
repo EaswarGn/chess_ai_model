@@ -93,7 +93,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         eps=CONFIG.EPSILON,
     )
 
-    step = 0
+    step = CONFIG.STEP
     start_epoch = 0
     total_steps = CONFIG.N_STEPS
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
@@ -159,6 +159,8 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         print(f"\nLoaded checkpoint from step {step}.\n")
     
+    if CONFIG.STEP is None:
+        step = 1
     
     # Compile model
     compiled_model = torch.compile(
@@ -204,7 +206,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    """train_epoch(
+    train_epoch(
         rank=rank,
         world_size=world_size,
         train_loader=train_loader,
@@ -220,9 +222,9 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer=writer,
         CONFIG=CONFIG,
         device=DEVICE
-    )"""
+    )
     
-    #validation only
+    """#validation only
     if rank==0:
         validate_epoch(
             rank=rank,
@@ -235,7 +237,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             device=DEVICE
         )
         cleanup_ddp()
-        sys.exit()
+        sys.exit()"""
 
     cleanup_ddp()
 
