@@ -114,7 +114,6 @@ def train_model(CONFIG):
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        print(model.state_dict())
         
         print("\nLoaded checkpoint from step %d.\n" % step)
 
@@ -143,7 +142,7 @@ def train_model(CONFIG):
     testing_file_list = get_all_record_files(f'../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
-    testing_file_list = random.sample(testing_file_list, min(10, len(testing_file_list)))
+    testing_file_list = random.sample(testing_file_list, min(3, len(testing_file_list)))
     
     
     train_dataset = ChunkLoader(training_file_list, record_dtype)
@@ -165,6 +164,16 @@ def train_model(CONFIG):
         shuffle=False,
     )
     
+    validate_epoch(
+        val_loader=val_loader,
+        model=model,
+        criterion=criterion,
+        epoch=0,
+        writer=writer,
+        CONFIG=CONFIG,
+    )
+    
+    
     # One epoch's training
     train_epoch(
         train_loader=train_loader,
@@ -177,6 +186,15 @@ def train_model(CONFIG):
         epochs=epochs,
         steps_per_epoch=steps_per_epoch,
         step=step,
+        writer=writer,
+        CONFIG=CONFIG,
+    )
+    
+    validate_epoch(
+        val_loader=val_loader,
+        model=model,
+        criterion=criterion,
+        epoch=0,
         writer=writer,
         CONFIG=CONFIG,
     )
@@ -345,6 +363,9 @@ def train_epoch(
 
             # This step is now complete
             step += 1
+            
+            if step%500==0:
+                return
 
             # Update learning rate after each step
             change_lr(

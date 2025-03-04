@@ -161,10 +161,10 @@ class ChunkLoader(IterableDataset):
                         #time_control = torch.LongTensor([0])
                         continue
                     
-                    if int(record["turn"]) == 0:
+                    """if int(record["turn"]) == 0:
                         record["turn"] = 1
                     else:
-                        record["turn"] = 0
+                        record["turn"] = 0"""
 
                     yield {
                         "turn": torch.tensor([record["turn"]]),
