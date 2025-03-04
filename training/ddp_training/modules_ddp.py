@@ -558,6 +558,7 @@ class BoardEncoder(nn.Module):
         print(time_control.unsqueeze(-1).to(torch.float32))
         print(self.time_control_projection(time_control).shape)
         print(self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)).shape)
+        import sys
         sys.exit()
 
         # Ensure all tensors have the same dtype, e.g., float32
