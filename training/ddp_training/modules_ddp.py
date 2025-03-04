@@ -559,6 +559,7 @@ class BoardEncoder(nn.Module):
         print("1:",time_control.unsqueeze(-1).to(torch.float32).shape)
         print("2:",self.time_control_projection(time_control).shape)
         print("3:",self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)).shape)
+        print("4:", move_number.unsqueeze(-1).to(torch.float32))
         
         sys.exit()
 
