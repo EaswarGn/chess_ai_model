@@ -139,7 +139,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
-        print(len(boards))
+        print(boards.shape)
         
         
         from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
