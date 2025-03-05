@@ -147,6 +147,8 @@ class ChunkLoader(IterableDataset):
                     if self.is_val==True:
                         if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
                             continue
+                        if int(record["move_number"])<=8:
+                            continue
 
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
