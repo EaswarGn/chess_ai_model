@@ -124,6 +124,8 @@ class ChunkLoader(IterableDataset):
                     
                     if int(record['move_number']) <= 8:
                         record["moves_until_end"] = 35
+                        
+                    record["moves_until_end"] = record["moves_until_end"]//2
 
                     try:
                         base_time = record["base_time"]
