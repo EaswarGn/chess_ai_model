@@ -77,8 +77,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         print(f"Training on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
         writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
-        tensorboard_process = subprocess.Popen(["tensorboard", f"--logdir={CONFIG.NAME}/logs/main_log"])
-        time.sleep(5)
+        print(f"TensorBoard logdir created at: {CONFIG.NAME}/logs/main_log")
     else:
         writer = None
 
