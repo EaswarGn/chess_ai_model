@@ -98,9 +98,9 @@ class CONFIG:
         self.CRITERION = LabelSmoothedCE
         self.LOSS_WEIGHTS = {
             "move_loss_weight": 1.0,
-            "time_loss_weight": 0.5,
+            "time_loss_weight": 1.0,
             "result_loss_weight": 0.0,
-            "moves_until_end_loss_weight": 0.5,
+            "moves_until_end_loss_weight": 1.0,
             "categorical_game_result_loss_weight": 1.0,
         }
 

@@ -59,7 +59,7 @@ class CONFIG:
         self.N_STEPS = 10000
         self.STEPS_PER_EPOCH = 2000
         self.WARMUP_STEPS = 3000
-        self.STEP = None
+        self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
@@ -97,9 +97,9 @@ class CONFIG:
         self.CRITERION = LabelSmoothedCE
         self.LOSS_WEIGHTS = {
             "move_loss_weight": 1.0,
-            "time_loss_weight": 0.5,
+            "time_loss_weight": 1.0,
             "result_loss_weight": 0.0,
-            "moves_until_end_loss_weight": 0.5,
+            "moves_until_end_loss_weight": 1.0,
             "categorical_game_result_loss_weight": 1.0,
         }
 
