@@ -18,5 +18,5 @@ cd ~/1900_zipped_training_chunks
 cd ~/ranged_chunks_zipped
 ~/chess_ai_model/data_saving/c++/unzip_files.sh
 cd ~/chess_ai_model/training/ddp_training
-#wget https://huggingface.co/datasets/codingmonster1234/ddp_config/resolve/main/checkpoints/models/1900_step_6000.pt
+wget https://huggingface.co/datasets/codingmonster1234/base_move_pred_model/resolve/main/checkpoints/models/1900_step_10000.pt
 python train_ddp.py ablation_1
