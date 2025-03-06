@@ -20,7 +20,7 @@ class CONFIG:
         ###############################
         ######### Dataloading #########
         ###############################
-        self.BATCH_SIZE = 512
+        self.BATCH_SIZE = 2048
         self.NUM_WORKERS = mp.cpu_count() // self.NUM_GPUS
         self.PREFETCH_FACTOR = 2
         self.PIN_MEMORY = False
