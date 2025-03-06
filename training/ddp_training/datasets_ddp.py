@@ -124,8 +124,6 @@ class ChunkLoader(IterableDataset):
                     
                     if int(record['move_number']) <= 8:
                         record["moves_until_end"] = 35
-                        
-                    record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
 
     
                     try:
@@ -152,6 +150,8 @@ class ChunkLoader(IterableDataset):
                             continue
                         if int(record["move_number"])<=8:
                             continue
+                        
+                    record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
 
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),

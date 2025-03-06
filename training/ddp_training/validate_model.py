@@ -3,7 +3,7 @@ from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
 from datasets_ddp import ChunkLoader
-from model_ddp import ChessTemporalTransformerEncoder, Ches
+from model_ddp import ChessTemporalTransformerEncoder
 import numpy as np
 import subprocess
 import random
