@@ -133,7 +133,7 @@ def validate_model(rank, world_size, CONFIG):
     
     pbar = None
     if rank==0:
-        pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating")#, disable=(rank == 0))
+        pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating")
     
     with torch.no_grad():
         # Batches

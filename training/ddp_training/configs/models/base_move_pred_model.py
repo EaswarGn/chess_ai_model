@@ -15,7 +15,7 @@ class CONFIG:
         ############ Name #############
         ###############################
         self.NAME = "base_move_pred_model"
-        self.NUM_GPUS = torch.cuda.device_count() #uses all available GPU's on system
+        self.NUM_GPUS = 1#torch.cuda.device_count() #uses all available GPU's on system
 
         ###############################
         ######### Dataloading #########
