@@ -197,10 +197,12 @@ def validate_model(rank, world_size, CONFIG):
             #print(rank)
             if rank==0:
                 #print("yes")
-                print(pbar.desc)
+                print(pbar.disable)
                 pbar.update(1)
             
             if i>=total_steps:
+                pbar.close()
+                cleanup_ddp()
                 break
             
         if rank==0:
@@ -214,8 +216,6 @@ def validate_model(rank, world_size, CONFIG):
             print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
             print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
             print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)
-            pbar.close()
-            cleanup_ddp()
             sys.exit()
             
 if __name__ == "__main__":
