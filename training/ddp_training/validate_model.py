@@ -131,7 +131,7 @@ def validate_model(rank, world_size, CONFIG):
     criterion = criterion.to(DEVICE)
     total_steps = CONFIG.VALIDATION_STEPS
     
-    pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating", disable=(rank == 0))
+    pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating")#, disable=(rank == 0))
     
     with torch.no_grad():
         # Batches
