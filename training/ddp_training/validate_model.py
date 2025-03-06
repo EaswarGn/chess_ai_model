@@ -194,11 +194,11 @@ def validate_model(rank, world_size, CONFIG):
             else:
                 categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
                             batch['categorical_result']), batch["lengths"].shape[0])
-            #print(rank)
             if rank==0:
-                #print("yes")
-                print(pbar.disable)
+                pbar.disable=False
                 pbar.update(1)
+            else:
+               pbar.disable = True 
             
             if i>=total_steps:
                 pbar.close()
