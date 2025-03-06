@@ -169,6 +169,7 @@ if __name__ == "__main__":
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
+    CONFIG = CONFIG.CONFIG()
 
     # Model
     model = ChessTemporalTransformerEncoder(CONFIG=CONFIG, DEVICE=DEVICE)
