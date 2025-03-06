@@ -14,6 +14,7 @@ from tqdm import tqdm
 from torch.amp import GradScaler
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+import comet_ml
 from torch.utils.tensorboard import SummaryWriter
 import shutil
 
@@ -27,6 +28,7 @@ import numpy as np
 import subprocess
 import random
 import datetime
+
 
 cudnn.benchmark = False
 
@@ -76,10 +78,17 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
+        COMET_API_KEY = 'v0AEYNQhnT4TDutOXig5ubtOL'
+        comet_ml.login()
+        experiment = comet_ml.start(
+            api_key=COMET_API_KEY,
+            project_name=CONFIG.NAME
+        )
         print(f"Training {CONFIG.NAME} model on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
         writer = SummaryWriter(log_dir=f'{CONFIG.NAME}/logs/main_log')
         print(f"TensorBoard logdir created at: {CONFIG.NAME}/logs/main_log")
+        
     else:
         writer = None
 
