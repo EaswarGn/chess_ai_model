@@ -131,7 +131,9 @@ def validate_model(rank, world_size, CONFIG):
     criterion = criterion.to(DEVICE)
     total_steps = CONFIG.VALIDATION_STEPS
     
-    pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating")#, disable=(rank == 0))
+    pbar = None
+    if rank==0:
+        pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating")#, disable=(rank == 0))
     
     with torch.no_grad():
         # Batches
@@ -195,10 +197,7 @@ def validate_model(rank, world_size, CONFIG):
                 categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
                             batch['categorical_result']), batch["lengths"].shape[0])
             if rank==0:
-                pbar.disable=False
                 pbar.update(1)
-            else:
-                pbar.disable = True 
             
             if i>=total_steps:
                 pbar.close()
