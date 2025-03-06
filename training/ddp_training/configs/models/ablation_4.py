@@ -62,7 +62,7 @@ class CONFIG:
         self.N_STEPS = 10000
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
-        self.STEP = None
+        self.STEP = 1
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
