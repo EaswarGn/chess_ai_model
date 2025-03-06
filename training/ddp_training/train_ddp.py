@@ -1,6 +1,5 @@
 import os
 os.environ["XLA_FLAGS"] = "--xla_gpu_cuda_data_dir=/usr/lib/cuda"
-import comet_ml
 import time
 import argparse
 import torch.optim
@@ -78,12 +77,6 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
-        COMET_API_KEY = 'v0AEYNQhnT4TDutOXig5ubtOL'
-        comet_ml.login()
-        experiment = comet_ml.start(
-            api_key=COMET_API_KEY,
-            project_name=CONFIG.NAME
-        )
         print(f"Training {CONFIG.NAME} model on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
         os.makedirs(f"{CONFIG.NAME}/logs/main_log", exist_ok=True)
         writer = SummaryWriter()#log_dir=f'{CONFIG.NAME}/logs/main_log')
