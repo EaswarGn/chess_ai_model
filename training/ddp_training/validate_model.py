@@ -198,7 +198,7 @@ def validate_model(rank, world_size, CONFIG):
                 pbar.disable=False
                 pbar.update(1)
             else:
-               pbar.disable = True 
+                pbar.disable = True 
             
             if i>=total_steps:
                 pbar.close()
