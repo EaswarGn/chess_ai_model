@@ -129,7 +129,8 @@ def validate_model(rank, world_size, CONFIG):
             device=DEVICE
         )
     criterion = criterion.to(DEVICE)
-    total_steps = min(CONFIG.VALIDATION_STEPS, len(val_loader))#CONFIG.VALIDATION_STEPS
+    total_steps = min(CONFIG.VALIDATION_STEPS, len(val_loader))
+    print(len(val_loader))
     
     pbar = None
     if rank==0:
