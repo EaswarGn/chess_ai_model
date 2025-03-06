@@ -196,6 +196,7 @@ def validate_model(rank, world_size, CONFIG):
                             batch['categorical_result']), batch["lengths"].shape[0])
             
             if rank==0:
+                print("yes")
                 pbar.update(1)
             
             if i>=total_steps:
