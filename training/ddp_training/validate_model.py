@@ -79,7 +79,7 @@ def validate_model(rank, world_size, CONFIG):
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
-        print("checkpoint loaded")
+        print(f"checkpoint loaded on rank {rank}")
     else:
         print("model checkpoint path not specified, exiting...")
         cleanup_ddp()
@@ -105,7 +105,7 @@ def validate_model(rank, world_size, CONFIG):
     val_loader = DataLoader(
         dataset=val_dataset,
         batch_size=CONFIG.BATCH_SIZE // world_size,
-        num_workers=CONFIG.NUM_WORKERS,
+        num_workers=CONFIG.NUM_WORKERS, 
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
@@ -131,7 +131,7 @@ def validate_model(rank, world_size, CONFIG):
     criterion = criterion.to(DEVICE)
     total_steps = CONFIG.VALIDATION_STEPS
     
-    pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating", disable=(rank != 0))
+    pbar = tqdm(total=min(total_steps, len(val_loader)), desc="Validating", disable=(rank == 0))
     
     with torch.no_grad():
         # Batches
