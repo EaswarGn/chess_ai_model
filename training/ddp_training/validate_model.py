@@ -64,7 +64,7 @@ def validate_model(rank, world_size, CONFIG):
     
     DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
-        print(f"Evaluating model on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
+        print(f"Evaluating {CONFIG.NAME} model on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
         
     model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
