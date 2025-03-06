@@ -20,7 +20,7 @@ class CONFIG:
         ###############################
         ######### Dataloading #########
         ###############################
-        self.BATCH_SIZE = 2048
+        self.BATCH_SIZE = 512
         self.NUM_WORKERS = mp.cpu_count() // self.NUM_GPUS
         self.PREFETCH_FACTOR = 2
         self.PIN_MEMORY = False
@@ -77,7 +77,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../1900_step_10000.pt'
+        self.CHECKPOINT_PATH = '../../../averaged_CT-EFT-20.pt'#'../../../1900_step_10000.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
