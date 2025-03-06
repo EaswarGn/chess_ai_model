@@ -197,6 +197,7 @@ def validate_model(rank, world_size, CONFIG):
             #print(rank)
             if rank==0:
                 #print("yes")
+                print(pbar.desc)
                 pbar.update(1)
             
             if i>=total_steps:
