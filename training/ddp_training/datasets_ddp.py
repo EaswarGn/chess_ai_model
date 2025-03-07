@@ -49,7 +49,16 @@ def get_all_record_files(directory: str):
 
 
 class ChunkLoader(IterableDataset):
-    def __init__(self, file_list, record_dtype, rank, world_size, is_val, use_low_time):
+    def __init__(self,
+                 file_list,
+                 record_dtype,
+                 rank,
+                 world_size,
+                 is_val,
+                 use_low_time,
+                 min_full_move_number=None,
+                 max_full_move_number=None
+        ):
         self.file_list = file_list
         self.record_dtype = record_dtype
         self.record_size = record_dtype.itemsize
@@ -62,6 +71,8 @@ class ChunkLoader(IterableDataset):
         self.world_size = world_size
         self.is_val = is_val
         self.use_low_time = use_low_time
+        self.min_full_move_number = min_full_move_number
+        self.max_full_move_number = max_full_move_number
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -146,6 +157,8 @@ class ChunkLoader(IterableDataset):
                     else:
                         record["turn"] = 0
                         
+                    
+                        
                     if self.is_val==True:
                         if self.use_low_time is True:
                             if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
@@ -157,7 +170,21 @@ class ChunkLoader(IterableDataset):
                                 continue
                         
                     record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
-
+                            
+                    is_continue = False
+                    if self.min_full_move_number is not None:
+                        if int(record["moves_until_end"]) < self.min_full_move_number:
+                            is_continue = True
+                        else:
+                            is_continue = False
+                    if self.max_full_move_number is not None:
+                        if int(record["moves_until_end"]) > self.max_full_move_number:
+                            is_continue = True
+                        else:
+                            is_continue = False
+                    if is_continue is True:
+                        continue
+                    
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
                         "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).long(),
