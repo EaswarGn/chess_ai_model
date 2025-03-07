@@ -95,11 +95,12 @@ def validate_model(rank, world_size, CONFIG):
     
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
     
-    rand_folder = random.randint(1, 3)
-    testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
+    #folder_num = random.randint(1, 3)
+    folder_num = 1
+    testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{folder_num}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
-    testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
+    #testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
     val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, is_val=True)
     
     val_loader = DataLoader(
