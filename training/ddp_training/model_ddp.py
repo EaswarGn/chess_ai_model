@@ -34,6 +34,7 @@ class MovePointerHead(nn.Module):
     def forward(self, board_repr):
         # Extract board square representations (ignoring CLS tokens)
         board_squares = board_repr[:, self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
+        print(board_squares.shape)
         batch_size = board_squares.size(0)
         
         # Expand the "from" query for each instance in the batch.
