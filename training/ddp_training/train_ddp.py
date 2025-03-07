@@ -149,7 +149,6 @@ def train_model_ddp(rank, world_size, CONFIG):
                     model_state_dict[name] = new_param
             else:
                 print(f"Skipping unknown parameter: {name}")
-                sys.exit()
 
         # Load the modified state_dict into the model
         model.load_state_dict(model_state_dict)
