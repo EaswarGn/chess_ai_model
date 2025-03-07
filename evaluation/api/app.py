@@ -5,7 +5,8 @@ from utils import load_model, get_model_inputs, get_move
 from configs import import_config
 import chess
 
-CONFIG = import_config('ablation_8_with_checkpoint')
+CONFIG = import_config('ablation_4')
+CONFIG = CONFIG.CONFIG()
 app = Flask(__name__)
 
 # Load the model
@@ -32,9 +33,9 @@ def predict():
         return jsonify(
             {
                 'predicted_move': model_move,
-                'move_time_spend': round(predictions['move_time'][0].item()*white_remaining_time, 4),
-                'model_evaluation': round(predictions['game_result'][0].item(), 4),
-                'moves_until_game_ends': int(predictions['moves_until_end'][0].item()*100),
+                'move_time_spend': round(predictions['move_time'][0].item(), 4),
+                #'model_evaluation': round(predictions['game_result'][0].item(), 4),
+                #'moves_until_game_ends': int(predictions['moves_until_end'][0].item()*100),
                 'white_wins_prob': round(predictions['categorical_game_result'][0][2].item(), 4),
                 'draw_prob': round(predictions['categorical_game_result'][0][1].item(), 4),
                 'black_wins_prob': round(predictions['categorical_game_result'][0][0].item(), 4)

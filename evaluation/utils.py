@@ -455,7 +455,6 @@ def get_model_inputs(board,
     model_inputs["phase"] = torch.IntTensor(
             [phase]
         ).unsqueeze(0)
-    model_inputs["time_control"] = torch.LongTensor([TIME_CONTROLS[time_control]]).unsqueeze(0)
     model_inputs["white_remaining_time"] = torch.FloatTensor(
             [white_remaining_time]
         ).unsqueeze(0)
@@ -490,6 +489,14 @@ def get_model_inputs(board,
     model_inputs["material_difference"] = torch.IntTensor(
             [model_inputs["material_difference"]]
         ).unsqueeze(0)
+    
+    model_inputs["base_time"] = torch.IntTensor(
+            [int(time_control.split("+")[0])]
+        ).unsqueeze(0)
+    model_inputs["increment_time"] = torch.IntTensor(
+            [int(time_control.split("+")[1])]
+        ).unsqueeze(0)
+    
     return model_inputs
 
 

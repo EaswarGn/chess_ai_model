@@ -1,4 +1,4 @@
-from .time_controls import time_controls_encoded
+from time_controls import time_controls_encoded
 
 TIME_CONTROLS = time_controls_encoded
 FILES = ["a", "b", "c", "d", "e", "f", "g", "h"]
@@ -19,7 +19,7 @@ PIECES = {
     "K": 12,
     "k": 13,
 }
-TURN = {"b": 1, "w": 0}
+TURN = {"b": 0, "w": 1}
 SQUARES = {
     "a8": 0,
     "b8": 1,
