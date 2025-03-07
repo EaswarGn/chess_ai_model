@@ -34,7 +34,6 @@ class MovePointerHead(nn.Module):
     def forward(self, board_repr):
         # Extract board square representations (ignoring CLS tokens)
         board_squares = board_repr[:, 14+self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
-        print(board_squares.shape)
         batch_size = board_squares.size(0)
         
         # Expand the "from" query for each instance in the batch.
@@ -183,8 +182,8 @@ class ExperimentalTransformer(nn.Module):
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
-        print(from_squares.shape)
-        print(to_squares.shape)
+        #print(from_squares.shape)
+        #print(to_squares.shape)
         
         predictions = {
             'from_squares': from_squares,
