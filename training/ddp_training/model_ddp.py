@@ -20,6 +20,17 @@ class MovePointerHead(nn.Module):
         # Transformation to produce a "to" query from the "from" context.
         self.to_query_transform = nn.Linear(d_model, d_model)
         
+        self._init_weights()
+        
+    def _init_weights(self):
+        # Initialize from_query with a small normal distribution
+        nn.init.normal_(self.from_query, mean=0.0, std=0.02)
+        
+        # Initialize linear layer with Xavier uniform initialization
+        nn.init.xavier_uniform_(self.to_query_transform.weight)
+        if self.to_query_transform.bias is not None:
+            nn.init.zeros_(self.to_query_transform.bias)
+        
     def forward(self, board_repr):
         # Extract board square representations (ignoring CLS tokens)
         board_squares = board_repr[:, self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
@@ -115,12 +126,6 @@ class ExperimentalTransformer(nn.Module):
 
         # Apply initialization to all submodules
         self.apply(_init_layer)
-
-        # Specific initialization for heads
-        for head in [self.from_squares, self.to_squares]:
-            if head is not None:  # Ensure the head is not None before initializing
-                nn.init.xavier_uniform_(head.weight)
-                nn.init.constant_(head.bias, 0)
 
         for head in [self.game_result_head, self.move_time_head, self.game_length_head]:
             if head is not None:  # Ensure the head is not None before iterating over its layers
