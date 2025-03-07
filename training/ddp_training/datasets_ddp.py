@@ -173,12 +173,12 @@ class ChunkLoader(IterableDataset):
                             
                     is_continue = False
                     if self.min_full_move_number is not None:
-                        if int(record["moves_until_end"]) < self.min_full_move_number:
+                        if int(record["move_number"]) < self.min_full_move_number:
                             is_continue = True
                         else:
                             is_continue = False
                     if self.max_full_move_number is not None:
-                        if int(record["moves_until_end"]) > self.max_full_move_number:
+                        if int(record["move_number"]) > self.max_full_move_number:
                             is_continue = True
                         else:
                             is_continue = False
