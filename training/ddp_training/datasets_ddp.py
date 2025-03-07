@@ -161,7 +161,7 @@ class ChunkLoader(IterableDataset):
                         
                     if self.is_val==True:
                         if self.use_low_time is True:
-                            if int(record["white_remaining_time"])>5 or int(record["black_remaining_time"])>5:
+                            if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
                                 continue
                         else:
                             if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
@@ -171,6 +171,7 @@ class ChunkLoader(IterableDataset):
                         
                     record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
                             
+                    print(record["move_number"])
                     is_continue = False
                     if self.min_full_move_number is not None:
                         if int(record["move_number"]) < self.min_full_move_number:
