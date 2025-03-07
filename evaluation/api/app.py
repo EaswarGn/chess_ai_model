@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import joblib
 import numpy as np
-from utils import load_model, get_model_inputs, get_move
+from utils import load_model, get_model_inputs, get_move, get_move_probabilities, get_all_move_probabilities
 from configs import import_config
 import chess
 
@@ -30,6 +30,9 @@ def predict():
                                          black_rating=black_rating)
                         )
         model_move = get_move(board, predictions)
+        all_move_probabilites = get_all_move_probabilities(board, predictions)
+        legal_move_probabilities = get_move_probabilities(board, predictions)
+        #print(get_all_move_probabilities(board, predictions))
         return jsonify(
             {
                 'predicted_move': model_move,
@@ -38,7 +41,9 @@ def predict():
                 #'moves_until_game_ends': int(predictions['moves_until_end'][0].item()*100),
                 'white_wins_prob': round(predictions['categorical_game_result'][0][2].item(), 4),
                 'draw_prob': round(predictions['categorical_game_result'][0][1].item(), 4),
-                'black_wins_prob': round(predictions['categorical_game_result'][0][0].item(), 4)
+                'black_wins_prob': round(predictions['categorical_game_result'][0][0].item(), 4),
+                'legal_move_probabilities': legal_move_probabilities,
+                'all_move_probabilities': all_move_probabilites,
             })
     except Exception as e:
         return jsonify({'error': str(e)})

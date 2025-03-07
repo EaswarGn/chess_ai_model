@@ -499,6 +499,43 @@ def get_model_inputs(board,
     
     return model_inputs
 
+#SQUARES = {chess.square_name(i): i for i in range(64)}  # Map square names to indices
+SQUARE_NAMES = {v: k for k, v in SQUARES.items()}
+
+def get_all_move_probabilities(board, predictions):
+    predicted_from_squares = predictions['from_squares']
+    predicted_to_squares = predictions['to_squares']
+    
+    # Extract probabilities (assume batch size = 1, take first batch)
+    predicted_from_squares = predicted_from_squares[:, 0, :].squeeze(0)  # Shape: (64,)
+    predicted_to_squares = predicted_to_squares[:, 0, :].squeeze(0)  # Shape: (64,)
+
+    # Apply softmax to get probabilities
+    predicted_from_probs = torch.softmax(predicted_from_squares, dim=-1)  # (64,)
+    predicted_to_probs = torch.softmax(predicted_to_squares, dim=-1)  # (64,)
+
+    # Sort squares by probability (highest first)
+    from_sorted_indices = torch.argsort(predicted_from_probs, descending=True)
+    to_sorted_indices = torch.argsort(predicted_to_probs, descending=True)
+
+    # Create a dictionary for all 64 × 64 moves
+    move_probabilities = {}
+    prob_sum = 0
+    for i in range(64):
+        from_square = SQUARE_NAMES[from_sorted_indices[i].item()]  # Get square name
+        to_square = SQUARE_NAMES[to_sorted_indices[i].item()]  # Get square name
+        move = from_square + to_square  # UCI move format
+        prob = predicted_from_probs[from_sorted_indices[i]].item() * predicted_to_probs[to_sorted_indices[i]].item()
+        move_probabilities[move] = prob
+        prob_sum += prob
+
+    # Sort the dictionary by probability in descending order
+    sorted_move_probabilities = dict(sorted(move_probabilities.items(), key=lambda item: item[1], reverse=True))
+
+    return sorted_move_probabilities
+
+
+
 
 def get_move_probabilities(board, predictions):
     legal_moves = [move.uci() for move in board.legal_moves]
