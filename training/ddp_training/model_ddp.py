@@ -53,7 +53,7 @@ class ExperimentalTransformer(nn.Module):
         CONFIG,
         DEVICE
     ):
-        super(ChessTemporalTransformerEncoder, self).__init__()
+        super(ExperimentalTransformer, self).__init__()
 
         self.code = CONFIG.NAME
 
