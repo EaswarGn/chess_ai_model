@@ -22,7 +22,7 @@ from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
 from datasets_ddp import ChunkLoader
-from model_ddp import ChessTemporalTransformerEncoder
+from model_ddp import ChessTemporalTransformerEncoder, ExperimentalTransformer
 import numpy as np
 import subprocess
 import random
@@ -86,7 +86,8 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer = None
 
     # Model
-    model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    #model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    model = ExperimentalTransformer(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     # Optimizer
     optimizer = torch.optim.Adam(
@@ -113,18 +114,18 @@ def train_model_ddp(rank, world_size, CONFIG):
             print("step is not specified in state dict")
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        state_dict = checkpoint['model_state_dict']
+        """state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
         
         
         
-        """model_state_dict = model.state_dict()
+        model_state_dict = model.state_dict()
         # Iterate through checkpoint params
         for name, param in checkpoint['model_state_dict'].items():
             if name in model_state_dict:
@@ -148,9 +149,10 @@ def train_model_ddp(rank, world_size, CONFIG):
                     model_state_dict[name] = new_param
             else:
                 print(f"Skipping unknown parameter: {name}")
+                sys.exit()
 
         # Load the modified state_dict into the model
-        model.load_state_dict(model_state_dict)"""
+        model.load_state_dict(model_state_dict)
         
         
         try:
