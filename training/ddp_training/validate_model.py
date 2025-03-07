@@ -101,7 +101,7 @@ def validate_model(rank, world_size, CONFIG):
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     #testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
-    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, is_val=True)
+    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, use_low_time=True, is_val=True)
     
     val_loader = DataLoader(
         dataset=val_dataset,

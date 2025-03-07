@@ -49,7 +49,7 @@ def get_all_record_files(directory: str):
 
 
 class ChunkLoader(IterableDataset):
-    def __init__(self, file_list, record_dtype, rank, world_size, is_val):
+    def __init__(self, file_list, record_dtype, rank, world_size, is_val, use_low_time):
         self.file_list = file_list
         self.record_dtype = record_dtype
         self.record_size = record_dtype.itemsize
@@ -61,6 +61,7 @@ class ChunkLoader(IterableDataset):
         self.rank = rank
         self.world_size = world_size
         self.is_val = is_val
+        self.use_low_time = use_low_time
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -146,10 +147,14 @@ class ChunkLoader(IterableDataset):
                         record["turn"] = 0
                         
                     if self.is_val==True:
-                        if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
-                            continue
-                        if int(record["move_number"])<=8:
-                            continue
+                        if self.use_low_time is True:
+                            if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
+                                continue
+                        else:
+                            if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
+                                continue
+                            if int(record["move_number"])<=8:
+                                continue
                         
                     record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
 
