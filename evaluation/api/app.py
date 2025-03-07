@@ -33,7 +33,7 @@ def predict():
         return jsonify(
             {
                 'predicted_move': model_move,
-                'move_time_spend': round(predictions['move_time'][0].item(), 4),
+                'move_time_spend': abs(round(predictions['move_time'][0].item(), 4)),
                 #'model_evaluation': round(predictions['game_result'][0].item(), 4),
                 #'moves_until_game_ends': int(predictions['moves_until_end'][0].item()*100),
                 'white_wins_prob': round(predictions['categorical_game_result'][0][2].item(), 4),
