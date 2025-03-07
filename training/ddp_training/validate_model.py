@@ -206,7 +206,7 @@ def validate_model(rank, world_size, CONFIG):
                 break
             
         if rank==0:
-            print("\nValidation loss: %.3f" % losses.avg)
+            """print("\nValidation loss: %.3f" % losses.avg)
             print("\nValidation move loss: %.3f" % move_losses.avg)
             print("\nValidation result loss: %.3f" % result_losses.avg)
             print("\nValidation move time loss: %.3f" % move_time_losses.avg)
@@ -215,7 +215,18 @@ def validate_model(rank, world_size, CONFIG):
             print("\nValidation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
             print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
             print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
-            print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)
+            print("Validation top-5 accuracy: %.3f\n" % top5_accuracies.avg)"""
+            
+            print("Validation loss: %.3f" % losses.avg)
+            print("Validation move loss: %.3f" % move_losses.avg)
+            print("Validation result loss: %.3f" % result_losses.avg)
+            print("Validation move time loss: %.3f" % move_time_losses.avg)
+            print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
+            print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
+            print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
+            print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
+            print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
+            print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
             sys.exit()
             
 if __name__ == "__main__":
