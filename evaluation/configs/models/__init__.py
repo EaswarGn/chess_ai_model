@@ -9,5 +9,6 @@ __all__ = [
     "ablation_8",
     "ablation_8_with_checkpoint",
     "ddp_config",
-    "base_move_pred_model"
+    "base_move_pred_model",
+    "move_pred&result_pred"
 ]

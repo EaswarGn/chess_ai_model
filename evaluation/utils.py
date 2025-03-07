@@ -5,7 +5,7 @@ import regex
 import argparse
 from configs import import_config
 import torch.nn.functional as F
-from configs.models.utils.levels import TURN, PIECES, UCI_MOVES, BOOL, SQUARES, FILES, RANKS, TIME_CONTROLS
+from configs.models.utils.levels import TURN, PIECES, UCI_MOVES, BOOL, SQUARES, FILES, RANKS
 from model import ChessTemporalTransformerEncoder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
