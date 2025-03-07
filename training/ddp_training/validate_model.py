@@ -107,8 +107,8 @@ def validate_model(rank, world_size, CONFIG):
                               world_size,
                               use_low_time=False,
                               is_val=True,
-                              min_full_move_number=0,
-                              max_full_move_number=10
+                              #min_full_move_number=0,
+                              #max_full_move_number=10
                               )
     
     val_loader = DataLoader(
