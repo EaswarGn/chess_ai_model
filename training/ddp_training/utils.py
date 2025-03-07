@@ -76,6 +76,9 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06, batch_si
 
     lr = lr*(batch_size/512)
     
+    #TODO: remove
+    lr = lr*5
+    
     return lr
 
 

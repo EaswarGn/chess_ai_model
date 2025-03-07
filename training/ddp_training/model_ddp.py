@@ -25,16 +25,16 @@ class MovePointerHead(nn.Module):
         
     def _init_weights(self):
         # Initialize from_query with a small normal distribution
-        nn.init.normal_(self.from_query, mean=0.0, std=0.02)
+        nn.init.normal_(self.from_query, mean=0.0, std=0.1)
         
         # Initialize linear layer with Xavier uniform initialization
         nn.init.xavier_uniform_(self.to_query_transform.weight)
         if self.to_query_transform.bias is not None:
             nn.init.zeros_(self.to_query_transform.bias)
         
-    def forward(self, board_repr):
+    def forward(self, board):
         # Extract board square representations (ignoring CLS tokens)
-        board_squares = board_repr[:, 14+self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
+        board_squares = board[:, 14+self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
         batch_size = board_squares.size(0)
         
         # Expand the "from" query for each instance in the batch.
