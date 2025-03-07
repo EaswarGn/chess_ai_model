@@ -170,17 +170,16 @@ class ChunkLoader(IterableDataset):
                                 continue
                         
                     record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
-                    record["move_number"] = record["move_number"]//2
                             
                     #print(f"move number: {record['move_number']}, moves until game ends: {record['moves_until_end']}")
                     is_continue = False
                     if self.min_full_move_number is not None:
-                        if int(record["move_number"]) < self.min_full_move_number:
+                        if int(record["move_number"])//2 < self.min_full_move_number:
                             is_continue = True
                         else:
                             is_continue = False
                     if self.max_full_move_number is not None:
-                        if int(record["move_number"]) > self.max_full_move_number:
+                        if int(record["move_number"])//2 > self.max_full_move_number:
                             is_continue = True
                         else:
                             is_continue = False
