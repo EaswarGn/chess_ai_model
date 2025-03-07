@@ -22,10 +22,11 @@ class ChessTemporalTransformerEncoder(nn.Module):
     def __init__(
         self,
         CONFIG,
+        DEVICE
     ):
         super(ChessTemporalTransformerEncoder, self).__init__()
 
-        self.code = "EFT-Extended"
+        self.code = CONFIG.NAME
 
         # Existing configuration parameters
         self.vocab_sizes = CONFIG.VOCAB_SIZES
@@ -41,6 +42,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
 
         # Encoder remains the same
         self.board_encoder = BoardEncoder(
+            DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
             n_heads=self.n_heads,
@@ -52,18 +54,17 @@ class ChessTemporalTransformerEncoder(nn.Module):
             num_cls_tokens=self.num_cls_tokens
         )
         
-        self.from_squares = CONFIG.OUTPUTS['from_squares']
-        self.to_squares = CONFIG.OUTPUTS['to_squares']
-        self.game_result_head = CONFIG.OUTPUTS['game_result']
-        self.move_time_head = CONFIG.OUTPUTS['move_time']
-        self.game_length_head = CONFIG.OUTPUTS['moves_until_end']
-        self.categorical_game_result_head = CONFIG.OUTPUTS['categorical_game_result']
+        self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
+        self.to_squares = nn.Linear(CONFIG.D_MODEL, 1)
+        self.game_result_head = None
+        self.move_time_head = CONFIG.move_time_head
+        self.game_length_head = CONFIG.game_length_head
+        self.categorical_game_result_head = CONFIG.categorical_game_result_head
         
         # Create task-specific CLS tokens
         self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
-
 
 
         # Initialize weights
@@ -117,6 +118,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             self.game_result_cls_token.expand(batch_size, 1, self.d_model),
             self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
         ], dim=1)
+        time_control = torch.cat([batch["base_time"], batch["increment_time"]], dim=-1)
         
         # Encoder
         boards = self.board_encoder(
@@ -126,23 +128,22 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["black_kingside_castling_rights"],
             batch["black_queenside_castling_rights"],
             batch["board_position"],
-            batch["time_control"],
             batch["move_number"],
             batch["num_legal_moves"],
             batch["white_remaining_time"],
             batch["black_remaining_time"],
             batch["phase"],
-            batch["white_rating"],
-            batch["black_rating"],
+            #batch["white_rating"],
+            #batch["black_rating"],
             batch["white_material_value"],
             batch["black_material_value"],
             batch["material_difference"],
+            time_control,
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
-        
-        from_squares = (self.from_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
-        to_squares = (self.to_squares(boards[:, 16+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None

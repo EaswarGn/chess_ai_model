@@ -348,11 +348,11 @@ def load_model(CONFIG):
         torch.nn.Module: The model.
     """
     # Model
-    _model = ChessTemporalTransformerEncoder(CONFIG).to(DEVICE)
+    _model = ChessTemporalTransformerEncoder(CONFIG, DEVICE).to(DEVICE)
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/1900_step_60000.pt'
+        checkpoint_path = 'checkpoints/1900_step_10000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         
@@ -557,15 +557,16 @@ if __name__ == "__main__":
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     CONFIG = import_config(args.config_name)
+    CONFIG = CONFIG.CONFIG()
 
     # Train model
     model = load_model(CONFIG)
-    board = chess.Board("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
-    white_remaining_time=558
-    black_remaining_time=579
-    white_rating = 1654
-    black_rating=1691
-    time_control = '600+0'
+    board = chess.Board("r4rk1/pb1qbppp/1pp1pn2/3p4/2PP4/2N3P1/PP2PPBP/R1BQR1K1 w - - 0 11")
+    white_remaining_time=290
+    black_remaining_time=285
+    white_rating = 1950
+    black_rating=1950
+    time_control = '300+0'
     predictions = model(get_model_inputs(board,
                                          time_control=time_control,
                                          white_remaining_time=white_remaining_time,
@@ -587,11 +588,11 @@ if __name__ == "__main__":
     print("\n\n")   
     print("predicted move: ",model_move)
     if board.turn:
-        print(f"Predicted time for white to spend on move {round(predictions['move_time'][0].item()*white_remaining_time, 4)}s")
+        print(f"Predicted time for white to spend on move {round(predictions['move_time'][0].item(), 4)}s")
     else:
-        print(f"Predicted time for black to spend on move {round(predictions['move_time'][0].item()*black_remaining_time, 4)}s")
-    print("Model's evaluation of the position is: ", round(predictions['game_result'][0].item(), 4))
-    print(f"Predicted number of full moves until the game ends: {int(predictions['moves_until_end'][0].item()*100)}")
+        print(f"Predicted time for black to spend on move {round(predictions['move_time'][0].item(), 4)}s")
+    #print("Model's evaluation of the position is: ", round(predictions['game_result'][0].item(), 4))
+    #print(f"Predicted number of full moves until the game ends: {int(predictions['moves_until_end'][0].item()*100)}")
     print("Probability that white wins: ", round(predictions['categorical_game_result'][0][2].item(), 4))
     print("Probability of a draw: ", round(predictions['categorical_game_result'][0][1].item(), 4))
     print("Probability that black wins: ", round(predictions['categorical_game_result'][0][0].item(), 4))
