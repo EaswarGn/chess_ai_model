@@ -7,6 +7,7 @@ import sys
 from configs import import_config
 from modules_ddp import BoardEncoder
 import torch.nn.functional as F
+import numpy as np
 
 class MovePointerHead(nn.Module):
     def __init__(self, d_model, board_length, num_cls_tokens):
@@ -40,14 +41,19 @@ class MovePointerHead(nn.Module):
         from_query_expanded = self.from_query.expand(batch_size, 1, self.d_model)  # (B, 1, d_model)
         
         # Compute attention scores over board squares for the "from" square.
-        scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2))  # (B, 1, board_length)
+        #scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2))  # (B, 1, board_length)
+        scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
         
         # Obtain a context vector for the selected "from" square.
         context_from = torch.bmm(F.softmax(scores_from, dim=-1), board_squares)  # (B, 1, d_model)
         
         # Transform this context into a query for the "to" square.
         to_query = self.to_query_transform(context_from)  # (B, 1, d_model)
-        scores_to = torch.bmm(to_query, board_squares.transpose(1, 2))  # (B, 1, board_length)
+        #scores_to = torch.bmm(to_query, board_squares.transpose(1, 2))  # (B, 1, board_length)
+        
+        
+        scores_to = torch.bmm(to_query, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
+
         
         return scores_from, scores_to  # Raw logits (unnormalized scores)
     
