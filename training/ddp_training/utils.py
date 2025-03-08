@@ -46,7 +46,7 @@ class LearnableLR(nn.Module):
         lr = lr * (self.batch_size / 512)
 
         # Multiply by learnable parameter
-        lr = lr * self.lr_scale
+        lr = lr * self.lr_scale.item()
 
         return lr
     
