@@ -57,6 +57,8 @@ class MovePointerHead(nn.Module):
         
         return scores_from, scores_to  # Raw logits (unnormalized scores)
     
+    
+    
 class ExperimentalTransformer(nn.Module):
     """
     Extended Chess Transformer Encoder with additional prediction heads:
