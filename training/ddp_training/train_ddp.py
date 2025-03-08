@@ -86,8 +86,8 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer = None
 
     # Model
-    model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
-    #model = ExperimentalTransformer(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    #model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    model = ExperimentalTransformer(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     # Optimizer
     optimizer = torch.optim.Adam(

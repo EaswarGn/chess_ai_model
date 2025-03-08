@@ -148,7 +148,7 @@ class ExperimentalTransformer(nn.Module):
             # Update boards: set the 'from square' positions to all ones (or any special value you choose)
             for i in range(batch_size):
                 from_idx = from_square_idx[i].item()  # Get the index of the from square for this example
-                boards[i, 14+self.num_cls_tokens+from_idx, :] = 1  # Set all channels at this index to 1
+                boards[i, 14+self.num_cls_tokens+from_idx, :] = 1.0  # Set all channels at this index to 1
         
         # Predict to squares (use the updated boards)
         to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
