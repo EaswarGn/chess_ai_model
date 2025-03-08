@@ -285,14 +285,6 @@ def train_epoch(
     start_data_time = time.time()
     start_step_time = time.time()
     
-    lr_scheduler = LearnableLR(
-                    d_model=CONFIG.D_MODEL,
-                    warmup_steps=CONFIG.WARMUP_STEPS,
-                    schedule=CONFIG.LR_SCHEDULE,
-                    decay=CONFIG.LR_DECAY,
-                    batch_size=CONFIG.BATCH_SIZE
-                )
-    
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
@@ -367,7 +359,7 @@ def train_epoch(
             
             
             
-            """change_lr(
+            change_lr(
                 optimizer,
                 new_lr=get_lr(
                     step=step,
@@ -377,10 +369,6 @@ def train_epoch(
                     decay=CONFIG.LR_DECAY,
                     batch_size=CONFIG.BATCH_SIZE
                 ),
-            )"""
-            change_lr(
-                optimizer,
-                new_lr=lr_scheduler(step)
             )
 
             step_time.update(time.time() - start_step_time)

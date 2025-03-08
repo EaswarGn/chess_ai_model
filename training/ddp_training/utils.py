@@ -14,45 +14,8 @@ import torch.nn as nn
 def get_all_record_files(directory: str):
     directory = Path(directory).expanduser()
     return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
-
-class LearnableLR(nn.Module):
-    def __init__(self, d_model, warmup_steps, schedule="vaswani", decay=0.06, batch_size=512):
-        super().__init__()
-        self.d_model = d_model
-        self.warmup_steps = warmup_steps
-        self.schedule = schedule
-        self.decay = decay
-        self.batch_size = batch_size
-
-        # Learnable parameter for LR scaling
-        self.lr_scale = nn.Parameter(torch.ones(1))
-
-    def forward(self, step):
-        if self.schedule == "vaswani":
-            lr = (
-                2.0
-                * math.pow(self.d_model, -0.5)
-                * min(math.pow(step, -0.5), step * math.pow(self.warmup_steps, -1.5))
-            )
-        elif self.schedule == "exp_decay":
-            if step <= self.warmup_steps:
-                lr = 1e-3 * step / self.warmup_steps
-            else:
-                lr = 1e-3 * ((1 - self.decay) ** ((step - self.warmup_steps) / 10000))
-        else:
-            raise NotImplementedError
-
-        # Adjust learning rate using batch size
-        lr = lr * (self.batch_size / 512)
-
-        # Multiply by learnable parameter
-        lr = lr * self.lr_scale.item()
-
-        return lr
     
     
-    
-
 def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06, batch_size=512):
     """
     The LR schedule.
@@ -116,7 +79,7 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06, batch_si
     lr = lr*(batch_size/512)
     
     #TODO: remove
-    lr = lr*5
+    lr = lr*8
     
     return lr
 
