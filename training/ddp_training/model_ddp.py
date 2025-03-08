@@ -10,11 +10,12 @@ import torch.nn.functional as F
 import numpy as np
 
 class MovePointerHead(nn.Module):
-    def __init__(self, d_model, board_length, num_cls_tokens):
+    def __init__(self, d_model, board_length, num_cls_tokens, dropout=0.1):
         super(MovePointerHead, self).__init__()
         self.d_model = d_model
         self.board_length = board_length
         self.num_cls_tokens = num_cls_tokens
+        self.dropout = dropout
         
         # Learnable query for the "from" square.
         self.from_query = nn.Parameter(torch.randn(1, d_model))
@@ -41,19 +42,20 @@ class MovePointerHead(nn.Module):
         from_query_expanded = self.from_query.expand(batch_size, 1, self.d_model)  # (B, 1, d_model)
         
         # Compute attention scores over board squares for the "from" square.
-        #scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2))  # (B, 1, board_length)
         scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
+        scores_from = F.dropout(scores_from, p=self.dropout, training=self.training)  # Dropout on attention scores
         
         # Obtain a context vector for the selected "from" square.
         context_from = torch.bmm(F.softmax(scores_from, dim=-1), board_squares)  # (B, 1, d_model)
+        context_from = F.dropout(context_from, p=self.dropout, training=self.training)  # Dropout on context vector
         
         # Transform this context into a query for the "to" square.
         to_query = self.to_query_transform(context_from)  # (B, 1, d_model)
-        #scores_to = torch.bmm(to_query, board_squares.transpose(1, 2))  # (B, 1, board_length)
+        to_query = F.dropout(to_query, p=self.dropout, training=self.training)  # Dropout on transformed query
         
-        
+        # Compute attention scores for the "to" square.
         scores_to = torch.bmm(to_query, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
-
+        scores_to = F.dropout(scores_to, p=self.dropout, training=self.training)  # Dropout on attention scores
         
         return scores_from, scores_to  # Raw logits (unnormalized scores)
     
