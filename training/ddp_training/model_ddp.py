@@ -8,57 +8,6 @@ from configs import import_config
 from modules_ddp import BoardEncoder
 import torch.nn.functional as F
 import numpy as np
-
-class MovePointerHead(nn.Module):
-    def __init__(self, d_model, board_length, num_cls_tokens, dropout=0.1):
-        super(MovePointerHead, self).__init__()
-        self.d_model = d_model
-        self.board_length = board_length
-        self.num_cls_tokens = num_cls_tokens
-        self.dropout = dropout
-        
-        # Learnable query for the "from" square.
-        self.from_query = nn.Parameter(torch.randn(1, d_model))
-        # Transformation to produce a "to" query from the "from" context.
-        self.to_query_transform = nn.Linear(d_model, d_model)
-        
-        self._init_weights()
-        
-    def _init_weights(self):
-        # Initialize from_query with a small normal distribution
-        nn.init.normal_(self.from_query, mean=0.0, std=0.1)
-        
-        # Initialize linear layer with Xavier uniform initialization
-        nn.init.xavier_uniform_(self.to_query_transform.weight)
-        if self.to_query_transform.bias is not None:
-            nn.init.zeros_(self.to_query_transform.bias)
-        
-    def forward(self, board):
-        # Extract board square representations (ignoring CLS tokens)
-        board_squares = board[:, 14+self.num_cls_tokens:, :]  # shape: (B, board_length, d_model)
-        batch_size = board_squares.size(0)
-        
-        # Expand the "from" query for each instance in the batch.
-        from_query_expanded = self.from_query.expand(batch_size, 1, self.d_model)  # (B, 1, d_model)
-        
-        # Compute attention scores over board squares for the "from" square.
-        scores_from = torch.bmm(from_query_expanded, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
-        scores_from = F.dropout(scores_from, p=self.dropout, training=self.training)  # Dropout on attention scores
-        
-        # Obtain a context vector for the selected "from" square.
-        context_from = torch.bmm(F.softmax(scores_from, dim=-1), board_squares)  # (B, 1, d_model)
-        context_from = F.dropout(context_from, p=self.dropout, training=self.training)  # Dropout on context vector
-        
-        # Transform this context into a query for the "to" square.
-        to_query = self.to_query_transform(context_from)  # (B, 1, d_model)
-        to_query = F.dropout(to_query, p=self.dropout, training=self.training)  # Dropout on transformed query
-        
-        # Compute attention scores for the "to" square.
-        scores_to = torch.bmm(to_query, board_squares.transpose(1, 2)) / np.sqrt(self.d_model)
-        scores_to = F.dropout(scores_to, p=self.dropout, training=self.training)  # Dropout on attention scores
-        
-        return scores_from, scores_to  # Raw logits (unnormalized scores)
-    
     
     
 class ExperimentalTransformer(nn.Module):
@@ -104,7 +53,8 @@ class ExperimentalTransformer(nn.Module):
             num_cls_tokens=self.num_cls_tokens
         )
         
-        self.move_pred_head = MovePointerHead(d_model=self.d_model, board_length=64, num_cls_tokens=self.num_cls_tokens)
+        self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
+        self.to_squares = nn.Linear(CONFIG.D_MODEL, 1)
         self.game_result_head = None
         self.move_time_head = CONFIG.move_time_head
         self.game_length_head = CONFIG.game_length_head
@@ -161,6 +111,7 @@ class ExperimentalTransformer(nn.Module):
             self.game_result_cls_token.expand(batch_size, 1, self.d_model),
             self.time_suggestion_cls_token.expand(batch_size, 1, self.d_model)
         ], dim=1)
+        
         time_control = torch.cat([batch["base_time"], batch["increment_time"]], dim=-1)
         
         # Encoder
@@ -186,25 +137,40 @@ class ExperimentalTransformer(nn.Module):
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
-        from_squares, to_squares = self.move_pred_head(boards)
+        # Predict from squares
+        from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
+        
+        # Get indices of the predicted from_squares
+        if from_squares is not None:
+            # Assuming from_squares shape is (batch_size, 1, 64)
+            from_square_idx = from_squares.argmax(dim=2)  # Get index of the highest probability move
+        
+            # Update boards: set the 'from square' positions to all ones (or any special value you choose)
+            for i in range(batch_size):
+                from_idx = from_square_idx[i].item()  # Get the index of the from square for this example
+                boards[i, 14+self.num_cls_tokens+from_idx, :] = 1  # Set all channels at this index to 1
+        
+        # Predict to squares (use the updated boards)
+        to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
+        
+        # Other heads
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
-        #print(from_squares.shape)
-        #print(to_squares.shape)
-        
+        # Pack predictions into a dictionary
         predictions = {
             'from_squares': from_squares,
             'to_squares': to_squares,
             'game_result': game_result,
-            'move_time': move_time, #* 100,  # Scaled for data compatibility
+            'move_time': move_time,  # Scaled for data compatibility
             'moves_until_end': moves_until_end,
             'categorical_game_result': categorical_game_result
         }
 
         return predictions
+
     
 
 class ChessTemporalTransformerEncoder(nn.Module):
