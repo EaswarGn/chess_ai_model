@@ -185,11 +185,10 @@ def train_model_ddp(rank, world_size, CONFIG):
     training_file_list = [s for s in training_file_list if "._" not in s]
     random.shuffle(training_file_list)
     
-    rand_folder = random.randint(1, 3)
-    testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{rand_folder}_chunks')
+    test_folder = 1
+    testing_file_list = get_all_record_files(f'../../../ranged_chunks_zipped/1900/{test_folder}_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
-    testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
     
     train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, use_low_time=False, is_val=False)
     val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, use_low_time=False, is_val=True)
