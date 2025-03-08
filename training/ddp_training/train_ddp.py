@@ -136,15 +136,21 @@ def train_model_ddp(rank, world_size, CONFIG):
                     # Shapes mismatch, manually adjust
                     print(f"Resizing parameter: {name}")
                     new_param = model_state_dict[name]  # Get the current param shape
-                    min_shape = min(new_param.shape[0], param.shape[0])  # Find the common dimension
 
-                    # Copy existing values
-                    new_param[:min_shape] = param[:min_shape]
-                    
-                    # Fill remaining values with zeros
-                    if new_param.shape[0] > min_shape:
-                        new_param[min_shape:] = torch.zeros_like(new_param[min_shape:])
-                    
+                    # Ensure the parameter has at least 12 values
+                    if new_param.shape[0] >= 12:
+                        new_param[:12] = torch.zeros_like(new_param[:12])  # Initialize first 12 values to zeros
+
+                    # Find the common dimension
+                    min_shape = min(new_param.shape[0] - 12, param.shape[0])  
+
+                    # Copy existing values after the first 12 zeros
+                    new_param[12:12 + min_shape] = param[:min_shape]
+
+                    # Fill remaining values with zeros if new_param is larger
+                    if new_param.shape[0] > 12 + min_shape:
+                        new_param[12 + min_shape:] = torch.zeros_like(new_param[12 + min_shape:])
+
                     # Assign the updated param
                     model_state_dict[name] = new_param
             else:
