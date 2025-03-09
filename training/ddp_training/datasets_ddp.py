@@ -78,7 +78,8 @@ class ChunkLoader(IterableDataset):
         self.stats = None
         with open('stats_dict.pkl', 'rb') as file:
             self.stats = pickle.load(file)
-        
+        self.stats['move_number']['mean'] = self.stats['move_number']['mean']/2.0
+        self.stats['move_number']['std'] = self.stats['move_number']['std']/2.0
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -194,10 +195,6 @@ class ChunkLoader(IterableDataset):
                     
                     #normalize continuous variables through z-scores:
                     record['move_number'] = record['move_number']//2
-                    print(self.stats['move_number']['mean'])
-                    print(self.stats['move_number']['std'])
-                    self.stats['move_number']['mean'] = self.stats['move_number']['mean']/2.0
-                    self.stats['move_number']['std'] = self.stats['move_number']['std']/2.0
                     
                     for key in self.stats:
                         record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']
