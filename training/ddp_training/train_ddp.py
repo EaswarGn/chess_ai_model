@@ -28,6 +28,8 @@ import subprocess
 import random
 import datetime
 
+torch._dynamo.config.capture_scalar_outputs = True
+
 
 cudnn.benchmark = False
 

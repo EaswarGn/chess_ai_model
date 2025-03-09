@@ -51,7 +51,11 @@ pbar = tqdm(total=total)
 for filename in files:
     with open(filename, "rb") as f:
         dctx = zstd.ZstdDecompressor()
-        decompressed = dctx.decompress(f.read())
+        try:
+            decompressed = dctx.decompress(f.read())
+        except zstd.ZstdError as e:
+            print(f"zstd error when reading {filename}")
+            continue
         num_dicts = len(decompressed) // record_size
         
         

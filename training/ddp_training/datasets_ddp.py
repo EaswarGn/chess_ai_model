@@ -12,6 +12,7 @@ from configs import import_config
 from time_controls import time_controls_encoded
 import numpy as np
 import multiprocessing as mp
+import pickle
 
 # Define the record dtype
 record_dtype = np.dtype([
@@ -73,6 +74,12 @@ class ChunkLoader(IterableDataset):
         self.use_low_time = use_low_time
         self.min_full_move_number = min_full_move_number
         self.max_full_move_number = max_full_move_number
+        
+        self.stats = None
+        with open('stats_dict.pkl', 'rb') as file:
+            self.stats = pickle.load(file)
+        print(self.stats)
+        
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -185,6 +192,11 @@ class ChunkLoader(IterableDataset):
                     if is_continue is True:
                         continue
                     
+                    
+                    #normalize continuous variables through z-scores:
+                    for key in self.stats:
+                        record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']
+                    
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
                         "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).long(),
@@ -231,13 +243,13 @@ if __name__ == "__main__":
     
     
     # List of file paths to be processed.
-    file_list = get_all_record_files('/Volumes/Lexar/chessmodel_dataset/1900_training_chunks')
+    file_list = get_all_record_files('/Volumes/Lexar/1900_training_chunks')
     file_list = [file for file in file_list if file.endswith('.zst')]   
     #file_list = [file.replace("._", "", 1) for file in file_list]
     print(f"found {len(file_list)} chunks")
     
     # Instantiate the dataset with the list of files.
-    dataset = ChunkLoader(file_list, record_dtype)
+    dataset = ChunkLoader(file_list, record_dtype, 0, 0, False, False)
     
     # Create a DataLoader with multiple workers.
     loader = DataLoader(dataset, batch_size=CONFIG.BATCH_SIZE, num_workers=mp.cpu_count()//2)
