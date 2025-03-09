@@ -192,9 +192,9 @@ class ChunkLoader(IterableDataset):
                         continue
                     
                     
-                    #normalize continuous variables through z-scores:
+                    """#normalize continuous variables through z-scores:
                     for key in self.stats:
-                        record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']
+                        record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']"""
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
