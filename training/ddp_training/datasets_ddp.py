@@ -149,7 +149,7 @@ class ChunkLoader(IterableDataset):
                             record["time_spent_on_move"] = 0
                         
                         time_control = f'{base_time}+{increment_time}'
-                        time_control = torch.LongTensor([time_controls_encoded[time_control]])
+                        time_control = torch.LongTensor([5])
                     except KeyError:
                         pass
 
