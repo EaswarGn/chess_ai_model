@@ -78,7 +78,6 @@ class ChunkLoader(IterableDataset):
         self.stats = None
         with open('stats_dict.pkl', 'rb') as file:
             self.stats = pickle.load(file)
-        print(self.stats)
         
 
     def get_chunk_size(self):
