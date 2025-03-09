@@ -64,7 +64,7 @@ class ChunkLoader(IterableDataset):
         self.record_dtype = record_dtype
         self.record_size = record_dtype.itemsize
         self.fmt = "<5b64b6b2h2f2hf5hf"
-        self.record_size = struct.calcsize(self.fmt)
+        self.record_size = 109  #struct.calcsize(self.fmt)
         self.length = len(self.file_list) * self.get_chunk_size()
 
         # Get rank and world size for distributed training
@@ -74,12 +74,6 @@ class ChunkLoader(IterableDataset):
         self.use_low_time = use_low_time
         self.min_full_move_number = min_full_move_number
         self.max_full_move_number = max_full_move_number
-        
-        self.stats = None
-        with open('stats_dict.pkl', 'rb') as file:
-            self.stats = pickle.load(file)
-        self.stats['move_number']['mean'] = self.stats['move_number']['mean']/2.0
-        self.stats['move_number']['std'] = self.stats['move_number']['std']/2.0
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -191,13 +185,6 @@ class ChunkLoader(IterableDataset):
                             is_continue = False
                     if is_continue is True:
                         continue
-                    
-                    
-                    #normalize continuous variables through z-scores:
-                    """record['move_number'] = record['move_number']//2
-                    
-                    for key in self.stats:
-                        record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']"""
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).long(),
