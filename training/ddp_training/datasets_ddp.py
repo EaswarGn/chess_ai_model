@@ -156,7 +156,7 @@ class ChunkLoader(IterableDataset):
                         time_control = f'{base_time}+{increment_time}'
                         time_control = torch.LongTensor([time_controls_encoded[time_control]])
                     except KeyError:
-                        continue
+                        pass
 
                     if int(record["turn"]) == 0:
                         record["turn"] = 1
@@ -193,6 +193,9 @@ class ChunkLoader(IterableDataset):
                     
                     
                     #normalize continuous variables through z-scores:
+                    record['move_number'] = record['move_number']//2
+                    self.stats['move_number']['mean'] = self.stats['move_number']['mean']/2.0
+                    self.stats['move_number']['std'] = self.stats['move_number']['std']/2.0
                     for key in self.stats:
                         record[key] = (record[key]-self.stats[key]['mean'])/self.stats[key]['std']
                     
