@@ -61,7 +61,7 @@ class CONFIG:
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = 10000
-        self.STEPS_PER_EPOCH = 2000
+        self.STEPS_PER_EPOCH = 500
         self.WARMUP_STEPS = 3000
         self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
