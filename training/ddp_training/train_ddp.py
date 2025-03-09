@@ -22,7 +22,7 @@ from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
 from datasets_ddp import ChunkLoader
-from model_ddp import ChessTemporalTransformerEncoder
+from model_ddp import ChessTemporalTransformerEncoder, ExperimentalTransformer
 import numpy as np
 import subprocess
 import random
@@ -88,7 +88,11 @@ def train_model_ddp(rank, world_size, CONFIG):
         writer = None
 
     # Model
-    model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    model = None
+    if 'experimental' in CONFIG.NAME:
+        model = ExperimentalTransformer(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    else:
+        model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     # Optimizer
     optimizer = torch.optim.Adam(
