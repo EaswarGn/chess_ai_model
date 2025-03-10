@@ -19,7 +19,7 @@ file_list = get_all_record_files('/Volumes/Lexar/1_chunks')
 file_list = [file for file in file_list if file.endswith('.zst')]   
 file_list = [s for s in file_list if "._" not in s]
 
-total = (len(file_list)*100000)//5000
+total = (len(file_list)*100000)//500
 pbar = tqdm(total=total)
 
 
@@ -90,7 +90,7 @@ for filename in file_list:
             
             elo_self = 0
             elo_oppo = 0
-            if int(record['turn']) == "0":
+            if int(record['turn']) == 0:
                 elo_self = int(record["black_rating"])
                 elo_oppo = int(record["white_rating"])
             else:
