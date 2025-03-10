@@ -20,7 +20,7 @@ class CONFIG:
         ###############################
         ######### Dataloading #########
         ###############################
-        self.BATCH_SIZE = 8192
+        self.BATCH_SIZE = 4096
         if self.NUM_GPUS == 0:
             self.NUM_WORKERS = mp.cpu_count()
         else:
