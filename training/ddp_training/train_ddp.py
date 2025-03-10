@@ -106,7 +106,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     start_epoch = 0
     total_steps = CONFIG.N_STEPS
     steps_per_epoch = CONFIG.STEPS_PER_EPOCH
-    epochs = total_steps//steps_per_epoch
+    epochs = 50
     
     
     if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
