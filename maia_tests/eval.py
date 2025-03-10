@@ -106,6 +106,7 @@ for filename in file_list:
                 
             pbar.update(1)
             if pbar.n >= total:
-                print(correct/total)
+                pbar.close()
+                print(f"Accuracy on test set: {correct/total}")
                 sys.exit()
 
