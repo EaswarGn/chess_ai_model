@@ -11,6 +11,7 @@ import zstandard as zstd
 import sys
 import threading
 from tqdm import tqdm
+import chess
 from collections import deque
 
 # Define the record dtype
@@ -145,8 +146,8 @@ class ChunkLoader(IterableDataset):
         """
         self.file_list = file_list
         self.record_dtype = record_dtype
-        self.record_size = record_dtype.itemsize
-        self.fmt = "<5b64b6b2h2f2hf5hf"
+        self.record_size = 309#record_dtype.itemsize
+        self.fmt = "<5b64b6b2h2f2hf5hf200s"
         self.record_size = struct.calcsize(self.fmt)
         self.length = len(self.file_list)*self.get_chunk_size()
         
@@ -225,6 +226,15 @@ class ChunkLoader(IterableDataset):
                     # 1 float32:
                     record["moves_until_end"] = unpacked[idx]; idx += 1
                     
+                    # fen string (200 bytes)
+                    record["fen"] = unpacked[idx:idx+200]; idx += 1
+                    fen_string = str(record["fen"][0])
+                    new_fen_string = ''
+                    for char in fen_string:
+                        if char!='x' and char!='0' and char!='\\':
+                            new_fen_string += char
+                    new_fen_string = new_fen_string[2:len(new_fen_string)-2]
+                    
                     try:
                         base_time = record["base_time"]
                         increment_time = record["increment_time"]
@@ -266,10 +276,11 @@ class ChunkLoader(IterableDataset):
 # Example usage:
 if __name__ == "__main__":
     # List of file paths to be processed.
-    file_list = get_all_record_files('/Volumes/Lexar/1900_training_chunks')
+    #file_list = get_all_record_files('/Volumes/Lexar/1900_training_chunks')
+    file_list = get_all_record_files('c++/9_2017_chunks')
     file_list = [file for file in file_list if file.endswith('.zst')]   
     file_list = [s for s in file_list if "._" not in s]
-    print(len(file_list)*100000)
+    print(len(file_list)*1000)
     
     # Instantiate the dataset with the list of files.
     dataset = ChunkLoader(file_list, record_dtype)

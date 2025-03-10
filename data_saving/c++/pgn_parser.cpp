@@ -49,6 +49,7 @@ class MyVisitor : public pgn::Visitor {
         int16_t black_material_value;
         int16_t material_difference;
         float   moves_until_end;
+        char fen[200];
     };
     #pragma pack(pop)
     // The expected size of Dictionary should be 109 bytes.
@@ -470,13 +471,27 @@ class MyVisitor : public pgn::Visitor {
         clock_board.makeMove(uci_move);
 
         if (comment_str.find("eval") != std::string::npos) {
+            
             size_t index = fen.find(']');
             if (index != std::string::npos && index + 1 < fen.size()) {
                 fen = trim(fen.substr(index + 1));  // Extract everything after ']'
             }
         } 
 
-        //std::cout << fen << std::endl;
+        std::string white_player = "";
+        std::string black_player = "";
+        std::string event, whiteElo, blackElo, timeControl, termination;
+        for (const auto& [key, value] : headers) {
+            if (key == "Event") event = value;
+            if (key == "WhiteElo") whiteElo = value;
+            if (key == "BlackElo") blackElo = value;
+            if (key == "TimeControl") timeControl = value;
+            if (key == "Termination") termination = value;
+            if (key == "White") white_player = value;
+            if (key == "Black") black_player = value;
+        }
+
+        
 
         moves_with_turns.push_back(std::string(move)+":"+turn);
         fens.push_back(std::string(fen));
@@ -509,6 +524,8 @@ class MyVisitor : public pgn::Visitor {
             if (key == "White") white_player = value;
             if (key == "Black") black_player = value;
         }
+
+        
 
         // Check conditions and print headers if any condition is met
         if (event.empty() || event == "Rated Correspondence game" ||
@@ -611,6 +628,8 @@ class MyVisitor : public pgn::Visitor {
             std::string fen = parts[0];
             std::string move = parts[1];
             std::string turn = parts[2];
+
+            //std::cout << fen << std::endl;
 
             //std::cout << line << std::endl;
             //std::cout << white_player << std::endl;
@@ -746,6 +765,10 @@ class MyVisitor : public pgn::Visitor {
                 }
             }
 
+
+
+            
+
             //create dictionary
             Dictionary dict;
             dict.turn = std::stoi(side_to_move);
@@ -775,6 +798,9 @@ class MyVisitor : public pgn::Visitor {
             dict.black_material_value = black_material_value;
             dict.material_difference = material_difference;
             dict.moves_until_end = moves_until_end;
+            //dict.fen = fen;
+            strncpy(dict.fen, fen.c_str(), sizeof(dict.fen) - 1);
+            dict.fen[sizeof(dict.fen) - 1] = '\0';
 
 
             if(chunk.size() <= chunks_per_file-1){
