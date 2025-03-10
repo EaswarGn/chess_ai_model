@@ -76,7 +76,7 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06, batch_si
     else:
         raise NotImplementedError
 
-    lr = lr*(batch_size/512)
+    lr = lr*(batch_size//512)
     
     return lr
 

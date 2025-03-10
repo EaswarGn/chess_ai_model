@@ -20,7 +20,7 @@ class CONFIG:
         ###############################
         ######### Dataloading #########
         ###############################
-        self.BATCH_SIZE = 4096
+        self.BATCH_SIZE = 512
         if self.NUM_GPUS == 0:
             self.NUM_WORKERS = mp.cpu_count()
         else:
@@ -58,7 +58,7 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.AVERAGE_STEPS = 18000
+        self.AVERAGE_STEPS = 80000
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
