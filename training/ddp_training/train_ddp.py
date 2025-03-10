@@ -457,6 +457,10 @@ def train_epoch(
                     )
                 
                 epoch += 1
+                
+            if step >= CONFIG.AVERAGE_STEPS:
+                if step % 100 == 0:
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
             
             
             if CONFIG.N_STEPS is None:

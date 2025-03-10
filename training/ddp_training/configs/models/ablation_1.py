@@ -58,10 +58,11 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
+        self.AVERAGE_STEPS = 18000
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
-        self.N_STEPS = 10000
-        self.STEPS_PER_EPOCH = 500
+        self.N_STEPS = None
+        self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
         self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
@@ -110,5 +111,5 @@ class CONFIG:
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss()
+        self.categorical_game_result_loss = nn.CrossEntropyLoss(label_smoothing=0.2)
 
