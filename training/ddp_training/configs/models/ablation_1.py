@@ -14,7 +14,7 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "ablation_1"
+        self.NAME = "full_trained_model"
         self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
