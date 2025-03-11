@@ -14,7 +14,7 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "full_trained_model"
+        self.NAME = "ablation_1"
         self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
@@ -58,13 +58,12 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.AVERAGE_STEPS = 80000
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
-        self.N_STEPS = None
-        self.STEPS_PER_EPOCH = 1000
+        self.N_STEPS = 10000
+        self.STEPS_PER_EPOCH = 2000
         self.WARMUP_STEPS = 3000
-        self.STEP = 1#None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
+        self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
@@ -81,9 +80,9 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.USE_STRICT = True #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../1900_step_83500.pt'
-        self.VALIDATION_STEPS = 1000000000 #number of validation steps (each step has BATCH_SIZE samples)
+        self.USE_STRICT = False #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '1900_step_67000.pt'
+        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
@@ -111,5 +110,5 @@ class CONFIG:
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss(label_smoothing=0.2)
+        self.categorical_game_result_loss = nn.CrossEntropyLoss()
 
