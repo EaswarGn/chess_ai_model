@@ -106,8 +106,7 @@ def validate_model(rank, world_size, CONFIG):
                               rank,
                               world_size,
                               use_low_time=False,
-                              is_val=True,
-                              #min_full_move_number=0,
+                              min_full_move_number=5,
                               #max_full_move_number=10
                               )
     

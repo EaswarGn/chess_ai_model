@@ -55,8 +55,7 @@ class ChunkLoader(IterableDataset):
                  record_dtype,
                  rank,
                  world_size,
-                 is_val,
-                 use_low_time,
+                 use_low_time=False,
                  min_full_move_number= -1, #initialized to arbitrary large value to allow any minimum move number
                  max_full_move_number= 500 #initialized to arbitrary large value to allow any max move number
         ):
@@ -70,7 +69,6 @@ class ChunkLoader(IterableDataset):
         # Get rank and world size for distributed training
         self.rank = rank
         self.world_size = world_size
-        self.is_val = is_val
         self.use_low_time = use_low_time
         self.min_full_move_number = min_full_move_number
         self.max_full_move_number = max_full_move_number
@@ -160,15 +158,13 @@ class ChunkLoader(IterableDataset):
                         
                     
                         
-                    if self.is_val==True:
-                        if self.use_low_time is True:
-                            if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
-                                continue
-                        else:
-                            if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
-                                continue
-                            if int(record["move_number"])<=8:
-                                continue
+                    if self.use_low_time is True:
+                        if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
+                            continue
+                    else:
+                        if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
+                            continue
+                            
                             
                     if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
                         pass
