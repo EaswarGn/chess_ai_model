@@ -645,7 +645,7 @@ class ExperimentalBoardEncoder(nn.Module):
             n_layers (int): Number of encoder layers.
             dropout (float): Dropout probability.
         """
-        super(BoardEncoder, self).__init__()
+        super(ExperimentalBoardEncoder, self).__init__()
 
         # Store configuration
         self.vocab_sizes = vocab_sizes
