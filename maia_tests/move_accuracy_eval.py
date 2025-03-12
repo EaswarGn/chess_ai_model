@@ -9,6 +9,7 @@ import sys
 from utils import *
 import chess
 from configs import import_config
+import time
 
 def get_all_record_files(directory: str):
     return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
@@ -17,8 +18,7 @@ def run_tests(harmonia_model):
     maia2_model = model.from_pretrained(type="blitz", device="cpu")
     data = dataset.load_example_test_dataset()
     prepared = inference.prepare()
-    maia_correct = dict()
-
+    maia_correct = 0
     file_list = get_all_record_files('/Volumes/Lexar/1_chunks')
     file_list = [file for file in file_list if file.endswith('.zst')]   
     file_list = [s for s in file_list if "._" not in s]
@@ -26,13 +26,17 @@ def run_tests(harmonia_model):
     total = (len(file_list)*100000)//5000
     pbar = tqdm(total=total)
     
+    if len(file_list)==0:
+        print("no files to evaluate with.")
+        return
+    
     incrementer = 0
 
-    harmonia_correct = dict()
+    harmonia_correct = 0
     record_size = 309
     fmt = "<5b64b6b2h2f2hf5hf200s"
     
-    move_number = 1
+    start_time = time.time()
     for filename in file_list:
         with open(filename, "rb") as f:
             dctx = zstd.ZstdDecompressor()
@@ -103,9 +107,8 @@ def run_tests(harmonia_model):
                 print("record full move number: ",record["move_number"])
                 print()"""
                 
+                #skip moves made under low time
                 if int(record["white_remaining_time"]) < 30 or int(record["black_remaining_time"]) < 30:
-                    continue
-                if int(record["move_number"]) != move_number:
                     continue
                 
                 elo_self = 0
@@ -122,7 +125,7 @@ def run_tests(harmonia_model):
                 move_probs, win_prob = inference.inference_each(maia2_model, prepared, fen, elo_self, elo_oppo)
                 
                 if max(move_probs, key=move_probs.get) == move:
-                    maia_correct[f"{move_number}"] = maia_correct.get(f"{move_number}", 0) + 1
+                    maia_correct += 1
                     
                 board = chess.Board(fen)
                 predictions = harmonia_model(get_model_inputs(board,
@@ -135,39 +138,19 @@ def run_tests(harmonia_model):
                 model_move = get_move(board, predictions)
                 
                 if model_move == move:
-                    harmonia_correct[f"{move_number}"] = harmonia_correct.get(f"{move_number}", 0) + 1
+                    harmonia_correct += 1
 
                     
                 incrementer += 1
-                if incrementer >= 1000:
-                    harmonia_correct[f"{move_number}"] = harmonia_correct[f"{move_number}"]/incrementer
-                    maia_correct[f"{move_number}"] = maia_correct[f"{move_number}"]/incrementer
-                    move_number += 1
-                    incrementer = 0
-                    print(move_number)
-                    
-                    for key in harmonia_correct:
-                        if harmonia_correct[key] > maia_correct[key]:
-                            print(f"harmonia ({harmonia_correct[key]}) outperforms maia ({maia_correct[key]}) on move {key}")
-                        if maia_correct[key] > harmonia_correct[key]:
-                            print(f"maia ({maia_correct[key]}) outperforms harmonia ({harmonia_correct[key]}) on move {key}")
-                        if harmonia_correct[key] == maia_correct[key]:
-                            print(f"harmonia ({harmonia_correct[key]}) performs the same as maia ({maia_correct[key]}) on move {key}")
-                    
-                    if move_number >= 40:
-                        print('\n')
-                        print("harmonia: ", harmonia_correct)
-                        print()
-                        print("maia: ", maia_correct)
-                        return
-                """incrementer += 1
+            
+                incrementer += 1
                 pbar.n = incrementer
                 pbar.refresh()
                 if pbar.n >= total:
                     pbar.close()
                     print(f"Maia accuracy on test set: {round(maia_correct/total, 4)}")
                     print(f"Harmonia accuracy on test set: {round(harmonia_correct/total, 4)}")
-                    sys.exit()"""
+                    sys.exit()
 
 
 if __name__ == "__main__":
