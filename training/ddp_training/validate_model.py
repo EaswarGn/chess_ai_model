@@ -208,6 +208,7 @@ def validate_model(rank, world_size, CONFIG):
                 pbar.update(1)
             
             if i+1>=total_steps and rank==0:
+                print("validation finished")
                 pbar.close()
                 cleanup_ddp()
                 break
