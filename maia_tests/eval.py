@@ -32,16 +32,6 @@ def run_tests(harmonia_model):
     record_size = 309
     fmt = "<5b64b6b2h2f2hf5hf200s"
     
-    harmonia_correct = {'1': 52, '2': 61, '3': 53, '4': 53, '5': 48, '6': 51, '7': 51, '8': 60, '9': 56, '10': 56, '11': 57, '12': 57, '13': 52, '14': 52, '15': 57, '16': 59, '17': 51, '18': 45, '19': 52, '20': 53, '21': 64, '22': 54, '23': 54, '24': 53, '25': 62, '26': 64, '27': 69, '28': 70, '29': 57, '30': 57, '31': 61, '32': 68, '33': 58, '34': 51, '35': 66, '36': 64, '37': 62, '38': 64, '39': 59}
-    maia_correct = {'1': 39, '2': 52, '3': 58, '4': 57, '5': 53, '6': 50, '7': 48, '8': 62, '9': 56, '10': 55, '11': 63, '12': 54, '13': 52, '14': 53, '15': 64, '16': 64, '17': 53, '18': 46, '19': 57, '20': 54, '21': 69, '22': 58, '23': 57, '24': 56, '25': 52, '26': 64, '27': 64, '28': 62, '29': 59, '30': 58, '31': 59, '32': 64, '33': 55, '34': 54, '35': 61, '36': 61, '37': 60, '38': 60, '39': 54}
-    
-    for key in harmonia_correct:
-        harmonia_correct[key] = harmonia_correct[key]/100
-    for key in maia_correct:
-        maia_correct[key] = maia_correct[key]/100
-    print(harmonia_correct)
-    print(maia_correct)
-    
     move_number = 1
     for filename in file_list:
         with open(filename, "rb") as f:
@@ -100,15 +90,22 @@ def run_tests(harmonia_model):
                 # fen string (200 bytes)
                 record["fen"] = unpacked[idx:idx+200]; idx += 1
                 fen_string = str(record["fen"][0])
+                
                 new_fen_string = ''
                 for char in fen_string:
-                    if char!='x' and char!='0' and char!='\\':
+                    if char!='\\':
                         new_fen_string += char
-                fen = new_fen_string[2:len(new_fen_string)-2]
+                    if char=='\\':
+                        break
+                fen = new_fen_string[2:].strip()
+                _, turn, castling_rights, ep_square, halfmove_count, fullmove_count = fen.split()
+                """print("fen full move number: ",fullmove_count)
+                print("record full move number: ",record["move_number"])
+                print()"""
                 
                 if int(record["white_remaining_time"]) < 30 or int(record["black_remaining_time"]) < 30:
                     continue
-                if int(record["move_number"])//2 != move_number:
+                if int(record["move_number"]) != move_number:
                     continue
                 
                 elo_self = 0
@@ -142,16 +139,26 @@ def run_tests(harmonia_model):
 
                     
                 incrementer += 1
-                if incrementer >= 100:
-                    harmonia_correct[f"{move_number}"] = harmonia_correct[f"{move_number}"]/100
-                    maia_correct[f"{move_number}"] = maia_correct[f"{move_number}"]/100
+                if incrementer >= 1000:
+                    harmonia_correct[f"{move_number}"] = harmonia_correct[f"{move_number}"]/incrementer
+                    maia_correct[f"{move_number}"] = maia_correct[f"{move_number}"]/incrementer
                     move_number += 1
                     incrementer = 0
                     print(move_number)
                     
+                    for key in harmonia_correct:
+                        if harmonia_correct[key] > maia_correct[key]:
+                            print(f"harmonia ({harmonia_correct[key]}) outperforms maia ({maia_correct[key]}) on move {key}")
+                        if maia_correct[key] > harmonia_correct[key]:
+                            print(f"maia ({maia_correct[key]}) outperforms harmonia ({harmonia_correct[key]}) on move {key}")
+                        if harmonia_correct[key] == maia_correct[key]:
+                            print(f"harmonia ({harmonia_correct[key]}) performs the same as maia ({maia_correct[key]}) on move {key}")
+                    
                     if move_number >= 40:
-                        print(harmonia_correct)
-                        print(maia_correct)
+                        print('\n')
+                        print("harmonia: ", harmonia_correct)
+                        print()
+                        print("maia: ", maia_correct)
                         return
                 """incrementer += 1
                 pbar.n = incrementer

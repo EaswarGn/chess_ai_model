@@ -201,7 +201,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     
-    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, use_low_time=False, is_val=False)
+    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, use_low_time=False, is_val=False, min_full_move_number=5)
     val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, use_low_time=False, is_val=True)
 
     train_loader = DataLoader(

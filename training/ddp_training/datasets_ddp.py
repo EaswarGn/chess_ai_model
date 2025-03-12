@@ -57,8 +57,8 @@ class ChunkLoader(IterableDataset):
                  world_size,
                  is_val,
                  use_low_time,
-                 min_full_move_number=None,
-                 max_full_move_number=None
+                 min_full_move_number= -1, #initialized to arbitrary large value to allow any minimum move number
+                 max_full_move_number= 500 #initialized to arbitrary large value to allow any max move number
         ):
         self.file_list = file_list
         self.record_dtype = record_dtype
@@ -169,21 +169,10 @@ class ChunkLoader(IterableDataset):
                                 continue
                             if int(record["move_number"])<=8:
                                 continue
-                        
-                    record["moves_until_end"] = record["moves_until_end"]//2 #number of full moves until the game ends
                             
-                    is_continue = False
-                    if self.min_full_move_number is not None:
-                        if int(record["move_number"])//2 < self.min_full_move_number:
-                            is_continue = True
-                        else:
-                            is_continue = False
-                    if self.max_full_move_number is not None:
-                        if int(record["move_number"])//2 > self.max_full_move_number:
-                            is_continue = True
-                        else:
-                            is_continue = False
-                    if is_continue is True:
+                    if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
+                        pass
+                    else:
                         continue
                     
                     yield {
