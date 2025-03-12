@@ -56,7 +56,7 @@ class ChunkLoader(IterableDataset):
                  rank,
                  world_size,
                  use_low_time=False,
-                 min_full_move_number= -1, #initialized to arbitrary large value to allow any minimum move number
+                 min_full_move_number= -1, #initialized to arbitrary small value to allow any minimum move number
                  max_full_move_number= 500 #initialized to arbitrary large value to allow any max move number
         ):
         self.file_list = file_list

@@ -27,7 +27,7 @@ class CONFIG:
             self.NUM_WORKERS = mp.cpu_count() // self.NUM_GPUS
 
         self.PREFETCH_FACTOR = 2
-        self.PIN_MEMORY = False
+        self.PIN_MEMORY = True
 
         ###############################
         ############ Model ############
