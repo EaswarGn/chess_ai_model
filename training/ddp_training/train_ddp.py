@@ -62,6 +62,9 @@ record_dtype = np.dtype([
 rating = 1900
 
 def setup_ddp(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    #dist.init_process_group("nccl", rank=rank, world_size=world_size)
     dist.init_process_group(backend='nccl', rank=rank, world_size=world_size, init_method='env://', timeout=datetime.timedelta(seconds=18000))
 
 def cleanup_ddp():
@@ -69,6 +72,8 @@ def cleanup_ddp():
 
 def train_model_ddp(rank, world_size, CONFIG):
     setup_ddp(rank, world_size)
+    
+    os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' 
     
     DEVICE = torch.device(f"cuda:{rank}")
     if rank == 0:
