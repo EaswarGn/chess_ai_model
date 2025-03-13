@@ -688,8 +688,8 @@ class ExperimentalBoardEncoder(nn.Module):
         
         # Continuous Feature Projections (ensure output remains float)
         self.time_control_projection = nn.Sequential(
-            nn.Linear(2, d_model//2),  # Input size is 2 (initial time + increment time)
-            nn.BatchNorm1d(d_model // 2),
+            nn.Linear(2, d_model),  # Input size is 2 (initial time + increment time)
+            nn.BatchNorm1d(d_model),
             nn.ReLU(),
             nn.Linear(d_model, d_model),
         )
