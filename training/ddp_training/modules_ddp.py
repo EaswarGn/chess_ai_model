@@ -852,7 +852,7 @@ class ExperimentalBoardEncoder(nn.Module):
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_projection(time_control.to(torch.float32)).unsqueeze(1).to(torch.float32),
-                self.phase_embeddings(phase),
+                self.phase_embeddings(phase.to(torch.int32)),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
                 self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
