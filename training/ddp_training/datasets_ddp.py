@@ -147,7 +147,7 @@ class ChunkLoader(IterableDataset):
                             record["time_spent_on_move"] = 0
                         
                         time_control = f'{base_time}+{increment_time}'
-                        time_control = torch.LongTensor([5])
+                        time_control = torch.FloatTensor([5.0])
                     except KeyError:
                         pass
 
@@ -172,32 +172,32 @@ class ChunkLoader(IterableDataset):
                         continue
                     
                     yield {
-                        "turn": torch.tensor([record["turn"]]).long(),
-                        "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).long(),
-                        "white_queenside_castling_rights": torch.tensor([record["white_queenside_castling_rights"]]).long(),
-                        "black_kingside_castling_rights": torch.tensor([record["black_kingside_castling_rights"]]).long(),
-                        "black_queenside_castling_rights": torch.tensor([record["black_queenside_castling_rights"]]).long(),
-                        "board_position": torch.tensor(np.array(record["board_position"])).long(),
-                        "from_squares": torch.tensor([record["from_square"]]).long(),
-                        "to_squares": torch.tensor([record["to_square"]]).long(),
-                        "lengths": torch.tensor([record["length"]]).long(),
-                        "phase": torch.tensor([record["phase"]]).long(),
-                        "game_result": torch.tensor([record["result"]]).long(),
-                        "categorical_result": torch.tensor([record["categorical_result"]]).long(),
+                        "turn": torch.tensor([record["turn"]]).float(), #make float
+                        "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).float(),
+                        "white_queenside_castling_rights": torch.tensor([record["white_queenside_castling_rights"]]).float(),
+                        "black_kingside_castling_rights": torch.tensor([record["black_kingside_castling_rights"]]).float(),
+                        "black_queenside_castling_rights": torch.tensor([record["black_queenside_castling_rights"]]).float(),
+                        "board_position": torch.tensor(np.array(record["board_position"])).float(),
+                        "from_squares": torch.tensor([record["from_square"]]).float(),
+                        "to_squares": torch.tensor([record["to_square"]]).float(),
+                        "lengths": torch.tensor([record["length"]]).float(),
+                        "phase": torch.tensor([record["phase"]]).float(),
+                        "game_result": torch.tensor([record["result"]]).float(),
+                        "categorical_result": torch.tensor([record["categorical_result"]]).float(),
                         "time_control": time_control,
-                        "white_remaining_time": torch.tensor([record["white_remaining_time"]]).long(),
-                        "black_remaining_time": torch.tensor([record["black_remaining_time"]]).long(),
-                        "white_rating": torch.tensor([record["white_rating"]]).long(),
-                        "black_rating": torch.tensor([record["black_rating"]]).long(),
-                        "move_time": torch.tensor([record["time_spent_on_move"]]).long(),
-                        "move_number": torch.tensor([record["move_number"]]).long(),
-                        "num_legal_moves": torch.tensor([record["num_legal_moves"]]).long(),
-                        "white_material_value": torch.tensor([record["white_material_value"]]).long(),
-                        "black_material_value": torch.tensor([record["black_material_value"]]).long(),
-                        "material_difference": torch.tensor([record["material_difference"]]).long(),
-                        "moves_until_end": torch.tensor([record["moves_until_end"]]).long(),
-                        "base_time": torch.tensor([record["base_time"]]).long(),
-                        "increment_time": torch.tensor([record["increment_time"]]).long(),
+                        "white_remaining_time": torch.tensor([record["white_remaining_time"]]).float(),
+                        "black_remaining_time": torch.tensor([record["black_remaining_time"]]).float(),
+                        "white_rating": torch.tensor([record["white_rating"]]).float(),
+                        "black_rating": torch.tensor([record["black_rating"]]).float(),
+                        "move_time": torch.tensor([record["time_spent_on_move"]]).float(),
+                        "move_number": torch.tensor([record["move_number"]]).float(),
+                        "num_legal_moves": torch.tensor([record["num_legal_moves"]]).float(),
+                        "white_material_value": torch.tensor([record["white_material_value"]]).float(),
+                        "black_material_value": torch.tensor([record["black_material_value"]]).float(),
+                        "material_difference": torch.tensor([record["material_difference"]]).float(),
+                        "moves_until_end": torch.tensor([record["moves_until_end"]]).float(),
+                        "base_time": torch.tensor([record["base_time"]]).float(),
+                        "increment_time": torch.tensor([record["increment_time"]]).float(),
                     }
 
 
