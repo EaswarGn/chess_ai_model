@@ -852,19 +852,19 @@ class ExperimentalBoardEncoder(nn.Module):
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_projection(time_control.to(torch.float32)).unsqueeze(1).to(torch.float32),
-                self.phase_embeddings(phase.to(torch.int32)),
+                self.phase_embeddings(phase.to(torch.int16)),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
                 self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
                 self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
                 self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
-                self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
-                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
-                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights).to(torch.float32),
-                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights).to(torch.float32),
-                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights).to(torch.float32),
-                self.board_position_embeddings(board_positions).to(torch.float32),
+                self.turn_embeddings(turns.to(torch.int16)).to(torch.float32),  # Ensure embeddings are float
+                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights.to(torch.int16)).to(torch.float32),
+                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int16)).to(torch.float32),
+                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int16)).to(torch.float32),
+                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int16)).to(torch.float32),
+                self.board_position_embeddings(board_positions.to(torch.int16)).to(torch.float32),
                 
                 
             ],
