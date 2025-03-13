@@ -838,12 +838,6 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
-        print("before batch normalization:")
-        print(move_number)
-        move_number = self.batch_norm_layers[0](move_number)
-        print('\n\n\n after batch normalization:')
-        print(move_number)
-        sys.exit()
         num_legal_moves = self.batch_norm_layers[1](num_legal_moves)
         white_remaining_time = self.batch_norm_layers[2](white_remaining_time)
         black_remaining_time = self.batch_norm_layers[3](black_remaining_time)
@@ -852,7 +846,6 @@ class ExperimentalBoardEncoder(nn.Module):
         material_difference = self.batch_norm_layers[6](material_difference)
         time_control = self.batch_norm_layers[7](time_control)
         
-
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
