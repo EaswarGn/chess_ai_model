@@ -148,15 +148,24 @@ def run_tests(harmonia_model):
                 if incrementer >= 1000:
                     harmonia_correct[f"{move_number}"] = harmonia_correct[f"{move_number}"]/incrementer
                     maia_correct[f"{move_number}"] = maia_correct[f"{move_number}"]/incrementer
+                    
+                    print(f"Taken {round(elapsed, 4)}s for move number {move_number}.")
+                    key = f"{move_number-1}"
+                    if harmonia_correct[key] > maia_correct[key]:
+                        print(f"harmonia ({harmonia_correct[key]}) outperforms maia ({maia_correct[key]}) on move {key}")
+                    if maia_correct[key] > harmonia_correct[key]:
+                        print(f"maia ({maia_correct[key]}) outperforms harmonia ({harmonia_correct[key]}) on move {key}")
+                    if harmonia_correct[key] == maia_correct[key]:
+                        print(f"harmonia ({harmonia_correct[key]}) performs the same as maia ({maia_correct[key]}) on move {key}")
+                    print('\n\n')
+                    
+                    
                     move_number += 1
                     incrementer = 0
                     elapsed = time.time() - start_time
-                    print(f"Taken {round(elapsed, 4)}s for move number {move_number}.")
                     start_time = time.time()
                     
-                    
-                    
-                    if move_number >= 30:
+                    if move_number >= 40:
                         for key in harmonia_correct:
                             if harmonia_correct[key] > maia_correct[key]:
                                 print(f"harmonia ({harmonia_correct[key]}) outperforms maia ({maia_correct[key]}) on move {key}")

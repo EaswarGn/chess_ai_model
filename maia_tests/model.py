@@ -5,7 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules import BoardEncoder
+from modules import BoardEncoder, ExperimentalBoardEncoder
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -41,7 +41,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.num_cls_tokens = 3
 
         # Encoder remains the same
-        self.board_encoder = BoardEncoder(
+        self.board_encoder = ExperimentalBoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,

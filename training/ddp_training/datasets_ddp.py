@@ -7,6 +7,7 @@ import time
 import zstandard as zstd
 import torch.distributed as dist
 import struct
+import random
 
 from configs import import_config
 from time_controls import time_controls_encoded
@@ -169,7 +170,11 @@ class ChunkLoader(IterableDataset):
                     if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
                         pass
                     else:
-                        continue
+                        #1% chance of yielding the position if it's not between the move numbers
+                        if random.randint(1, 100)==50:
+                            pass
+                        else:
+                            continue
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float

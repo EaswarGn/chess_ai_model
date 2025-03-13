@@ -352,7 +352,7 @@ def load_model(CONFIG):
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = '1900_step_67000.pt'
+        checkpoint_path = '1900_step_94000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         
@@ -467,18 +467,18 @@ def get_model_inputs(board,
     model_inputs["black_rating"] = torch.FloatTensor(
             [black_rating]
         ).unsqueeze(0)
-    model_inputs["move_number"] = torch.IntTensor(
+    model_inputs["move_number"] = torch.FloatTensor(
             [fullmove_count-1]
         ).unsqueeze(0)
     legal_moves_board = board
     num_legal_moves = len(list(legal_moves_board.legal_moves))
-    model_inputs["num_legal_moves"] = torch.IntTensor(
+    model_inputs["num_legal_moves"] = torch.FloatTensor(
             [num_legal_moves]
         ).unsqueeze(0)
-    model_inputs["white_material_value"] = torch.IntTensor(
+    model_inputs["white_material_value"] = torch.FloatTensor(
             [calculate_material(board.fen(), 'white')]
         ).unsqueeze(0)
-    model_inputs["black_material_value"] = torch.IntTensor(
+    model_inputs["black_material_value"] = torch.FloatTensor(
             [calculate_material(board.fen(), 'black')]
         ).unsqueeze(0)
     
@@ -486,14 +486,14 @@ def get_model_inputs(board,
         model_inputs["material_difference"] = calculate_material(board.fen(), 'white') - calculate_material(board.fen(), 'black')
     if t=='b':
         model_inputs["material_difference"] = calculate_material(board.fen(), 'black') - calculate_material(board.fen(), 'white')
-    model_inputs["material_difference"] = torch.IntTensor(
+    model_inputs["material_difference"] = torch.FloatTensor(
             [model_inputs["material_difference"]]
         ).unsqueeze(0)
     
-    model_inputs["base_time"] = torch.IntTensor(
+    model_inputs["base_time"] = torch.FloatTensor(
             [int(time_control.split("+")[0])]
         ).unsqueeze(0)
-    model_inputs["increment_time"] = torch.IntTensor(
+    model_inputs["increment_time"] = torch.FloatTensor(
             [int(time_control.split("+")[1])]
         ).unsqueeze(0)
     
