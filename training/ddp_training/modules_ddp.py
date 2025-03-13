@@ -842,7 +842,19 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
-        print(move_number.unsqueeze(-1).to(torch.float32).shape)
+        x = torch.randn(512, 1)  # Example input tensor (batch_size=512, feature_size=1)
+
+        # Get the first linear layer
+        first_linear = self.move_number_projection[0]  
+
+        # Pass input through the first linear layer
+        x = first_linear(x)
+
+        # Print the shape
+        print("Shape after first Linear layer:", x.shape)
+        sys.exit()
+
+
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
