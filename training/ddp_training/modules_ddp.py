@@ -839,7 +839,7 @@ class ExperimentalBoardEncoder(nn.Module):
         
         #print(move_number.shape)
         #print(time_control.shape)
-        #move_number = self.batch_norm_layers[0](move_number)
+        move_number = self.batch_norm_layers[0](move_number)
 
 
         # Ensure all tensors have the same dtype, e.g., float32
