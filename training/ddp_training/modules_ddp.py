@@ -852,6 +852,7 @@ class ExperimentalBoardEncoder(nn.Module):
 
         # Print the shape
         print("Shape after first Linear layer:", x.shape)
+        print(move_number.unsqueeze(0).shape)
         sys.exit()
 
 
