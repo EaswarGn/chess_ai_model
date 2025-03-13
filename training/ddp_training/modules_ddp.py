@@ -768,10 +768,11 @@ class ExperimentalBoardEncoder(nn.Module):
         self.apply_dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model)
         
-        num_features = 9
+        num_features = 7
         self.batch_norm_layers = []
         for _ in range(num_features):
             self.batch_norm_layers.append(nn.BatchNorm1d(1))
+        self.batch_norm_layers.append(nn.BatchNorm1d(2))
 
     def make_encoder_layer(self):
         """
@@ -839,8 +840,15 @@ class ExperimentalBoardEncoder(nn.Module):
         
         #print(move_number.shape)
         #print(time_control.shape)
-        #move_number = self.batch_norm_layers[0](move_number)
-
+        move_number = self.batch_norm_layers[0](move_number)
+        num_legal_moves = self.batch_norm_layers[1](num_legal_moves)
+        white_remaining_time = self.batch_norm_layers[2](white_remaining_time)
+        black_remaining_time = self.batch_norm_layers[3](black_remaining_time)
+        white_material_value = self.batch_norm_layers[4](white_material_value)
+        black_material_value = self.batch_norm_layers[5](black_material_value)
+        material_difference = self.batch_norm_layers[6](material_difference)
+        time_control = self.batch_norm_layers[7](time_control)
+        
 
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
