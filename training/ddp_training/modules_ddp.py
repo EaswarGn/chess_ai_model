@@ -842,7 +842,7 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
-        x = torch.randn(512, 1, device=move_number.device)  # Example input tensor (batch_size=512, feature_size=1)
+        x = torch.randn(256, 1, device=move_number.device).unsqueeze(0)  # Example input tensor (batch_size=512, feature_size=1)
 
         # Get the first linear layer
         first_linear = self.move_number_projection[0]  
