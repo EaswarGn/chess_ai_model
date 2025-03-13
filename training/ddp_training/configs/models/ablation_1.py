@@ -58,7 +58,6 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.AVERAGE_STEPS = 80000
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
@@ -82,7 +81,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '1900_step_11000.pt.2'
+        self.CHECKPOINT_PATH = '../../../1900_step_83000.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
