@@ -126,8 +126,8 @@ class MultiTaskChessLoss(nn.Module):
             if key == 'categorical_game_result_loss':
                 targets['categorical_result'] = targets['categorical_result'].squeeze(1)
                 loss = loss_fn(
-                    predictions['categorical_game_result'].float(), 
-                    targets['categorical_result']
+                    predictions['categorical_game_result'], 
+                    targets['categorical_result'].to(torch.int64)
                 )
                 
             individual_losses[key] = loss
