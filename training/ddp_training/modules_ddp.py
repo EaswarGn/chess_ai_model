@@ -840,6 +840,7 @@ class ExperimentalBoardEncoder(nn.Module):
         
         #print(move_number.shape)
         #print(time_control.shape)
+        print(move_number.device)
         move_number = self.batch_norm_layers[0](move_number)
         num_legal_moves = self.batch_norm_layers[1](num_legal_moves)
         white_remaining_time = self.batch_norm_layers[2](white_remaining_time)
