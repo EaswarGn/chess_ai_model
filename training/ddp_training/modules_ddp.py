@@ -771,7 +771,7 @@ class ExperimentalBoardEncoder(nn.Module):
         num_features = 9
         self.batch_norm_layers = []
         for _ in range(num_features):
-            self.batch_norm_layers.append(nn.BatchNorm1d(d_model // 2))
+            self.batch_norm_layers.append(nn.BatchNorm1d(1))
 
     def make_encoder_layer(self):
         """
@@ -838,6 +838,7 @@ class ExperimentalBoardEncoder(nn.Module):
         batch_size = turns.size(0)
         
         print(move_number.shape)
+        print(time_control.shape)
         move_number = self.batch_norm_layers[0](move_number)
 
 
