@@ -689,35 +689,30 @@ class ExperimentalBoardEncoder(nn.Module):
         # Continuous Feature Projections (ensure output remains float)
         self.time_control_projection = nn.Sequential(
             nn.Linear(2, d_model),  # Input size is 2 (initial time + increment time)
-            nn.BatchNorm1d(d_model),
             nn.ReLU(),
             nn.Linear(d_model, d_model),
         )
         
         self.move_number_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.num_legal_moves_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.white_remaining_time_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.black_remaining_time_projection = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
@@ -728,34 +723,29 @@ class ExperimentalBoardEncoder(nn.Module):
         )
         self.white_rating_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         self.black_rating_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.white_material_value_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.black_material_value_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
         
         self.material_difference_embeddings = nn.Sequential(
             nn.Linear(1, d_model // 2),
-            nn.BatchNorm1d(d_model // 2),
             nn.ReLU(),
             nn.Linear(d_model // 2, d_model),
         )
@@ -777,6 +767,11 @@ class ExperimentalBoardEncoder(nn.Module):
         # Dropout and Layer Norm
         self.apply_dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model)
+        
+        num_features = 9
+        self.batch_norm_layers = []
+        for _ in range(num_features):
+            self.batch_norm_layers.append(nn.BatchNorm1d(d_model // 2))
 
     def make_encoder_layer(self):
         """
@@ -842,18 +837,7 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
-        x = torch.randn(256, 1, device=move_number.device).unsqueeze(0)  # Example input tensor (batch_size=512, feature_size=1)
-
-        # Get the first linear layer
-        first_linear = self.move_number_projection[0]  
-
-        # Pass input through the first linear layer
-        x = first_linear(x)
-
-        # Print the shape
-        print("Shape after first Linear layer:", x.shape)
-        print(move_number.unsqueeze(0).shape)
-        sys.exit()
+        move_number = self.batch_norm_layers[0](move_number)
 
 
         # Ensure all tensors have the same dtype, e.g., float32
