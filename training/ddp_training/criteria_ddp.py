@@ -105,8 +105,8 @@ class MultiTaskChessLoss(nn.Module):
                 continue
             
             if key == 'move_loss':
-                loss = loss_fn(predictions['from_squares'], targets["from_squares"], targets["lengths"]) + \
-                       loss_fn(predictions['to_squares'], targets["to_squares"], targets["lengths"])
+                loss = loss_fn(predictions['from_squares'].to(torch.int64), targets["from_squares"].to(torch.int64), targets["lengths"]) + \
+                       loss_fn(predictions['to_squares'].to(torch.int64), targets["to_squares"].to(torch.int64), targets["lengths"])
             if key == 'time_loss':  # Fix indentation here
                 loss = loss_fn(
                     predictions['move_time'].float(), 
