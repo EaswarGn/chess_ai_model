@@ -838,6 +838,8 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
+        
+        
         move_number = self.batch_norm_layers[0](move_number)
         num_legal_moves = self.batch_norm_layers[1](num_legal_moves)
         white_remaining_time = self.batch_norm_layers[2](white_remaining_time)
