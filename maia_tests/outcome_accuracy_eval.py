@@ -123,8 +123,8 @@ def run_tests(harmonia_model):
                 reversed_squares = {v: k for k, v in SQUARES.items()}
                 move = reversed_squares[record["from_square"]] + reversed_squares[record["to_square"]]
                 move_probs, win_prob = inference.inference_each(maia2_model, prepared, fen, elo_self, elo_oppo)
-                print(f"{fen} move prediction: {max(move_probs, key=move_probs.get)}, outcome prediction: {win_prob}")
-                sys.exit()
+                print(f"maia predictions: {fen} move prediction: {max(move_probs, key=move_probs.get)}, outcome prediction: {win_prob}")
+                
                 
                 if max(move_probs, key=move_probs.get) == move:
                     maia_correct += 1
@@ -138,6 +138,10 @@ def run_tests(harmonia_model):
                                             black_rating=record["black_rating"])
                             )
                 model_move = get_move(board, predictions)
+                predictions['categorical_game_result'] = predictions['categorical_game_result'][0]
+                print(f"harmonia predictions: black wins({predictions['categorical_game_result'][0]}), draw({predictions['categorical_game_result'][1]}), white wins({predictions['categorical_game_result'][2]})")
+                
+                sys.exit()
                 
                 if model_move == move:
                     harmonia_correct += 1
