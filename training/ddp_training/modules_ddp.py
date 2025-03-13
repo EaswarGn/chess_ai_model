@@ -769,7 +769,7 @@ class ExperimentalBoardEncoder(nn.Module):
         self.layer_norm = nn.LayerNorm(d_model)
         
         num_features = 7
-        self.batch_norm_layers = []
+        self.batch_norm_layers = nn.ModuleList()
         for _ in range(num_features):
             self.batch_norm_layers.append(nn.BatchNorm1d(1))
         self.batch_norm_layers.append(nn.BatchNorm1d(2))
