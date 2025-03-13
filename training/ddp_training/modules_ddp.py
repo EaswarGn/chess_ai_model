@@ -842,6 +842,7 @@ class ExperimentalBoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
+        print(move_number.unsqueeze(-1).to(torch.float32).shape)
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
