@@ -859,12 +859,12 @@ class ExperimentalBoardEncoder(nn.Module):
                 self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
                 self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
-                self.turn_embeddings(turns.to(torch.int16)).to(torch.float32),  # Ensure embeddings are float
-                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights.to(torch.int16)).to(torch.float32),
-                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int16)).to(torch.float32),
-                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int16)).to(torch.float32),
-                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int16)).to(torch.float32),
-                self.board_position_embeddings(board_positions.to(torch.int16)).to(torch.float32),
+                self.turn_embeddings(turns.to(torch.int64)).to(torch.float32),  # Ensure embeddings are float
+                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),
                 
                 
             ],
