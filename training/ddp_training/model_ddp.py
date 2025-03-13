@@ -53,7 +53,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens
         )"""
-        self.board_encoder = BoardEncoder(
+        self.board_encoder = ExperimentalBoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
