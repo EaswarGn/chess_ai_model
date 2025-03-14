@@ -118,6 +118,8 @@ def validate_model(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
     
+    print(val_loader.dataset.datapoints_skipped)
+    
     model.eval()
     
     
