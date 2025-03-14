@@ -181,6 +181,8 @@ class ChunkLoader(IterableDataset):
                             self.datapoints_skipped += 1
                             continue
                     
+                    print(self.datapoints_skipped)
+                    
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float
                         "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).float(),
