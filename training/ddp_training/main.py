@@ -31,5 +31,5 @@ if __name__ == "__main__":
     parser.add_argument("config_name", type=str, help="Name of configuration file.")
     args = parser.parse_args()
     config = import_config(args.config_name)
-    config = config.config()
+    config = config.CONFIG()
     main(config)
