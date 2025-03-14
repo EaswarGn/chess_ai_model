@@ -67,14 +67,7 @@ class ChunkLoader(IterableDataset):
         self.record_size = 109  #struct.calcsize(self.fmt)
         self.length = len(self.file_list) * self.get_chunk_size()
         
-        total = 0
-        for filename in self.file_list:
-            with open(filename, "rb") as f:
-                dctx = zstd.ZstdDecompressor()
-                decompressed = dctx.decompress(f.read())
-                num_dicts = len(decompressed) // self.record_size
-                total += num_dicts
-        print("total datapoints: ", total)
+        print(self.length//world_size)
 
         # Get rank and world size for distributed training
         self.rank = rank
