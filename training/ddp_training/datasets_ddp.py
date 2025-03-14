@@ -163,7 +163,6 @@ class ChunkLoader(IterableDataset):
                     if self.use_low_time is True:
                         if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
                             continue
-                        
                     else:
                         if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
                             continue
