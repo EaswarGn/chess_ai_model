@@ -168,8 +168,6 @@ class ChunkLoader(IterableDataset):
                     else:
                         if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
                             self.datapoints_skipped += 1
-                            print(self.datapoints_skipped)
-                            sys.exit()
                             continue
                             
                             
