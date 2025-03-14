@@ -8,6 +8,7 @@ import zstandard as zstd
 import torch.distributed as dist
 import struct
 import random
+import sys
 
 from configs import import_config
 from time_controls import time_controls_encoded
@@ -167,6 +168,8 @@ class ChunkLoader(IterableDataset):
                     else:
                         if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
                             self.datapoints_skipped += 1
+                            print(self.datapoints_skipped)
+                            sys.exit()
                             continue
                             
                             
