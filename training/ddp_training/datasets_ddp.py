@@ -171,11 +171,7 @@ class ChunkLoader(IterableDataset):
                     if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
                         pass
                     else:
-                        #1% chance of yielding the position if it's not between the move numbers
-                        if random.randint(1, 100)==50:
-                            pass
-                        else:
-                            continue
+                        continue
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float
