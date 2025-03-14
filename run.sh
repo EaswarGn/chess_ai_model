@@ -18,7 +18,8 @@ cd ~/1900_zipped_training_chunks
 cd ~/ranged_chunks_zipped
 ~/chess_ai_model/data_saving/c++/unzip_files.sh
 cd ~
-wget https://huggingface.co/datasets/codingmonster1234/full_trained_model/resolve/main/checkpoints/models/1900_step_83500.pt
+wget -O ablation_1.pt https://huggingface.co/datasets/codingmonster1234/full_trained_model/resolve/main/checkpoints/models/1900_step_94000.pt
 wget https://chesstransformers.blob.core.windows.net/checkpoints/CT-EFT-20/averaged_CT-EFT-20.pt
 cd ~/chess_ai_model/training/ddp_training
-python train_ddp.py ablation_1
+#python train_ddp.py ablation_1
+python validate_model.py ablation_1
