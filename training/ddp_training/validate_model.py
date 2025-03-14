@@ -118,7 +118,7 @@ def validate_model(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
     
-    print(val_loader.dataset.datapoints_skipped)
+    
     
     model.eval()
     
@@ -167,6 +167,8 @@ def validate_model(rank, world_size, CONFIG):
                 moves_until_end_loss = loss_details['moves_until_end_loss']
                 categorical_game_result_loss = loss_details['categorical_game_result_loss']
 
+            print(val_loader.dataset.datapoints_skipped)
+            
             losses.update(
                 loss.item(), batch["lengths"].sum().item()
             )
