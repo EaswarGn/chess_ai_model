@@ -50,3 +50,4 @@ class HarmoniaTrainer:
                 "cuda" if torch.cuda.is_available() else "cpu"
             )  # CPU isn't really practical here
             self.master_process = True
+        print(self.ddp)
