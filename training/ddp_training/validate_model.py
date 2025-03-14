@@ -235,6 +235,9 @@ def validate_model(rank, world_size, CONFIG):
             print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
             print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
             print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
+            print(f"{val_dataset.datapoints_skipped} datapoints skipped from validation set.")
+            pbar.close()
+            cleanup_ddp()
             sys.exit()
             
 if __name__ == "__main__":
