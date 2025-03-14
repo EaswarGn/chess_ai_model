@@ -145,6 +145,7 @@ def validate_model(rank, world_size, CONFIG):
     if rank==0:
         pbar = tqdm(total=total_steps, desc="Validating")
     
+    total_batches_processed = 0
     with torch.no_grad():
         # Batches
         for i, batch in enumerate(val_loader):
@@ -166,8 +167,6 @@ def validate_model(rank, world_size, CONFIG):
                 move_loss = loss_details['move_loss']
                 moves_until_end_loss = loss_details['moves_until_end_loss']
                 categorical_game_result_loss = loss_details['categorical_game_result_loss']
-
-            #print(val_loader.dataset.datapoints_skipped)
             
             losses.update(
                 loss.item(), batch["lengths"].sum().item()
@@ -211,11 +210,14 @@ def validate_model(rank, world_size, CONFIG):
             if rank==0:
                 pbar.update(1)
             
+            total_batches_processed += 1
             if i+1>=total_steps and rank==0:
                 print("validation finished")
                 pbar.close()
                 cleanup_ddp()
                 break
+        
+        datapoints_skipped = (len(val_loader)-total_batches_processed)*CONFIG.BATCH_SIZE
             
         if rank==0:
             """print("\nValidation loss: %.3f" % losses.avg)
@@ -239,7 +241,7 @@ def validate_model(rank, world_size, CONFIG):
             print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
             print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
             print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
-            print(f"{val_dataset.datapoints_skipped} datapoints skipped from validation set.")
+            print(f"{datapoints_skipped} datapoints skipped from validation set.")
             pbar.close()
             cleanup_ddp()
             sys.exit()

@@ -74,7 +74,6 @@ class ChunkLoader(IterableDataset):
         self.use_low_time = use_low_time
         self.min_full_move_number = min_full_move_number
         self.max_full_move_number = max_full_move_number
-        self.datapoints_skipped = 0
 
     def get_chunk_size(self):
         with open(self.file_list[0], "rb") as f:
@@ -163,11 +162,6 @@ class ChunkLoader(IterableDataset):
                         
                     if self.use_low_time is True:
                         if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
-                            self.datapoints_skipped += 1
-                            continue
-                    else:
-                        if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
-                            self.datapoints_skipped += 1
                             continue
                             
                             
@@ -178,10 +172,7 @@ class ChunkLoader(IterableDataset):
                         if random.randint(1, 100)==50:
                             pass
                         else:
-                            self.datapoints_skipped += 1
                             continue
-                    
-                    print(self.datapoints_skipped)
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float
