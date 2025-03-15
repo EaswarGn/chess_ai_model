@@ -143,7 +143,7 @@ def validate_model(rank, world_size, CONFIG):
     
     pbar = None
     if rank==0:
-        pbar = tqdm(total=total_steps, desc="Validating", dynamic_ncols=True)
+        pbar = tqdm(total=total_steps, desc="Validating")
     
     total_batches_processed = 0
     with torch.no_grad():
