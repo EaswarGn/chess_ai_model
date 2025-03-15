@@ -143,7 +143,7 @@ def validate_model(rank, world_size, CONFIG):
     
     pbar = None
     if rank==0:
-        pbar = tqdm(total=total_steps, desc="Validating")
+        pbar = tqdm(total=total_steps, desc="Validating", dynamic_ncols=True)
     
     total_batches_processed = 0
     with torch.no_grad():
@@ -209,6 +209,16 @@ def validate_model(rank, world_size, CONFIG):
                             batch['categorical_result']), batch["lengths"].shape[0])
             if rank==0:
                 pbar.update(1)
+                
+                if i % 50 == 0:  # Update postfix every 1000 iterations to reduce overhead
+                    pbar.set_postfix({
+                        "Game Result Accuracy": categorical_game_result_accuracies.avg, 
+                        "Game Result Loss": categorical_game_result_losses.avg,
+                        "Move Loss": move_losses.avg,
+                        "Top 1 Accuracies": top1_accuracies.avg,
+                        "Top 3 Accuracies": top3_accuracies.avg,
+                        "Top 5 Accuracies": top5_accuracies.avg
+                    })
             
             total_batches_processed += 1
             if i+1>=total_steps and rank==0:
