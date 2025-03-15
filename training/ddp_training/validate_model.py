@@ -210,7 +210,7 @@ def validate_model(rank, world_size, CONFIG):
             if rank==0:
                 pbar.update(1)
                 
-                if i % 50 == 0:  # Update postfix every 1000 iterations to reduce overhead
+                if pbar.n % 50 == 0:  # Update postfix every 1000 iterations to reduce overhead
                     pbar.set_postfix({
                         "Game Result Accuracy": categorical_game_result_accuracies.avg, 
                         "Game Result Loss": categorical_game_result_losses.avg,
