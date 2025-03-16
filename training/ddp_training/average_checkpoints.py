@@ -5,12 +5,12 @@ from configs import import_config
 import argparse
 
 def average_checkpoints(min_checkpoint_step, max_checkpoint_step, checkpoint_folder, repo_id="codingmonster1234/full_trained_model", output_path="averaged_checkpoint.pt"):
-    num_checkpoints = max_checkpoint_step - min_checkpoint_step + 1
+    num_checkpoints = (max_checkpoint_step - min_checkpoint_step) // 1000 + 1
     
     avg_state_dict = None
     i = 0
     
-    for step in range(min_checkpoint_step, max_checkpoint_step + 1):
+    for step in range(min_checkpoint_step, max_checkpoint_step + 1, 1000):
         filename = f"checkpoints/models/1900_step_{step}.pt"
         hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset", local_dir=checkpoint_folder)
         if i == 0:
