@@ -22,7 +22,7 @@ def average_checkpoints(min_checkpoint_step, max_checkpoint_step, checkpoint_fol
         i+=1
     
     for key in avg_state_dict.keys():
-        avg_state_dict[key] /= num_checkpoints
+        avg_state_dict[key] /= float(num_checkpoints)
         
     torch.save({'model_state_dict': avg_state_dict}, output_path)
     
