@@ -209,16 +209,6 @@ def validate_model(rank, world_size, CONFIG):
                             batch['categorical_result']), batch["lengths"].shape[0])
             if rank==0:
                 pbar.update(1)
-                
-                if pbar.n % 50 == 0:  # Update postfix every 1000 iterations to reduce overhead
-                    pbar.set_postfix({
-                        "Game Result Accuracy": categorical_game_result_accuracies.avg, 
-                        "Game Result Loss": categorical_game_result_losses.avg,
-                        "Move Loss": move_losses.avg,
-                        "Top 1 Accuracies": top1_accuracies.avg,
-                        "Top 3 Accuracies": top3_accuracies.avg,
-                        "Top 5 Accuracies": top5_accuracies.avg
-                    })
             
             total_batches_processed += 1
             if i+1>=total_steps and rank==0:

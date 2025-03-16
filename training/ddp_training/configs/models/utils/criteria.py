@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 
 
 
@@ -76,3 +77,43 @@ class LabelSmoothedCE(torch.nn.Module):
         loss = torch.mean(loss)
 
         return loss
+    
+    
+# First, define a Focal Loss class
+class FocalLoss(nn.Module):
+    def __init__(self, alpha = torch.tensor([0.25, 1.25, 0.25]), gamma=2.0, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.reduction = reduction
+        
+    def forward(self, inputs, targets):
+        # Traditional cross entropy
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        
+        # Get the probability for the correct class
+        pt = torch.exp(-ce_loss)
+        
+        # Apply focal weighting
+        focal_weight = (1 - pt) ** self.gamma
+        
+        # Apply alpha weighting for class imbalance
+        if self.alpha is not None:
+            # For multi-class, you can use a tensor of alphas
+            if isinstance(self.alpha, torch.Tensor):
+                alpha_t = self.alpha.gather(0, targets)
+                focal_weight = alpha_t * focal_weight
+            else:
+                # Simple scalar alpha for binary case
+                focal_weight = self.alpha * focal_weight
+        
+        # Apply weighting to CE loss
+        loss = focal_weight * ce_loss
+        
+        # Apply reduction
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            return loss

@@ -4,7 +4,7 @@ from torch import nn
 import multiprocessing as mp
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
-from .utils.criteria import LabelSmoothedCE
+from .utils.criteria import LabelSmoothedCE, FocalLoss
 from .utils.time_controls import time_controls_encoded
 
 
@@ -81,7 +81,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../ablation_1.pt'
+        self.CHECKPOINT_PATH = 'full_trained_model/checkpoints/models/1900_step_224000.pt'#'../../../ablation_1.pt'
         self.VALIDATION_STEPS = 1e10 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
@@ -89,9 +89,8 @@ class CONFIG:
         ###############################
         self.move_time_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.D_MODEL, 3),
-            nn.Softmax(dim=-1),
+        self.categorical_game_result_head = self.categorical_game_result_head = nn.Sequential(
+            nn.Linear(self.D_MODEL, 3)
         )
         self.game_result_head = None
 
@@ -107,8 +106,9 @@ class CONFIG:
             "categorical_game_result_loss_weight": 1.0,
         }
 
+        
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss(label_smoothing=0.2)
+        self.categorical_game_result_loss = FocalLoss()
 
