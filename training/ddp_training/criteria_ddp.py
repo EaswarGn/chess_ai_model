@@ -86,11 +86,14 @@ class MultiTaskChessLoss(nn.Module):
         
         self.loss_weights = CONFIG.LOSS_WEIGHTS
         
+        weights = torch.tensor([1.0, 5.0, 1.0])
+        label_smoothing=0.2
+        
         self.loss_functions = {
             'move_loss': CONFIG.move_loss(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
             'time_loss': CONFIG.move_time_loss,
             'moves_until_end_loss': CONFIG.moves_until_end_loss,
-            'categorical_game_result_loss': CONFIG.categorical_game_result_loss
+            'categorical_game_result_loss': CONFIG.categorical_game_result_loss(weights=weights.to(device), label_smoothing=label_smoothing)
         }
 
     def forward(self, predictions, targets):
