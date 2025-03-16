@@ -11,7 +11,7 @@ def average_checkpoints(min_checkpoint_step, max_checkpoint_step, checkpoint_fol
     i = 0
     
     for step in range(min_checkpoint_step, max_checkpoint_step + 1):
-        filename = f"1900_step_{step}.pt"
+        filename = f"checkpoints/models/1900_step_{step}.pt"
         hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset", local_dir=checkpoint_folder)
         if i == 0:
             avg_state_dict = torch.load(f'{checkpoint_folder}/{filename}', map_location="cpu")['model_state_dict']
