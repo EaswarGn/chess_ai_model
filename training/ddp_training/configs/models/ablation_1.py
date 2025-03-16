@@ -58,6 +58,7 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
+        self.USE_UPLOAD = False #upload checkpoints to hugginface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = None

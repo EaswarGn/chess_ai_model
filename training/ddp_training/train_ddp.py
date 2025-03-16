@@ -436,8 +436,7 @@ def train_epoch(
                 
                 if rank == 0: 
                     time.sleep(5)
-                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models")
-                    #dist.barrier()
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     
                     validate_epoch(
                         rank=rank,

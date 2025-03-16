@@ -86,7 +86,7 @@ from huggingface_hub.utils import RepositoryNotFoundError, BadRequestError
 import shutil
 api = HfApi()
 
-def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_folder, prefix=""):
+def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_folder, CONFIG, prefix=""):
     """
     Checkpoint saver. Each save overwrites any previous save.
 
@@ -132,28 +132,29 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
     os.makedirs(f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}", exist_ok=True)
     shutil.copy(f"{config_name}/logs/main_log/{os.listdir(f'{config_name}/logs/main_log')[0]}", f"{config_name}/logs/checkpoint_logs/{rating}_step_{step}")
     
-    import time
+    if CONFIG.USE_UPLOAD is True:
+        import time
 
-    while True:
-        try:
-            api.upload_folder(
-                folder_path=f"{config_name}",
-                repo_id=f"codingmonster1234/{config_name}",
-                repo_type="dataset",
-                ignore_patterns="**/logs/*.txt",  # Ignore all text logs
-            )
-            print("Upload successful!")
-            break  # Exit loop when upload is successful
-        except (RepositoryNotFoundError, BadRequestError) as e:
-            print(f"Error occurred: {type(e).__name__} - {e}")
+        while True:
+            try:
+                api.upload_folder(
+                    folder_path=f"{config_name}",
+                    repo_id=f"codingmonster1234/{config_name}",
+                    repo_type="dataset",
+                    ignore_patterns="**/logs/*.txt",  # Ignore all text logs
+                )
+                print("Upload successful!")
+                break  # Exit loop when upload is successful
+            except (RepositoryNotFoundError, BadRequestError) as e:
+                print(f"Error occurred: {type(e).__name__} - {e}")
 
-            if isinstance(e, RepositoryNotFoundError):
-                print("Repository not found. Creating repository...")
-                api.create_repo(f"codingmonster1234/{config_name}", repo_type="dataset")
-            elif isinstance(e, BadRequestError):
-                print("Bad request error. Retrying upload...")
+                if isinstance(e, RepositoryNotFoundError):
+                    print("Repository not found. Creating repository...")
+                    api.create_repo(f"codingmonster1234/{config_name}", repo_type="dataset")
+                elif isinstance(e, BadRequestError):
+                    print("Bad request error. Retrying upload...")
 
-            time.sleep(5)  # Wait for 5 seconds before retrying
+                time.sleep(5)  # Wait for 5 seconds before retrying
 
     
     print("Checkpoint saved.\n")
