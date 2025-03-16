@@ -90,7 +90,7 @@ class MultiTaskChessLoss(nn.Module):
             'move_loss': CONFIG.move_loss(DEVICE=device, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES),
             'time_loss': CONFIG.move_time_loss,
             'moves_until_end_loss': CONFIG.moves_until_end_loss,
-            'categorical_game_result_loss': CONFIG.categorical_game_result_loss(device=device)
+            'categorical_game_result_loss': CONFIG.categorical_game_result_loss
         }
 
     def forward(self, predictions, targets):
