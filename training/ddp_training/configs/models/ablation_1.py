@@ -82,7 +82,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../ablation_1.pt'
+        self.CHECKPOINT_PATH = 'averaged_checkpoints.pt'#'../../../ablation_1.pt'
         self.VALIDATION_STEPS = 1e10 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
