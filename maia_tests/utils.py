@@ -614,6 +614,8 @@ if __name__ == "__main__":
     model_move = get_move(board, predictions)
     print(get_move_probabilities(board, predictions))
     
+    predictions['categorical_game_result'] = F.softmax(predictions['categorical_game_result'], dim=0)
+    
     print(board)
     print("FEN: ", board.fen())
     print("Time control: ", time_control)

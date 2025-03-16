@@ -4,6 +4,7 @@ import numpy as np
 from utils import load_model, get_model_inputs, get_move, get_move_probabilities, get_all_move_probabilities
 from configs import import_config
 import chess
+import torch.nn.functional as F
 
 CONFIG = import_config('ablation_4')
 CONFIG = CONFIG.CONFIG()
@@ -29,6 +30,7 @@ def predict():
                                          white_rating=white_rating,
                                          black_rating=black_rating)
                         )
+        predictions['categorical_game_result'] = F.softmax(predictions['categorical_game_result'], dim=0)
         model_move = get_move(board, predictions)
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)

@@ -611,6 +611,7 @@ if __name__ == "__main__":
                                          white_rating=white_rating,
                                          black_rating=black_rating)
                         )
+    predictions['categorical_game_result'] = F.softmax(predictions['categorical_game_result'], dim=0)
     model_move = get_move(board, predictions)
     print(get_move_probabilities(board, predictions))
     
