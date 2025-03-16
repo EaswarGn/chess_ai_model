@@ -58,7 +58,7 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.USE_UPLOAD = False #upload checkpoints to hugginface?
+        self.USE_UPLOAD = False #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
@@ -111,5 +111,5 @@ class CONFIG:
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = FocalLoss()
+        self.categorical_game_result_loss = FocalLoss
 
