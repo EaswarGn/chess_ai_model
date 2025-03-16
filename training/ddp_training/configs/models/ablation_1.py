@@ -108,8 +108,9 @@ class CONFIG:
         }
 
         
+        weights = torch.tensor([1.0, 5.0, 1.0])
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = FocalLoss
+        self.categorical_game_result_loss = nn.CrossEntropyLoss(weight=weights, label_smoothing=0.2)
 
