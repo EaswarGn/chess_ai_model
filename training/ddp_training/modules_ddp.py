@@ -357,7 +357,8 @@ class BoardEncoder(nn.Module):
         d_inner,
         n_layers,
         dropout,
-        num_cls_tokens
+        num_cls_tokens,
+        freeze_board=False
     ):
         """
         Initialize the Enhanced Board Encoder.
@@ -400,11 +401,29 @@ class BoardEncoder(nn.Module):
         self.black_queenside_castling_rights_embeddings = nn.Embedding(
             vocab_sizes["black_queenside_castling_rights"], d_model, dtype=torch.float
         )
-        """self.board_position_embeddings = nn.Embedding(
+        self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
-        )"""
-        self.seq_length = 14 + num_cls_tokens
+        )
+
+        
+        self.seq_length = 78 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
+
+        if freeze_board is True:
+            for param in self.board_position_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.turn_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.white_kingside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.black_kingside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.white_queenside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.black_queenside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for i in range(self.seq_length - 69, self.seq_length):
+                self.positional_embeddings.weight.data[i].requires_grad = False
 
         """# New Temporal and Contextual Embeddings
         self.time_control_embeddings = nn.Embedding(
@@ -598,7 +617,7 @@ class BoardEncoder(nn.Module):
                 self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int64)).to(torch.float32),
                 self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int64)).to(torch.float32),
                 self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int64)).to(torch.float32),
-                #self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),  
+                self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),  
             ],
             dim=1
         )

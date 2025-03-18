@@ -226,7 +226,8 @@ class PonderingTimeModel(nn.Module):
             d_inner=self.d_inner,
             n_layers=self.n_layers,
             dropout=self.dropout,
-            num_cls_tokens=self.num_cls_tokens
+            num_cls_tokens=self.num_cls_tokens,
+            freeze_board='time' in CONFIG.NAME
         )
         
         
@@ -341,5 +342,5 @@ if __name__ == "__main__":
         model = ChessTemporalTransformerEncoder(CONFIG=CONFIG, DEVICE=DEVICE)
     print(
         "There are %d learnable parameters in this model."
-        % sum([p.numel() for p in model.parameters()])
+        % sum([p.numel() for p in model.parameters() if p.requires_grad])
     )
