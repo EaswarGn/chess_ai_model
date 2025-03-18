@@ -340,6 +340,7 @@ class PositionWiseFCNetwork(nn.Module):
         return sequences
     
 
+#seeing if adding batch normalization affects predictive performance
 class BoardEncoder(nn.Module):
     """
     Enhanced Board Encoder with additional temporal and contextual features.
@@ -479,6 +480,7 @@ class BoardEncoder(nn.Module):
         # Temporal Feature Fusion Layer
         self.temporal_fusion = nn.Sequential(
             nn.Linear(d_model * 2, d_model),
+            nn.BatchNorm1d(d_model),
             nn.ReLU(),
             nn.Linear(d_model, d_model)
         )
@@ -492,6 +494,12 @@ class BoardEncoder(nn.Module):
         # Dropout and Layer Norm
         self.apply_dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model)
+        
+        num_features = 7
+        self.batch_norm_layers = nn.ModuleList()
+        for _ in range(num_features):
+            self.batch_norm_layers.append(nn.BatchNorm1d(1))
+        self.batch_norm_layers.append(nn.BatchNorm1d(2))
 
     def make_encoder_layer(self):
         """
@@ -524,6 +532,7 @@ class BoardEncoder(nn.Module):
         black_queenside_castling_rights,
         board_positions,
         # New input parameters for temporal features
+        #categorical_time_control,
         move_number,
         num_legal_moves,
         white_remaining_time,
@@ -556,6 +565,18 @@ class BoardEncoder(nn.Module):
         """
         batch_size = turns.size(0)
         
+        
+        
+        move_number = self.batch_norm_layers[0](move_number)
+        num_legal_moves = self.batch_norm_layers[1](num_legal_moves)
+        white_remaining_time = self.batch_norm_layers[2](white_remaining_time)
+        black_remaining_time = self.batch_norm_layers[3](black_remaining_time)
+        white_material_value = self.batch_norm_layers[4](white_material_value)
+        black_material_value = self.batch_norm_layers[5](black_material_value)
+        material_difference = self.batch_norm_layers[6](material_difference)
+        time_control = self.batch_norm_layers[7](time_control)
+        
+
         # Ensure all tensors have the same dtype, e.g., float32
         embeddings = torch.cat(
             [
@@ -566,21 +587,19 @@ class BoardEncoder(nn.Module):
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_projection(time_control.to(torch.float32)).unsqueeze(1).to(torch.float32),
-                self.phase_embeddings(phase),
+                self.phase_embeddings(phase.to(torch.int64)),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
                 self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
                 self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
                 self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
-                self.turn_embeddings(turns).to(torch.float32),  # Ensure embeddings are float
-                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights).to(torch.float32),
-                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights).to(torch.float32),
-                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights).to(torch.float32),
-                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights).to(torch.float32),
-                self.board_position_embeddings(board_positions).to(torch.float32),
-                
-                
+                self.turn_embeddings(turns.to(torch.int64)).to(torch.float32),  # Ensure embeddings are float
+                self.white_kingside_castling_rights_embeddings(white_kingside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int64)).to(torch.float32),
+                self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),  
             ],
             dim=1
         )

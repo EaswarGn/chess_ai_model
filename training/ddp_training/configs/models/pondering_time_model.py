@@ -4,7 +4,7 @@ from torch import nn
 import multiprocessing as mp
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
-from .utils.criteria import LabelSmoothedCE
+from .utils.criteria import LabelSmoothedCE, FocalLoss
 from .utils.time_controls import time_controls_encoded
 
 
@@ -14,14 +14,18 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "ddp_config"
+        self.NAME = "pondering_time_model"
         self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
         ######### Dataloading #########
         ###############################
         self.BATCH_SIZE = 512
-        self.NUM_WORKERS = mp.cpu_count() // self.NUM_GPUS
+        if self.NUM_GPUS == 0:
+            self.NUM_WORKERS = mp.cpu_count()
+        else:
+            self.NUM_WORKERS = mp.cpu_count() // self.NUM_GPUS
+
         self.PREFETCH_FACTOR = 2
         self.PIN_MEMORY = False
 
@@ -36,34 +40,35 @@ class CONFIG:
             "black_kingside_castling_rights": len(BOOL),
             "black_queenside_castling_rights": len(BOOL),
             "board_position": len(PIECES),
-            "time_controls": len(time_controls_encoded),
-        }
-        self.D_MODEL = 384
-        self.N_HEADS = 8
-        self.D_QUERIES = 64
-        self.D_VALUES = 64
-        self.D_INNER = 4 * self.D_MODEL
-        self.N_LAYERS = 12
-        self.DROPOUT = 0.2
-        self.N_MOVES = 1
-        self.DISABLE_COMPILATION = False
-        self.COMPILATION_MODE = "default"
-        self.DYNAMIC_COMPILATION = True
-        self.SAMPLING_K = 1
+            "time_controls": len(time_controls_encoded)
+        }  # vocabulary sizes
+        self.D_MODEL = 128  # size of vectors throughout the transformer model
+        self.N_HEADS = 4  # number of heads in the multi-head attention
+        self.D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
+        self.D_VALUES = 64  # size of value vectors in the multi-head attention
+        self.D_INNER = 1024  # an intermediate size in the position-wise FC
+        self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
+        self.DROPOUT = 0.1  # dropout probability
+        self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
+        self.DISABLE_COMPILATION = False  # disable model compilation?
+        self.COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
+        self.DYNAMIC_COMPILATION = True  # expect tensors with dynamic shapes?
+        self.SAMPLING_K = 1  # k in top-k sampling model predictions during play
 
         ###############################
         ########### Training ##########
         ###############################
+        self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
-        self.N_STEPS = 10000
-        self.STEPS_PER_EPOCH = 2000
+        self.N_STEPS = None
+        self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
-        self.STEP = 1
+        self.STEP = 1 #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
-            step=self.STEP,
+            step=1,
             d_model=self.D_MODEL,
             warmup_steps=self.WARMUP_STEPS,
             schedule=self.LR_SCHEDULE,
@@ -76,19 +81,19 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.CHECKPOINT_PATH = '../../../1900_step_6000.pt'
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
+        self.CHECKPOINT_PATH = None#'../../../ablation_1.pt'
+        self.VALIDATION_STEPS = 1e10 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
         ###############################
         self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.game_length_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = nn.Sequential(
-            nn.Linear(self.D_MODEL, 3),
-            nn.Softmax(dim=-1),
-        )
+        self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
+        self.categorical_game_result_head = None 
+        """nn.Sequential(
+            nn.Linear(self.D_MODEL, 3)
+        )"""
         self.game_result_head = None
 
         ###############################
@@ -97,14 +102,16 @@ class CONFIG:
         self.CRITERION = LabelSmoothedCE
         self.LOSS_WEIGHTS = {
             "move_loss_weight": 1.0,
-            "time_loss_weight": 0.2,
+            "time_loss_weight": 1.0,
             "result_loss_weight": 0.0,
-            "moves_until_end_loss_weight": 0.2,
-            "categorical_game_result_loss_weight": 0.3,
+            "moves_until_end_loss_weight": 1.0,
+            "categorical_game_result_loss_weight": 1.0,
         }
 
-        self.move_loss = self.CRITERION
-        self.move_time_loss = nn.HuberLoss()
-        self.moves_until_end_loss = nn.HuberLoss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss(label_smoothing=0.1)
+        
+        
+        self.move_loss = None #self.CRITERION
+        self.move_time_loss = nn.L1Loss()
+        self.moves_until_end_loss = None #nn.L1Loss()
+        self.categorical_game_result_loss = None #nn.CrossEntropyLoss
 

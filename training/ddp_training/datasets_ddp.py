@@ -15,6 +15,7 @@ from time_controls import time_controls_encoded
 import numpy as np
 import multiprocessing as mp
 import pickle
+import numpy as np
 
 # Define the record dtype
 record_dtype = np.dtype([
@@ -172,6 +173,10 @@ class ChunkLoader(IterableDataset):
                         pass
                     else:
                         continue
+                    
+                    
+                    #normalizing through log transformations
+                    record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float

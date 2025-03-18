@@ -352,7 +352,7 @@ def load_model(CONFIG):
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/1900_step_10000.pt'
+        checkpoint_path = 'checkpoints/1900_step_347000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         
@@ -467,18 +467,18 @@ def get_model_inputs(board,
     model_inputs["black_rating"] = torch.FloatTensor(
             [black_rating]
         ).unsqueeze(0)
-    model_inputs["move_number"] = torch.IntTensor(
-            [fullmove_count-1]
+    model_inputs["move_number"] = torch.FloatTensor(
+            [fullmove_count]
         ).unsqueeze(0)
     legal_moves_board = board
     num_legal_moves = len(list(legal_moves_board.legal_moves))
-    model_inputs["num_legal_moves"] = torch.IntTensor(
+    model_inputs["num_legal_moves"] = torch.FloatTensor(
             [num_legal_moves]
         ).unsqueeze(0)
-    model_inputs["white_material_value"] = torch.IntTensor(
+    model_inputs["white_material_value"] = torch.FloatTensor(
             [calculate_material(board.fen(), 'white')]
         ).unsqueeze(0)
-    model_inputs["black_material_value"] = torch.IntTensor(
+    model_inputs["black_material_value"] = torch.FloatTensor(
             [calculate_material(board.fen(), 'black')]
         ).unsqueeze(0)
     
@@ -486,14 +486,14 @@ def get_model_inputs(board,
         model_inputs["material_difference"] = calculate_material(board.fen(), 'white') - calculate_material(board.fen(), 'black')
     if t=='b':
         model_inputs["material_difference"] = calculate_material(board.fen(), 'black') - calculate_material(board.fen(), 'white')
-    model_inputs["material_difference"] = torch.IntTensor(
+    model_inputs["material_difference"] = torch.FloatTensor(
             [model_inputs["material_difference"]]
         ).unsqueeze(0)
     
-    model_inputs["base_time"] = torch.IntTensor(
+    model_inputs["base_time"] = torch.FloatTensor(
             [int(time_control.split("+")[0])]
         ).unsqueeze(0)
-    model_inputs["increment_time"] = torch.IntTensor(
+    model_inputs["increment_time"] = torch.FloatTensor(
             [int(time_control.split("+")[1])]
         ).unsqueeze(0)
     
@@ -598,12 +598,12 @@ if __name__ == "__main__":
 
     # Train model
     model = load_model(CONFIG)
-    board = chess.Board("r4rk1/pb1qbppp/1pp1pn2/3p4/2PP4/2N3P1/PP2PPBP/R1BQR1K1 w - - 0 11")
-    white_remaining_time=290
-    black_remaining_time=285
+    board = chess.Board("4B1k1/R4p1p/4p3/p4p2/1bP5/1P4PP/5K2/8 b - - 0 34")
+    white_remaining_time=10
+    black_remaining_time=10
     white_rating = 1950
     black_rating=1950
-    time_control = '300+0'
+    time_control = '180+0'
     predictions = model(get_model_inputs(board,
                                          time_control=time_control,
                                          white_remaining_time=white_remaining_time,
@@ -611,7 +611,6 @@ if __name__ == "__main__":
                                          white_rating=white_rating,
                                          black_rating=black_rating)
                         )
-    predictions['categorical_game_result'] = F.softmax(predictions['categorical_game_result'], dim=0)
     model_move = get_move(board, predictions)
     print(get_move_probabilities(board, predictions))
     
@@ -625,10 +624,12 @@ if __name__ == "__main__":
     
     print("\n\n")   
     print("predicted move: ",model_move)
-    if board.turn:
-        print(f"Predicted time for white to spend on move {round(predictions['move_time'][0].item(), 4)}s")
-    else:
-        print(f"Predicted time for black to spend on move {round(predictions['move_time'][0].item(), 4)}s")
+    
+    if predictions['move_time'] is not None:
+        if board.turn:
+            print(f"Predicted time for white to spend on move {round(predictions['move_time'][0].item(), 4)}s")
+        else:
+            print(f"Predicted time for black to spend on move {round(predictions['move_time'][0].item(), 4)}s")
     #print("Model's evaluation of the position is: ", round(predictions['game_result'][0].item(), 4))
     #print(f"Predicted number of full moves until the game ends: {int(predictions['moves_until_end'][0].item()*100)}")
     print("Probability that white wins: ", round(predictions['categorical_game_result'][0][2].item(), 4))
