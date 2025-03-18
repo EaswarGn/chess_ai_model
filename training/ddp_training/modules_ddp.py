@@ -626,7 +626,5 @@ class BoardEncoder(nn.Module):
 
         # Layer normalization
         boards = self.layer_norm(boards)
-        
-        print(boards.shape)
 
         return boards
