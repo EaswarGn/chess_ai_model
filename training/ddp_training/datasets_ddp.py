@@ -175,7 +175,7 @@ class ChunkLoader(IterableDataset):
                     
                     
                     #normalizing through log transformations
-                    record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
+                    #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float
