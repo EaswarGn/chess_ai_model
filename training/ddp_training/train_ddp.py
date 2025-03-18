@@ -204,8 +204,8 @@ def train_model_ddp(rank, world_size, CONFIG):
     if "time" in CONFIG.NAME:
         use_low_time = True
         min_full_move_number = -1
-    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, use_low_time=use_low_time, min_full_move_number=min_full_move_number)
-    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, use_low_time=use_low_time, min_full_move_number=min_full_move_number)
+    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number)
+    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number)
 
     train_loader = DataLoader(
         dataset=train_dataset,

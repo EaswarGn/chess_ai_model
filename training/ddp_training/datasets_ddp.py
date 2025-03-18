@@ -58,7 +58,7 @@ class ChunkLoader(IterableDataset):
                  record_dtype,
                  rank,
                  world_size,
-                 use_low_time=False,
+                 include_low_time_moves=False,
                  min_full_move_number= -1, #initialized to arbitrary small value to allow any minimum move number
                  max_full_move_number= 500 #initialized to arbitrary large value to allow any max move number
         ):
@@ -72,7 +72,7 @@ class ChunkLoader(IterableDataset):
         # Get rank and world size for distributed training
         self.rank = rank
         self.world_size = world_size
-        self.use_low_time = use_low_time
+        self.include_low_time_moves = include_low_time_moves
         self.min_full_move_number = min_full_move_number
         self.max_full_move_number = max_full_move_number
 
@@ -161,9 +161,8 @@ class ChunkLoader(IterableDataset):
                         
                     
                         
-                    if self.use_low_time is True:
-                        if int(record["white_remaining_time"])>30 or int(record["black_remaining_time"])>30:
-                            continue
+                    if self.include_low_time_moves is True:
+                        pass
                     else:
                         if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
                             continue
