@@ -103,7 +103,7 @@ class MultiTaskChessLoss(nn.Module):
             loss_fn = self.loss_functions[key]
             
             if loss_fn is None:
-                loss = torch.tensor(0.0)
+                loss = torch.tensor(0.0).to(self.device)
                 individual_losses[key] = loss
                 continue
             
