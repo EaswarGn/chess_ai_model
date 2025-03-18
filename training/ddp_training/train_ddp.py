@@ -119,12 +119,25 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
+
         for key, value in state_dict.items():
-            new_key = key.replace('_orig_mod.', '')
-            new_key = new_key.replace('module.', '')
-            #new_key = 'module.'+new_key
-            new_state_dict[new_key] = value
+            new_key = key.replace('_orig_mod.', '').replace('module.', '')
+
+            # Handle the positional embeddings separately
+            if new_key == "board_encoder.positional_embeddings.weight":
+                # Create a new weight tensor with the correct shape (79, 512)
+                new_value = model.state_dict()[new_key].clone()  # Clone model's tensor
+                
+                # Copy elements 1 to 78 from the checkpoint (skip the first element)
+                new_value[1:79] = value[1:79]  # Assuming value has shape (81, 512)
+                
+                new_state_dict[new_key] = new_value
+            else:
+                new_state_dict[new_key] = value  # Copy all other weights normally
+
+        # Load the modified state_dict into the model
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+
         
         
         
