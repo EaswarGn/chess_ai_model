@@ -46,7 +46,7 @@ class CONFIG:
         self.N_HEADS = 8  # number of heads in the multi-head attention
         self.D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
-        self.D_INNER = 1024  # an intermediate size in the position-wise FC
+        self.D_INNER = 2048  # an intermediate size in the position-wise FC
         self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
         self.DROPOUT = 0.1  # dropout probability
         self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
@@ -81,8 +81,8 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = None#'../../../ablation_1.pt'
+        self.USE_STRICT = True #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
