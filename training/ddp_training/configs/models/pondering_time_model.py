@@ -42,8 +42,8 @@ class CONFIG:
             "board_position": len(PIECES),
             "time_controls": len(time_controls_encoded)
         }  # vocabulary sizes
-        self.D_MODEL = 128  # size of vectors throughout the transformer model
-        self.N_HEADS = 4  # number of heads in the multi-head attention
+        self.D_MODEL = 512  # size of vectors throughout the transformer model
+        self.N_HEADS = 8  # number of heads in the multi-head attention
         self.D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
         self.D_INNER = 1024  # an intermediate size in the position-wise FC
