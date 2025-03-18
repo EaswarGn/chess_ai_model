@@ -227,7 +227,6 @@ class PonderingTimeModel(nn.Module):
             n_layers=self.n_layers,
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens,
-            freeze_board='time' in CONFIG.NAME
         )
         
         

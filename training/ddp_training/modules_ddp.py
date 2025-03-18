@@ -423,15 +423,9 @@ class BoardEncoder(nn.Module):
             for param in self.black_queenside_castling_rights_embeddings.parameters():
                 param.requires_grad = False
                 
-                
-            # Detach the positional embeddings weight tensor
             weight = self.positional_embeddings.weight.detach()
-
-            # Freeze parameters starting from index self.seq_length - 69
             for i in range(self.seq_length - 69, self.seq_length):
                 weight[i].requires_grad = False
-
-            # Assign the modified detached weight back to the embedding layer
             self.positional_embeddings.weight = torch.nn.Parameter(weight)
 
         
