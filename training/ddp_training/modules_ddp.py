@@ -400,10 +400,10 @@ class BoardEncoder(nn.Module):
         self.black_queenside_castling_rights_embeddings = nn.Embedding(
             vocab_sizes["black_queenside_castling_rights"], d_model, dtype=torch.float
         )
-        self.board_position_embeddings = nn.Embedding(
+        """self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
-        )
-        self.seq_length = 78 + num_cls_tokens
+        )"""
+        self.seq_length = 14 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
         """# New Temporal and Contextual Embeddings
@@ -598,7 +598,7 @@ class BoardEncoder(nn.Module):
                 self.white_queenside_castling_rights_embeddings(white_queenside_castling_rights.to(torch.int64)).to(torch.float32),
                 self.black_kingside_castling_rights_embeddings(black_kingside_castling_rights.to(torch.int64)).to(torch.float32),
                 self.black_queenside_castling_rights_embeddings(black_queenside_castling_rights.to(torch.int64)).to(torch.float32),
-                self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),  
+                #self.board_position_embeddings(board_positions.to(torch.int64)).to(torch.float32),  
             ],
             dim=1
         )
