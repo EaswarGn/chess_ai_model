@@ -5,7 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules_ddp import BoardEncoder, ExperimentalBoardEncoder
+from modules_ddp import BoardEncoder
 import torch.nn.functional as F
 import numpy as np
 
@@ -53,7 +53,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens
         )"""
-        self.board_encoder = ExperimentalBoardEncoder(
+        self.board_encoder = BoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
@@ -216,7 +216,7 @@ class PonderingTimeModel(nn.Module):
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens
         )"""
-        self.board_encoder = ExperimentalBoardEncoder(
+        self.board_encoder = BoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
@@ -308,22 +308,15 @@ class PonderingTimeModel(nn.Module):
             cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
-        from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
-        to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
-        moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
-        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
-        move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
-        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
-        
-        
-        
+        move_time = self.move_time_head(boards[:, 0:1, :]).squeeze(-1)
+         
         predictions = {
-            'from_squares': from_squares,
-            'to_squares': to_squares,
-            'game_result': game_result,
+            'from_squares': None,
+            'to_squares': None,
+            'game_result': None,
             'move_time': move_time, #* 100,  # Scaled for data compatibility
-            'moves_until_end': moves_until_end,
-            'categorical_game_result': categorical_game_result
+            'moves_until_end': None,
+            'categorical_game_result': None
         }
 
         return predictions
