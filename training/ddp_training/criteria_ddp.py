@@ -139,8 +139,6 @@ class MultiTaskChessLoss(nn.Module):
 
         total_loss = 0.0
         for i, key in enumerate(individual_losses):
-            print(f"{key} on device: {individual_losses[key].device}")
-            #print()
             total_loss += self.loss_weights[key+'_weight'] * individual_losses[key]
 
         return total_loss, individual_losses
