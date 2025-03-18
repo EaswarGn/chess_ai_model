@@ -129,7 +129,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 new_value = model.state_dict()[new_key].clone()  # Clone model's tensor
                 
                 # Copy elements 1 to 78 from the checkpoint (skip the first element)
-                new_value[1:15] = value[3:17]  # Assuming value has shape (81, 512)
+                new_value[1:79] = value[3:81]  # Assuming value has shape (81, 512)
                 
                 new_state_dict[new_key] = new_value
             else:

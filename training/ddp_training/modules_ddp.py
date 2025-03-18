@@ -424,12 +424,6 @@ class BoardEncoder(nn.Module):
                 param.requires_grad = False
             for i in range(self.seq_length - 69, self.seq_length):
                 self.positional_embeddings.weight.data[i].requires_grad = False
-
-        """# New Temporal and Contextual Embeddings
-        self.time_control_embeddings = nn.Embedding(
-            vocab_sizes.get("time_control", 458), d_model, dtype=torch.float
-        )"""
-        
         
         
         # Continuous Feature Projections (ensure output remains float)
