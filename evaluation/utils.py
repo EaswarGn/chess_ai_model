@@ -5,8 +5,9 @@ import regex
 import argparse
 from configs import import_config
 import torch.nn.functional as F
+import numpy as np
 from configs.models.utils.levels import TURN, PIECES, UCI_MOVES, BOOL, SQUARES, FILES, RANKS
-from model import ChessTemporalTransformerEncoder
+from model import ChessTemporalTransformerEncoder, PonderingTimeModel
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -348,11 +349,18 @@ def load_model(CONFIG):
         torch.nn.Module: The model.
     """
     # Model
-    _model = ChessTemporalTransformerEncoder(CONFIG, DEVICE).to(DEVICE)
+    model = None
+    if 'time' in CONFIG.NAME:
+        _model = PonderingTimeModel(CONFIG, DEVICE).to(DEVICE)
+    else:
+        _model = ChessTemporalTransformerEncoder(CONFIG, DEVICE).to(DEVICE)
 
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
-        checkpoint_path = 'checkpoints/1900_step_347000.pt'
+        if 'time' in CONFIG.NAME:
+            checkpoint_path = 'checkpoints/1900_step_14000.pt'
+        else:
+            checkpoint_path = 'checkpoints/1900_step_347000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         
@@ -379,7 +387,7 @@ def load_model(CONFIG):
     model = _model
     model.eval()  # eval mode disables dropout
 
-    print("\nModel loaded!\n")
+    print(f"\n {CONFIG.NAME} Model loaded!\n")
 
     return model
 
@@ -598,19 +606,23 @@ if __name__ == "__main__":
 
     # Train model
     model = load_model(CONFIG)
+    pondering_time_model = load_model(import_config('pondering_time_model').CONFIG())
     board = chess.Board("4B1k1/R4p1p/4p3/p4p2/1bP5/1P4PP/5K2/8 b - - 0 34")
-    white_remaining_time=10
-    black_remaining_time=10
+    white_remaining_time=50
+    black_remaining_time=50
     white_rating = 1950
     black_rating=1950
     time_control = '180+0'
-    predictions = model(get_model_inputs(board,
-                                         time_control=time_control,
-                                         white_remaining_time=white_remaining_time,
-                                         black_remaining_time=black_remaining_time,
-                                         white_rating=white_rating,
-                                         black_rating=black_rating)
-                        )
+    
+    inputs = get_model_inputs(board,
+                            time_control=time_control,
+                            white_remaining_time=white_remaining_time,
+                            black_remaining_time=black_remaining_time,
+                            white_rating=white_rating,
+                            black_rating=black_rating)
+    predictions = model(inputs)
+    pondering_time_pred = pondering_time_model(inputs) 
+    predictions['move_time'] = np.expm1(pondering_time_pred['move_time'][0].item())
     model_move = get_move(board, predictions)
     print(get_move_probabilities(board, predictions))
     
@@ -627,9 +639,9 @@ if __name__ == "__main__":
     
     if predictions['move_time'] is not None:
         if board.turn:
-            print(f"Predicted time for white to spend on move {round(predictions['move_time'][0].item(), 4)}s")
+            print(f"Predicted time for white to spend on move {round(predictions['move_time'], 4)}s")
         else:
-            print(f"Predicted time for black to spend on move {round(predictions['move_time'][0].item(), 4)}s")
+            print(f"Predicted time for black to spend on move {round(predictions['move_time'], 4)}s")
     #print("Model's evaluation of the position is: ", round(predictions['game_result'][0].item(), 4))
     #print(f"Predicted number of full moves until the game ends: {int(predictions['moves_until_end'][0].item()*100)}")
     print("Probability that white wins: ", round(predictions['categorical_game_result'][0][2].item(), 4))

@@ -805,7 +805,6 @@ class ExperimentalBoardEncoder(nn.Module):
         black_queenside_castling_rights,
         board_positions,
         # New input parameters for temporal features
-        categorical_time_control,
         move_number,
         num_legal_moves,
         white_remaining_time,

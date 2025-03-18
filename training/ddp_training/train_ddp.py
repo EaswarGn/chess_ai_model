@@ -462,11 +462,13 @@ def train_epoch(
             
             
             if CONFIG.N_STEPS is None:
-                if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP:
+                if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP and rank==0:
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
                     sys.exit()
             else:
-                if step >= CONFIG.N_STEPS:
+                if step >= CONFIG.N_STEPS and rank==0:
+                    save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
                     sys.exit()
 
