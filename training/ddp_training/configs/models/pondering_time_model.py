@@ -60,7 +60,7 @@ class CONFIG:
         ###############################
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
-        self.PRINT_FREQUENCY = 5
+        self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
