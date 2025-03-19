@@ -42,11 +42,11 @@ class CONFIG:
             "board_position": len(PIECES),
             "time_controls": len(time_controls_encoded)
         }  # vocabulary sizes
-        self.D_MODEL = 128  # size of vectors throughout the transformer model
-        self.N_HEADS = 4  # number of heads in the multi-head attention
+        self.D_MODEL = 512  # size of vectors throughout the transformer model
+        self.N_HEADS = 8  # number of heads in the multi-head attention
         self.D_QUERIES = 64  # size of query vectors (and also the size of the key vectors) in the multi-head attention
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
-        self.D_INNER = 1024  # an intermediate size in the position-wise FC
+        self.D_INNER = 2048  # an intermediate size in the position-wise FC
         self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
         self.DROPOUT = 0.1  # dropout probability
         self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
@@ -64,7 +64,7 @@ class CONFIG:
         self.N_STEPS = None
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
-        self.STEP = 1 #the step to start training at, if None then step will start at 1 even after loading from checkpoint
+        self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
@@ -82,7 +82,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = None#'../../../ablation_1.pt'
+        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################

@@ -61,6 +61,22 @@ record_dtype = np.dtype([
 
 rating = 1900
 
+def seed_everything(seed: int = 42):
+    random.seed(seed)  # Python random module
+    np.random.seed(seed)  # NumPy random module
+    torch.manual_seed(seed)  # PyTorch random seed (CPU)
+    
+    # If using CUDA
+    torch.cuda.manual_seed(seed)  
+    torch.cuda.manual_seed_all(seed)  # For multi-GPU training
+    
+    # Ensures deterministic behavior
+    torch.backends.cudnn.deterministic = True  
+    torch.backends.cudnn.benchmark = False  # Disables auto-optimization
+    
+    # Ensures deterministic behavior for `torch.use_deterministic_algorithms`
+    torch.use_deterministic_algorithms(True, warn_only=True)
+
 def setup_ddp(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
@@ -71,7 +87,10 @@ def cleanup_ddp():
     dist.destroy_process_group()
 
 def train_model_ddp(rank, world_size, CONFIG):
+    
+    seed_everything(42)
     setup_ddp(rank, world_size)
+    
     
     os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' 
     

@@ -422,10 +422,10 @@ class BoardEncoder(nn.Module):
                 param.requires_grad = False
             for param in self.black_queenside_castling_rights_embeddings.parameters():
                 param.requires_grad = False
-                
             weight = self.positional_embeddings.weight.detach()
             for i in range(self.seq_length - 69, self.seq_length):
                 weight[i].requires_grad = False
+
             self.positional_embeddings.weight = torch.nn.Parameter(weight)
 
         
