@@ -4,88 +4,21 @@ from torch import nn
 import sys
 
 
-import math
-import torch
-from torch import nn
-import sys
-
-
-class SmolgenMLP(nn.Module):
-    """
-    Smolgen MLP that generates additional attention logits based on global information.
-    It takes the entire residual state and generates offsets to attention scores.
-    """
-    def __init__(self, d_model, n_heads, sequence_length, hidden_size=256):
-        super(SmolgenMLP, self).__init__()
-        
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.sequence_length = sequence_length
-        
-        # Compress each position's embedding to a smaller representation
-        self.compress_embedding = nn.Linear(d_model, 32)
-        
-        # Process the compressed embeddings through MLP
-        self.hidden_layer1 = nn.Linear(32 * sequence_length, hidden_size)
-        self.hidden_layer2 = nn.Linear(hidden_size, hidden_size)
-        
-        # Output layer that generates attention logit offsets for all heads
-        # Output shape will be [n_heads, sequence_length, sequence_length]
-        self.output_layer = nn.Linear(hidden_size, n_heads * sequence_length * sequence_length)
-        
-        # Activation function (Swish as mentioned in the description, slightly better than ReLU)
-        self.swish = lambda x: x * torch.sigmoid(x)
-    
-    def forward(self, residual_state):
-        """
-        Generate attention logit offsets based on the entire residual state.
-        
-        Args:
-            residual_state: Tensor of shape [batch_size, sequence_length, d_model]
-            
-        Returns:
-            Tensor of shape [batch_size, n_heads, sequence_length, sequence_length]
-            containing attention logit offsets
-        """
-        batch_size = residual_state.size(0)
-        
-        # Compress each position's embedding
-        compressed = self.compress_embedding(residual_state)  # [batch_size, sequence_length, 32]
-        
-        # Flatten for global processing
-        flattened = compressed.reshape(batch_size, -1)  # [batch_size, sequence_length * 32]
-        
-        # Process through MLP
-        hidden = self.swish(self.hidden_layer1(flattened))
-        hidden = self.swish(self.hidden_layer2(hidden))
-        
-        # Generate attention logit offsets
-        logit_offsets = self.output_layer(hidden)  # [batch_size, n_heads * sequence_length * sequence_length]
-        
-        # Reshape to the desired output shape
-        logit_offsets = logit_offsets.reshape(
-            batch_size, self.n_heads, self.sequence_length, self.sequence_length
-        )
-        
-        return logit_offsets
-
-
 class MultiHeadAttention(nn.Module):
     """
-    The Multi-Head Attention sublayer with Smolgen enhancement.
-    
-    Reused from https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Machine-Translation
-    and enhanced with Smolgen as used in Leela Chess.
+    The Multi-Head Attention sublayer.
+
+    Reused from https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Machine-Translation.
     """
 
     def __init__(
-        self, DEVICE, d_model, n_heads, d_queries, d_values, dropout, 
-        in_decoder=False, sequence_length=None, use_smolgen=True
+        self, DEVICE, d_model, n_heads, d_queries, d_values, dropout, in_decoder=False
     ):
         """
         Init.
 
         Args:
+
             d_model (int): The size of vectors throughout the
             transformer model, i.e. input and output sizes for this
             sublayer.
@@ -102,12 +35,6 @@ class MultiHeadAttention(nn.Module):
 
             in_decoder (bool, optional): Is this Multi-Head Attention
             sublayer instance in the Decoder? Defaults to False.
-            
-            sequence_length (int, optional): Length of input sequences,
-            required for Smolgen. Defaults to None.
-            
-            use_smolgen (bool, optional): Whether to use Smolgen enhancement.
-            Defaults to True.
         """
         super(MultiHeadAttention, self).__init__()
 
@@ -119,8 +46,6 @@ class MultiHeadAttention(nn.Module):
         self.d_keys = d_queries  # size of key vectors, same as of the query vectors to allow dot-products for similarity
 
         self.in_decoder = in_decoder
-        self.use_smolgen = use_smolgen
-        self.sequence_length = sequence_length
 
         # A linear projection to cast (n_heads sets of) queries from the
         # input query sequences
@@ -134,10 +59,6 @@ class MultiHeadAttention(nn.Module):
         # attention-weighted vectors to output vectors (of the same size
         # as input query vectors)
         self.cast_output = nn.Linear(n_heads * d_values, d_model)
-        
-        # Smolgen component - MLP that generates attention logit offsets
-        if use_smolgen and sequence_length is not None:
-            self.smolgen = SmolgenMLP(d_model, n_heads, sequence_length)
 
         # Softmax layer
         self.softmax = nn.Softmax(dim=-1)
@@ -155,6 +76,7 @@ class MultiHeadAttention(nn.Module):
         Forward prop.
 
         Args:
+
             query_sequences (torch.FloatTensor): The input query
             sequences, of size (N, query_sequence_pad_length, d_model).
 
@@ -167,6 +89,7 @@ class MultiHeadAttention(nn.Module):
             pads, of size (N).
 
         Returns:
+
             torch.FloatTensor: Attention-weighted output sequences for
             the query sequences, of size (N, query_sequence_pad_length,
             d_model).
@@ -245,21 +168,6 @@ class MultiHeadAttention(nn.Module):
         attention_weights = (
             1.0 / math.sqrt(self.d_keys)
         ) * attention_weights  # (N * n_heads, query_sequence_pad_length, key_value_sequence_pad_length)
-        
-        # ===== SMOLGEN ENHANCEMENT =====
-        # Apply smolgen to generate attention logit offsets if enabled and in self-attention mode
-        if self.use_smolgen and self_attention and hasattr(self, 'smolgen'):
-            # Generate smolgen attention logit offsets from the residual state
-            smolgen_offsets = self.smolgen(query_sequences)  # [batch_size, n_heads, seq_len, seq_len]
-            
-            # Reshape to match attention_weights shape for addition
-            smolgen_offsets = smolgen_offsets.view(
-                batch_size * self.n_heads, query_sequence_pad_length, key_value_sequence_pad_length
-            )
-            
-            # Add smolgen offsets to the scaled dot-product attention scores
-            attention_weights = attention_weights + smolgen_offsets
-        # ===== END SMOLGEN ENHANCEMENT =====
 
         # Before computing softmax weights, prevent queries from
         # attending to certain keys
@@ -432,10 +340,10 @@ class PositionWiseFCNetwork(nn.Module):
         return sequences
 
 
+#seeing if adding batch normalization affects predictive performance
 class BoardEncoder(nn.Module):
     """
     Enhanced Board Encoder with additional temporal and contextual features.
-    Includes Smolgen for improved attention mechanisms.
     """
 
     def __init__(
@@ -450,8 +358,7 @@ class BoardEncoder(nn.Module):
         n_layers,
         dropout,
         num_cls_tokens,
-        freeze_board=False,
-        use_smolgen=False  # New parameter to enable/disable smolgen
+        freeze_board=False
     ):
         """
         Initialize the Enhanced Board Encoder.
@@ -465,9 +372,6 @@ class BoardEncoder(nn.Module):
             d_inner (int): Inner dimension of feed-forward networks.
             n_layers (int): Number of encoder layers.
             dropout (float): Dropout probability.
-            num_cls_tokens (int): Number of classification tokens to prepend.
-            freeze_board (bool): Whether to freeze board embeddings.
-            use_smolgen (bool): Whether to use smolgen enhancement.
         """
         super(BoardEncoder, self).__init__()
 
@@ -480,7 +384,6 @@ class BoardEncoder(nn.Module):
         self.d_inner = d_inner
         self.n_layers = n_layers
         self.dropout = dropout
-        self.use_smolgen = use_smolgen
 
         self.DEVICE = DEVICE
 
@@ -502,6 +405,7 @@ class BoardEncoder(nn.Module):
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
 
+        
         self.seq_length = 78 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
@@ -524,6 +428,8 @@ class BoardEncoder(nn.Module):
 
             self.positional_embeddings.weight = torch.nn.Parameter(weight)
 
+        
+        
         # Continuous Feature Projections (ensure output remains float)
         self.time_control_projection = nn.Sequential(
             nn.Linear(2, d_model),  # Input size is 2 (initial time + increment time)
@@ -596,7 +502,8 @@ class BoardEncoder(nn.Module):
             nn.Linear(d_model, d_model)
         )
         
-        # Encoder layers with Smolgen
+        
+        # Encoder layers
         self.encoder_layers = nn.ModuleList(
             [self.make_encoder_layer() for _ in range(n_layers)]
         )
@@ -613,8 +520,8 @@ class BoardEncoder(nn.Module):
 
     def make_encoder_layer(self):
         """
-        Create a single encoder layer with multi-head attention (with smolgen)
-        and position-wise feed-forward network.
+        Create a single encoder layer with multi-head attention and 
+        position-wise feed-forward network.
         """
         return nn.ModuleList([
             MultiHeadAttention(
@@ -625,8 +532,6 @@ class BoardEncoder(nn.Module):
                 d_values=self.d_values,
                 dropout=self.dropout,
                 in_decoder=False,
-                sequence_length=self.seq_length,  # Pass sequence length for smolgen
-                use_smolgen=self.use_smolgen  # Enable smolgen
             ),
             PositionWiseFCNetwork(
                 d_model=self.d_model, 
@@ -658,7 +563,7 @@ class BoardEncoder(nn.Module):
         cls_tokens
     ):
         """
-        Forward pass with enhanced temporal feature integration and smolgen attention.
+        Forward pass with enhanced temporal feature integration.
         
         Args:
             (Previous args remain the same)
@@ -668,15 +573,15 @@ class BoardEncoder(nn.Module):
             white_remaining_time (torch.FloatTensor): Remaining time for white
             black_remaining_time (torch.FloatTensor): Remaining time for black
             phase (torch.LongTensor): Game phase
-            white_material_value (torch.FloatTensor): Material value for white
-            black_material_value (torch.FloatTensor): Material value for black
-            material_difference (torch.FloatTensor): Material difference
-            cls_tokens (torch.FloatTensor): Classification tokens to prepend
+            white_rating (torch.LongTensor): White player's rating
+            black_rating (torch.LongTensor): Black player's rating
         
         Returns:
             torch.FloatTensor: Encoded board representation
         """
         batch_size = turns.size(0)
+        
+        
         
         move_number = self.batch_norm_layers[0](move_number)
         num_legal_moves = self.batch_norm_layers[1](num_legal_moves)

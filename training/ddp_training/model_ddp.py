@@ -64,7 +64,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
             n_layers=self.n_layers,
             dropout=self.dropout,
             num_cls_tokens=self.num_cls_tokens,
-            use_smolgen=CONFIG.USE_SMOLGEN
         )
         
         self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
