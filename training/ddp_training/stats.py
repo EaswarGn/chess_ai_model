@@ -10,14 +10,16 @@ import torch.distributed as dist
 import struct
 import random
 import sys
+import chess
 from tqdm import tqdm
+import math
 
 from configs import import_config
 from time_controls import time_controls_encoded
 import numpy as np
 import multiprocessing as mp
 import pickle
-
+from configs.models.utils.levels import *
 
 
 def get_all_record_files(directory: str):
@@ -74,6 +76,61 @@ for filename in file_list:
             record["black_material_value"] = unpacked[idx]; idx += 1
             record["material_difference"] = unpacked[idx]; idx += 1
             record["moves_until_end"] = unpacked[idx]; idx += 1
+            
+            board = chess.Board(None)
+            reversed_squares = {value: key for key, value in SQUARES.items()}
+            
+            board.fullmove_number = record["move_number"]
+            if record['turn'] == 1:
+                board.turn = chess.BLACK
+            if record['turn'] == 0:
+                board.turn = chess.WHITE
+                
+            for index, piece in enumerate(record["board_position"]):
+                if piece != 0:
+                    square_str = reversed_squares[index]
+                    square = chess.SQUARE_NAMES.index(square_str)
+                    
+                    curr_piece = None
+                    if piece==1:
+                        board.ep_square = square
+                    if piece==2:
+                        curr_piece = chess.Piece(chess.PAWN, chess.WHITE)
+                    if piece==3:
+                        curr_piece = chess.Piece(chess.PAWN, chess.BLACK)
+                    if piece==4:
+                        curr_piece = chess.Piece(chess.ROOK, chess.WHITE)
+                    if piece==5:
+                        curr_piece = chess.Piece(chess.ROOK, chess.BLACK)
+                    if piece==6:
+                        curr_piece = chess.Piece(chess.KNIGHT, chess.WHITE)
+                    if piece==7:
+                        curr_piece = chess.Piece(chess.KNIGHT, chess.BLACK)
+                    if piece==8:
+                        curr_piece = chess.Piece(chess.BISHOP, chess.WHITE)
+                    if piece==9:
+                        curr_piece = chess.Piece(chess.BISHOP, chess.BLACK)
+                    if piece==10:
+                        curr_piece = chess.Piece(chess.QUEEN, chess.WHITE)
+                    if piece==11:
+                        curr_piece = chess.Piece(chess.QUEEN, chess.BLACK)
+                    if piece==12:
+                        curr_piece = chess.Piece(chess.KING, chess.WHITE)
+                    if piece==13:
+                        curr_piece = chess.Piece(chess.KING, chess.BLACK)
+
+                    board.set_piece_at(square, curr_piece)
+
+            num_legal_moves = len(list(board.legal_moves))
+            
+            if abs(record["num_legal_moves"] - num_legal_moves) > 1:
+                print(record)
+                print(board.fen())
+                print(num_legal_moves)
+                sys.exit()
+            #sys.exit()
+                    
+                    
             
             if int(record['move_number']) <= 8:
                 record["moves_until_end"] = 35

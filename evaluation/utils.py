@@ -622,7 +622,7 @@ if __name__ == "__main__":
                             black_rating=black_rating)
     predictions = model(inputs)
     pondering_time_pred = pondering_time_model(inputs) 
-    predictions['move_time'] = np.expm1(pondering_time_pred['move_time'][0].item())
+    predictions['move_time'] = pondering_time_pred['move_time'][0].item()
     model_move = get_move(board, predictions)
     print(get_move_probabilities(board, predictions))
     

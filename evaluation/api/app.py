@@ -25,19 +25,20 @@ def predict():
         black_rating = int(request.json['black_rating'])
 
         inputs = get_model_inputs(board,
-                                         time_control=time_control,
-                                         white_remaining_time=white_remaining_time,
-                                         black_remaining_time=black_remaining_time,
-                                         white_rating=white_rating,
-                                         black_rating=black_rating)
+                time_control=time_control,
+                white_remaining_time=white_remaining_time,
+                black_remaining_time=black_remaining_time,
+                white_rating=white_rating,
+                black_rating=black_rating
+        )
         
         
         predictions = model(inputs)
-        pondering_time_pred = pondering_time_model(inputs) 
+        pondering_time_pred = pondering_time_model(inputs)
         
         
         model_move = get_move(board, predictions)
-        predictions['move_time'] = np.expm1(pondering_time_pred['move_time'][0].item())
+        predictions['move_time'] = pondering_time_pred['move_time'][0].item()
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
         
