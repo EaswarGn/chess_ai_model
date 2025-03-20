@@ -1,5 +1,6 @@
 import os
 os.environ["XLA_FLAGS"] = "--xla_gpu_cuda_data_dir=/usr/lib/cuda"
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import time
 import argparse
 import torch.optim
