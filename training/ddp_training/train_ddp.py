@@ -23,7 +23,7 @@ from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
 from datasets_ddp import ChunkLoader
-from model_ddp import ChessTemporalTransformerEncoder, PonderingTimeModel
+from model_ddp import ChessTemporalTransformerEncoder, PonderingTimeModel, ExperimentalModel
 import numpy as np
 import subprocess
 import random
@@ -110,7 +110,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     if "time" in CONFIG.NAME:
         model = PonderingTimeModel(CONFIG, DEVICE=DEVICE).to(DEVICE)
     else:
-        model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+        model = ExperimentalModel(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     # Optimizer
     optimizer = torch.optim.Adam(
