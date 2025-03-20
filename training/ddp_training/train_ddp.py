@@ -134,6 +134,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             step = int(step)
         except KeyError:
             print("step is not specified in state dict")
+            step = 1
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
         """state_dict = checkpoint['model_state_dict']
