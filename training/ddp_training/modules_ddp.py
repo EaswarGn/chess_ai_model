@@ -451,7 +451,7 @@ class BoardEncoder(nn.Module):
         dropout,
         num_cls_tokens,
         freeze_board=False,
-        use_smolgen=True  # New parameter to enable/disable smolgen
+        use_smolgen=False  # New parameter to enable/disable smolgen
     ):
         """
         Initialize the Enhanced Board Encoder.
