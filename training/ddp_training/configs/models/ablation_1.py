@@ -58,13 +58,13 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.USE_UPLOAD = True #upload checkpoints to huggingface?
+        self.USE_UPLOAD = False #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
-        self.STEP = 1 #the step to start training at, if None then step will start at 1 even after loading from checkpoint
+        self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "exp_decay"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
@@ -81,9 +81,9 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = 'averaged_checkpoint.pt'#'../../../ablation_1.pt'
-        self.VALIDATION_STEPS = 1e10 #number of validation steps (each step has BATCH_SIZE samples)
+        self.USE_STRICT = True #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../../averaged_CT-EFT-20.pt'
+        self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
