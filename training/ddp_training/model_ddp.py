@@ -315,7 +315,7 @@ class PonderingTimeModel(nn.Module):
             'from_squares': None,
             'to_squares': None,
             'game_result': None,
-            'move_time': move_time, #* 100,  # Scaled for data compatibility
+            'move_time': move_time, 
             'moves_until_end': None,
             'categorical_game_result': None
         }

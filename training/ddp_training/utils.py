@@ -122,6 +122,7 @@ def save_checkpoint(rating, step, model, optimizer, config_name, checkpoint_fold
         "step": step,
         "model_state_dict": model_state_dict,
         "optimizer_state_dict": optimizer_state_dict,
+        "config": CONFIG
     }
     checkpoint_folder = f'{config_name}/{checkpoint_folder}'
     pathlib.Path(checkpoint_folder).mkdir(parents=True, exist_ok=True)
