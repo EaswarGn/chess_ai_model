@@ -3,7 +3,7 @@ from utils import *
 from configs import import_config
 from criteria_ddp import MultiTaskChessLoss, LabelSmoothedCE
 from datasets_ddp import ChunkLoader
-from model_ddp import ChessTemporalTransformerEncoder
+from model_ddp import ChessTemporalTransformerEncoder, PonderingTimeModel
 import numpy as np
 import subprocess
 import random
@@ -66,7 +66,13 @@ def validate_model(rank, world_size, CONFIG):
     if rank == 0:
         print(f"Evaluating {CONFIG.NAME} model on {world_size} GPU(s) with {CONFIG.NUM_WORKERS} worker(s) per GPU for dataloading.")
         
-    model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    
+    # Model
+    model = None
+    if "time" in CONFIG.NAME:
+        model = PonderingTimeModel(CONFIG, DEVICE=DEVICE).to(DEVICE)
+    else:
+        model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
         checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
