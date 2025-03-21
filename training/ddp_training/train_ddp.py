@@ -110,7 +110,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     if "time" in CONFIG.NAME:
         model = PonderingTimeModel(CONFIG, DEVICE=DEVICE).to(DEVICE)
     else:
-        model = ExperimentalModel(CONFIG, DEVICE=DEVICE).to(DEVICE)
+        model = ChessTemporalTransformerEncoder(CONFIG, DEVICE=DEVICE).to(DEVICE)
     
     # Optimizer
     optimizer = torch.optim.Adam(
