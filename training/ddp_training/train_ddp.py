@@ -165,6 +165,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         model_state_dict = model.state_dict()
         # Iterate through checkpoint params
         for name, param in checkpoint['model_state_dict'].items():
+            name = name.replace("_orig_mod.", "")
             if name in model_state_dict:
                 if model_state_dict[name].shape == param.shape:
                     # Shapes match, directly load
