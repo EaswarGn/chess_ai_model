@@ -155,9 +155,9 @@ class ExperimentalModel(nn.Module):
         from_squares = (self.from_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
         to_squares = (self.to_squares(boards[:, 14+self.num_cls_tokens:, :]).squeeze(2).unsqueeze(1)) if self.to_squares is not None else None
         moves_until_end = self.game_length_head(boards[:, 0:1, :]).squeeze(-1) if self.game_length_head is not None else None
-        game_result = self.game_result_head(boards).squeeze(-1) if self.game_result_head is not None else None
+        game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
-        categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
         
         
