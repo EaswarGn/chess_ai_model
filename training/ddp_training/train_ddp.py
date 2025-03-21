@@ -138,7 +138,7 @@ def train_model_ddp(rank, world_size, CONFIG):
             step = 1
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        """state_dict = checkpoint['model_state_dict']
+        state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
 
         for key, value in state_dict.items():
@@ -150,19 +150,19 @@ def train_model_ddp(rank, world_size, CONFIG):
                 new_value = model.state_dict()[new_key].clone()  # Clone model's tensor
                 
                 # Copy elements 1 to 78 from the checkpoint (skip the first element)
-                new_value[3:72] = value[12:81]  # Assuming value has shape (81, 512)
+                new_value = value[2:]  # Assuming value has shape (81, 512)
                 
                 new_state_dict[new_key] = new_value
             else:
                 new_state_dict[new_key] = value  # Copy all other weights normally
 
         # Load the modified state_dict into the model
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
 
         
         
         
-        model_state_dict = model.state_dict()
+        """model_state_dict = model.state_dict()
         # Iterate through checkpoint params
         for name, param in checkpoint['model_state_dict'].items():
             name = name.replace("_orig_mod.", "")
@@ -195,7 +195,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 print(f"Skipping unknown parameter: {name}")
 
         # Load the modified state_dict into the model
-        model.load_state_dict(model_state_dict)
+        model.load_state_dict(model_state_dict)"""
         
         
         try:
