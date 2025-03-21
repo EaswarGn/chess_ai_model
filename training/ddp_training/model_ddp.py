@@ -159,7 +159,7 @@ class ExperimentalModel(nn.Module):
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         categorical_game_result = self.categorical_game_result_head(boards).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
-        
+        print(categorical_game_result.shape)
         
         predictions = {
             'from_squares': from_squares,
