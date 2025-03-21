@@ -61,7 +61,7 @@ class CONFIG:
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
-        self.N_STEPS = 14560*2
+        self.N_STEPS = 14600*2
         self.STEPS_PER_EPOCH = 5000
         self.WARMUP_STEPS = 3000
         self.STEP = 1 #the step to start training at, if None then step will start at 1 even after loading from checkpoint
