@@ -61,7 +61,7 @@ class CONFIG:
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
-        self.N_STEPS = 14600
+        self.N_STEPS = None
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
         self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
@@ -81,8 +81,8 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'#'pondering_time_model/checkpoints/models/1900_step_15000.pt'
+        self.USE_STRICT = True #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../../1900_step_15000.pt'#'../../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
