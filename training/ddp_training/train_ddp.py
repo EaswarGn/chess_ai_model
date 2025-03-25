@@ -128,7 +128,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     
     if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
-        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE)
+        checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
         
         try:
             step = checkpoint['step']
@@ -143,7 +143,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '').replace('module.', '')
             new_state_dict[new_key] = value  # Copy all other weights normally
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT, weights_only=True)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
         
         """state_dict = checkpoint['model_state_dict']
