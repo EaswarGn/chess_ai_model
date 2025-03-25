@@ -1,6 +1,5 @@
 sudo apt-get update
 sudo apt-get install npm
-sudo apt install unzip
 sudo npm install -g localtunnel
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 git config --global credential.helper store
