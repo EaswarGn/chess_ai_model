@@ -6,7 +6,7 @@ chess==1.10.0
 zstandard==0.22.0
 pydot==3.0.2
 py7zr==0.22.0
-triton==3.1.0
+triton== 3.2.0 #3.1.0
 huggingface-hub==0.28.1
 hf_transfer==0.1.9
 torch==2.6.0 #2.5.1
