@@ -58,7 +58,7 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.USE_UPLOAD = True #upload checkpoints to huggingface?
+        self.USE_UPLOAD = False #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
         self.N_STEPS = None
@@ -82,7 +82,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../pondering_time_step_15000.pt'#'../../../full_trained_model.pt'
+        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'#'../../../pondering_time_step_15000.pt'#
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
