@@ -1,14 +1,14 @@
 numpy==1.26.4
 pandas==2.2.2
-transformers==4.44.0
+#transformers==4.44.0
 scikit-learn==1.4.2
 chess==1.10.0
 zstandard==0.22.0
 pydot==3.0.2
 py7zr==0.22.0
-triton== 3.1.0
+#triton== 3.1.0
 huggingface-hub==0.28.1
 hf_transfer==0.1.9
-torch==2.5.1
+#torch==2.5.1
 networkx==2.8.1
 tnr==1.5.71
