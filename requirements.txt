@@ -10,5 +10,5 @@ py7zr==0.22.0
 huggingface-hub==0.28.1
 hf_transfer==0.1.9
 #torch==2.5.1
-networkx==2.8.1
+#networkx==2.8.1
 tnr==1.5.71
