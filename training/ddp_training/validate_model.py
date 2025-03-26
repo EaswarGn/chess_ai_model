@@ -84,8 +84,7 @@ def validate_model(rank, world_size, CONFIG):
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
-            if 'cls' in key:
-                print(new_key)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
             
         move_time_checkpoint = torch.load('../../../pondering_time_step_22000.pt', map_location=DEVICE, weights_only=False)
         state_dict = move_time_checkpoint['model_state_dict']
@@ -100,7 +99,7 @@ def validate_model(rank, world_size, CONFIG):
         new_state_dict['move_time_head.0.weight'] = move_time_model_state_dict['move_time_head.0.weight']
         new_state_dict = move_time_model_state_dict['move_time_head.0.weight']
         
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        
         print(f"checkpoint loaded on rank {rank}")
     else:
         print("model checkpoint path not specified, exiting...")
