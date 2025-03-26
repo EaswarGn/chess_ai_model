@@ -80,6 +80,10 @@ def validate_model(rank, world_size, CONFIG):
         state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
+            
+            if 'cls' in key:
+                print(key)
+            
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
