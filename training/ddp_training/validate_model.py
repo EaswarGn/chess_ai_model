@@ -97,6 +97,7 @@ def validate_model(rank, world_size, CONFIG):
         new_state_dict['move_time_head.0.weight'] = move_time_model_state_dict['move_time_head.0.weight']
         new_state_dict = move_time_model_state_dict['move_time_head.0.weight']
         
+        model.load_state_dict(new_state_dict)
         
         print(f"checkpoint loaded on rank {rank}")
     else:
