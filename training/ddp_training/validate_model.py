@@ -80,14 +80,12 @@ def validate_model(rank, world_size, CONFIG):
         state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
-            
-            if 'cls' in key:
-                print(key)
-            
             new_key = key.replace('_orig_mod.', '')
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
+            if 'cls' in key:
+                print(new_key)
             
         move_time_checkpoint = torch.load('../../../pondering_time_step_22000.pt', map_location=DEVICE)
         state_dict = move_time_checkpoint['model_state_dict']
