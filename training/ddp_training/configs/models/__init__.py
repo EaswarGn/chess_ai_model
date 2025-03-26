@@ -12,5 +12,6 @@ __all__ = [
     "base_move_pred_model",
     "base_move_pred_model",
     "move_pred&result_pred",
-    "pondering_time_model"
+    "pondering_time_model",
+    "combined_model"
 ]
