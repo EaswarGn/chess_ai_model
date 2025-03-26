@@ -95,7 +95,7 @@ def validate_model(rank, world_size, CONFIG):
             move_time_model_state_dict[new_key] = value
         new_state_dict['time_suggestion_cls_token'] = move_time_model_state_dict['time_suggestion_cls_token']
         new_state_dict['move_time_head.0.weight'] = move_time_model_state_dict['move_time_head.0.weight']
-        new_state_dict = move_time_model_state_dict['move_time_head.0.weight']
+        new_state_dict['move_time_head.0.bias'] = move_time_model_state_dict['move_time_head.0.bias']
         
         model.load_state_dict(new_state_dict)
         
