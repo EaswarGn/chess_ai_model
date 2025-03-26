@@ -89,9 +89,15 @@ def validate_model(rank, world_size, CONFIG):
             
         move_time_checkpoint = torch.load('../../../pondering_time_step_22000.pt', map_location=DEVICE)
         state_dict = move_time_checkpoint['model_state_dict']
-        new_state_dict['time_suggestion_cls_token'] = state_dict['time_suggestion_cls_token']
-        new_state_dict['move_time_head.0.weight'] = state_dict['move_time_head.0.weight']
-        new_state_dict = state_dict['move_time_head.0.weight']
+        move_time_model_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key.replace('_orig_mod.', '')
+            new_key = new_key.replace('module.', '')
+            #new_key = 'module.'+new_key
+            move_time_model_state_dict[new_key] = value
+        new_state_dict['time_suggestion_cls_token'] = move_time_model_state_dict['time_suggestion_cls_token']
+        new_state_dict['move_time_head.0.weight'] = move_time_model_state_dict['move_time_head.0.weight']
+        new_state_dict = move_time_model_state_dict['move_time_head.0.weight']
         
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         print(f"checkpoint loaded on rank {rank}")
