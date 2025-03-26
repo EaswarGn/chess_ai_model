@@ -138,15 +138,15 @@ def train_model_ddp(rank, world_size, CONFIG):
             step = 1
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        """state_dict = checkpoint['model_state_dict']
+        state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '').replace('module.', '')
             new_state_dict[new_key] = value  # Copy all other weights normally
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
         
         
-        state_dict = checkpoint['model_state_dict']
+        """state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
 
         for key, value in state_dict.items():
@@ -165,7 +165,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 new_state_dict[new_key] = value  # Copy all other weights normally
 
         # Load the modified state_dict into the model
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
 
         
         

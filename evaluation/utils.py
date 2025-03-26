@@ -358,7 +358,7 @@ def load_model(CONFIG):
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
         if 'time' in CONFIG.NAME:
-            checkpoint_path = 'checkpoints/1900_step_14000.pt'
+            checkpoint_path = 'checkpoints/pondering_time_model_step_22000.pt'
         else:
             checkpoint_path = 'checkpoints/1900_step_347000.pt'
     else:
@@ -367,7 +367,7 @@ def load_model(CONFIG):
     
 
     # Load checkpoint
-    checkpoint = torch.load(str(checkpoint_path), weights_only=True, map_location=torch.device('cpu'))
+    checkpoint = torch.load(str(checkpoint_path), weights_only=False, map_location=torch.device('cpu'))
     
     state_dict = checkpoint['model_state_dict']
     new_state_dict = {}

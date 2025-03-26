@@ -14,7 +14,7 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "pondering_time_model"
+        self.NAME = "full_trained_model"
         self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
@@ -58,9 +58,9 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
-        self.USE_UPLOAD = True #upload checkpoints to huggingface?
+        self.USE_UPLOAD = False #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
-        self.PRINT_FREQUENCY = 10
+        self.PRINT_FREQUENCY = 1
         self.N_STEPS = None
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
@@ -82,7 +82,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../pondering_time_step_15000.pt'#'../../../full_trained_model.pt'
+        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
@@ -90,10 +90,9 @@ class CONFIG:
         ###############################
         self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = None 
-        """nn.Sequential(
+        self.categorical_game_result_head = nn.Sequential(
             nn.Linear(self.D_MODEL, 3)
-        )"""
+        )
         self.game_result_head = None
 
         ###############################
@@ -110,8 +109,8 @@ class CONFIG:
 
         
         
-        self.move_loss = None #self.CRITERION
+        self.move_loss = self.CRITERION
         self.move_time_loss = nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = None #nn.CrossEntropyLoss
+        self.categorical_game_result_loss = nn.CrossEntropyLoss
 
