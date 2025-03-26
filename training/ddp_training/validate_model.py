@@ -84,6 +84,7 @@ def validate_model(rank, world_size, CONFIG):
             new_key = new_key.replace('module.', '')
             #new_key = 'module.'+new_key
             new_state_dict[new_key] = value
+            print(type(value))
         model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
             
         move_time_checkpoint = torch.load('../../../pondering_time_step_22000.pt', map_location=DEVICE, weights_only=False)
