@@ -236,6 +236,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
     random.shuffle(training_file_list)
+    print(training_file_list)
     
     
     testing_file_list = get_all_record_files(f'../../../blitzking45_validation_chunks')
