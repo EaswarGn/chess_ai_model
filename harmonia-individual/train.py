@@ -273,8 +273,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
-    print("created dataloaders, starting training")
-
     train_epoch(
         rank=rank,
         world_size=world_size,
@@ -355,6 +353,7 @@ def train_epoch(
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
 
     for i, batch in enumerate(train_loader):
+        print("yes")
         for key in batch:
             batch[key] = batch[key].to(device)
 
