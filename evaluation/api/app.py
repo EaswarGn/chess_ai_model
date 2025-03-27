@@ -5,6 +5,7 @@ from utils import load_model, get_model_inputs, get_move, get_move_probabilities
 from configs import import_config
 import chess
 import torch.nn.functional as F
+import random
 
 CONFIG = import_config('ablation_1')
 CONFIG = CONFIG.CONFIG()
@@ -38,9 +39,12 @@ def predict():
         
         
         model_move = get_move(board, predictions)
-        predictions['move_time'] = pondering_time_pred['move_time'][0].item()
+        predictions['move_time'] = abs(round(pondering_time_pred['move_time'][0].item(), 4))
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
+        
+        if predictions['move_time'] < 0.5:
+            predictions['move_time'] = random.uniform(0.1, 0.5)
         
         #print(get_all_move_probabilities(board, predictions))
         return jsonify(
