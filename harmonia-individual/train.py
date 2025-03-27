@@ -351,7 +351,7 @@ def train_epoch(
     
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
-    print("yes")
+    
     for i, batch in enumerate(train_loader):
         for key in batch:
             batch[key] = batch[key].to(device)
