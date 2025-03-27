@@ -258,11 +258,11 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
     
-    """def cycle(iterable):
+    def cycle(iterable):
         while True:
             for x in iterable:
                 yield x         
-    train_loader = iter(cycle(train_loader))"""
+    train_loader = iter(cycle(train_loader))
     
 
     val_loader = DataLoader(
@@ -457,9 +457,9 @@ def train_epoch(
                         epoch,
                         epochs,
                         i + 1,
-                        len(train_loader),
+                        CONFIG.N_STEPS*4,
                         step,
-                        len(train_loader)//CONFIG.BATCHES_PER_STEP,
+                        CONFIG.N_STEPS,
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
