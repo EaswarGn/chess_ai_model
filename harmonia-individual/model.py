@@ -77,14 +77,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
 
-        
-        self.reduce_boards = nn.Sequential(
-            nn.Linear(81*CONFIG.D_MODEL, 40*CONFIG.D_MODEL),
-            nn.Linear(40*CONFIG.D_MODEL, 20*CONFIG.D_MODEL),
-            nn.Linear(20*CONFIG.D_MODEL, 5*CONFIG.D_MODEL),
-            nn.Linear(5*CONFIG.D_MODEL, 1)
-        )
-
         # Initialize weights
         self.init_weights()
         
@@ -166,7 +158,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         game_result = self.game_result_head(boards[:, 1:2, :]).squeeze(-1) if self.game_result_head is not None else None
         move_time = self.move_time_head(boards[:, 2:3, :]).squeeze(-1) if self.move_time_head is not None else None
         #categorical_game_result = self.categorical_game_result_head(boards[:, 1:2, :]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
-        categorical_game_result = self.categorical_game_result_head(self.reduce_boards(boards)).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
+        categorical_game_result = self.categorical_game_result_head(boards[1:2]).squeeze(-1).squeeze(1) if self.categorical_game_result_head is not None else None
         
         
         predictions = {
