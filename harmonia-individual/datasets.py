@@ -161,7 +161,7 @@ class ChunkLoader(IterableDataset):
                         record["turn"] = 0
 
 
-                    """if record['turn'] == 1:
+                    if record['turn'] == 1:
                         if white_player == self.target_player:
                             pass
                         else:
@@ -170,7 +170,7 @@ class ChunkLoader(IterableDataset):
                         if black_player == self.target_player:
                             pass
                         else:
-                            continue"""
+                            continue
 
                     
                     if int(record['move_number']) <= 8:
