@@ -273,6 +273,8 @@ def train_model_ddp(rank, world_size, CONFIG):
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
 
+    print("created dataloaders, starting training")
+
     train_epoch(
         rank=rank,
         world_size=world_size,
