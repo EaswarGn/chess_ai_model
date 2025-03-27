@@ -233,13 +233,12 @@ def train_model_ddp(rank, world_size, CONFIG):
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
     
     training_file_list = get_all_record_files('../../../blitzking45_train_chunks') 
-    training_file_list += get_all_record_files('../../../blitzking45_train_validation')
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
     random.shuffle(training_file_list)
     
     
-    testing_file_list = get_all_record_files(f'../../../blitzking45_chunks/2')
+    testing_file_list = get_all_record_files(f'../../../blitzking45_validation_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     
