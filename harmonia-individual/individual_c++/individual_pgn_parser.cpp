@@ -50,6 +50,8 @@ class MyVisitor : public pgn::Visitor {
         int16_t material_difference;
         float   moves_until_end;
         char fen[200];
+        char white_username[100];
+        char black_username[100];
     };
     #pragma pack(pop)
     // The expected size of Dictionary should be 109 bytes.
@@ -840,9 +842,12 @@ class MyVisitor : public pgn::Visitor {
             dict.black_material_value = black_material_value;
             dict.material_difference = material_difference;
             dict.moves_until_end = moves_until_end;
-            //dict.fen = fen;
             strncpy(dict.fen, fen.c_str(), sizeof(dict.fen) - 1);
             dict.fen[sizeof(dict.fen) - 1] = '\0';
+            strncpy(dict.white_username, white_player.c_str(), sizeof(dict.white_username) - 1);
+            dict.white_username[sizeof(dict.white_username) - 1] = '\0';
+            strncpy(dict.black_username, black_player.c_str(), sizeof(dict.black_username) - 1);
+            dict.black_username[sizeof(dict.black_username) - 1] = '\0';
 
 
             if(chunk.size() <= chunks_per_file-1){
