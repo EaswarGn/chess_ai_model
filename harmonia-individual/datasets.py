@@ -205,8 +205,6 @@ class ChunkLoader(IterableDataset):
                     else:
                         continue
                     
-                    print("yes")
-                    
                     
                     #normalizing through log transformations
                     #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
@@ -257,7 +255,7 @@ if __name__ == "__main__":
     
     
     # List of file paths to be processed.
-    file_list = get_all_record_files('blitzking45_chunks')
+    file_list = get_all_record_files('blitzking45_data/blitzking45_train_chunks')
     file_list = [file for file in file_list if file.endswith('.zst')]   
     #file_list = [file.replace("._", "", 1) for file in file_list]
     print(f"found {len(file_list)} chunks")
