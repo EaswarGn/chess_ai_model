@@ -5,7 +5,7 @@ from torch import nn
 import sys
 
 from configs import import_config
-from modules_ddp import BoardEncoder
+from modules import BoardEncoder
 import torch.nn.functional as F
 import numpy as np
     
