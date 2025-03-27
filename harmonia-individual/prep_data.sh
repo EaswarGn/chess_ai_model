@@ -14,3 +14,8 @@ mkdir "${username}_data"
 cd "${username}_data"
 pgn_parser --pgn_file="../processed_${username}_train.pgn" --chunks_per_file=25000 --max_files_per_dir=10 --outputdir="${username}_train_chunks"
 pgn_parser --pgn_file="../processed_${username}_validation.pgn" --chunks_per_file=25000 --max_files_per_dir=10 --outputdir="${username}_validation_chunks"
+
+rm "../${username}_train.pgn"
+rm "../${username}_validation.pgn"
+rm "../processed_${username}_train.pgn"
+rm "../processed_${username}_validation.pgn"
