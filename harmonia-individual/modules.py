@@ -509,10 +509,10 @@ class BoardEncoder(nn.Module):
         )
         
         n = 2
-        # Freeze the first n layers
+        """# Freeze the first n layers
         for layer in self.encoder_layers[:n]:
             for param in layer.parameters():
-                param.requires_grad = False
+                param.requires_grad = False"""
 
 
         # Dropout and Layer Norm
