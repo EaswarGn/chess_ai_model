@@ -4,6 +4,7 @@ import argparse
 from tqdm import tqdm
 import chess.pgn
 import sys
+import io
 
 HEADERS = {"User-Agent": "MyChessBot/1.0"}
 
@@ -27,7 +28,7 @@ def download_games(username, train_output_file, validation_output_file, train_ra
     pbar = tqdm(desc="Downloading games", total=total)
         
     total_train_games = int(train_ratio * total)
-
+    
     with open(train_output_file, "a") as file:
         for archive_url in archive_urls:
             games_response = requests.get(archive_url, headers=HEADERS)
@@ -36,6 +37,31 @@ def download_games(username, train_output_file, validation_output_file, train_ra
             # Extract and save PGN data
             for game in games:
                 if "pgn" in game:
+                    curr_game = chess.pgn.read_game(io.StringIO(game["pgn"]))
+                    
+                    if (curr_game.headers.get("Event") != 'Live Chess' or
+                        curr_game.headers.get("Variant") is not None or 
+                        curr_game.headers.get("WhiteElo") == '?' or 
+                        curr_game.headers.get("BlackElo") == '?' or
+                        curr_game.headers.get("TimeControl") == '-' or
+                        curr_game.headers.get("FEN") is not None or 
+                        'abandon' in curr_game.headers.get("Termination")):
+                        continue
+                    else:
+                        pass
+                        
+                    # Create a board and play out the moves
+                    board = curr_game.board()
+
+                    for move in curr_game.mainline_moves():
+                        if move in board.legal_moves:
+                            board.push(move)  # Play the move
+                        else:
+                            print(f"Illegal move detected: {move}")
+                            sys.exit()
+                            break  # Stop if an illegal move is found
+                            
+                    
                     if pbar.n <= total_train_games:
                         file.write(game["pgn"] + "\n")
                         pbar.update(1)
@@ -45,6 +71,7 @@ def download_games(username, train_output_file, validation_output_file, train_ra
                             validation_file.write(game["pgn"] + "\n")
                             pbar.update(1)
         pbar.close()
+
                         
 
 if __name__ == "__main__":

@@ -41,4 +41,4 @@ rm "../${username}_train.pgn"
 rm "../${username}_validation.pgn"
 rm "../processed_${username}_train.pgn"
 rm "../processed_${username}_validation.pgn"
-rm ../logs.txt
+rm ../log.txt
