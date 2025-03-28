@@ -103,8 +103,6 @@ def validate_model(rank, world_size, CONFIG):
     
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
     
-    #folder_num = random.randint(1, 3)
-    folder_num = 1
     testing_file_list = get_all_record_files(f'../../blitzking45_validation_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
@@ -115,7 +113,8 @@ def validate_model(rank, world_size, CONFIG):
                               world_size,
                               include_low_time_moves=False,
                               min_full_move_number=5,
-                              target_player=CONFIG.TARGET_PLAYER
+                              target_player=CONFIG.TARGET_PLAYER,
+                              loop_forever=False
                               #max_full_move_number=10
                               )
     
