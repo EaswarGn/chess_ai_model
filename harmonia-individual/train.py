@@ -128,6 +128,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     
     if CONFIG.CHECKPOINT_PATH is not None: #and rank == 0:
+        print(CONFIG.CHECKPOINT_PATH)
         checkpoint = torch.load(CONFIG.CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
         
         try:
