@@ -118,6 +118,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         lr=CONFIG.LR,
         betas=CONFIG.BETAS,
         eps=CONFIG.EPSILON,
+        weight_decay=CONFIG.WEIGHT_DECAY
     )
 
     step = CONFIG.STEP
