@@ -194,8 +194,6 @@ class ChunkLoader(IterableDataset):
                         except KeyError:
                             pass
                             
-                        
-                            
                         if self.include_low_time_moves is True:
                             pass
                         else:
@@ -260,7 +258,7 @@ if __name__ == "__main__":
     
     
     # List of file paths to be processed.
-    file_list = get_all_record_files('blitzking45_data/blitzking45_train_chunks')
+    file_list = get_all_record_files('data-prep/Chess_Star1234_data')
     file_list = [file for file in file_list if file.endswith('.zst')]   
     #file_list = [file.replace("._", "", 1) for file in file_list]
     print(f"found {len(file_list)} chunks")
