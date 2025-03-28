@@ -50,7 +50,7 @@ class CONFIG:
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
         self.D_INNER = 2048  # an intermediate size in the position-wise FC
         self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
-        self.DROPOUT = 0.4#0.1  # dropout probability
+        self.DROPOUT = 0.1#0.1  # dropout probability
         self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
         self.DISABLE_COMPILATION = False  # disable model compilation?
         self.COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
