@@ -360,7 +360,7 @@ def load_model(CONFIG):
         if 'time' in CONFIG.NAME:
             checkpoint_path = 'checkpoints/pondering_time_model_step_22000.pt'
         else:
-            checkpoint_path = 'checkpoints/1900_step_347000.pt'
+            checkpoint_path = 'checkpoints/1900_step_20000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         

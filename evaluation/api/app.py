@@ -7,7 +7,7 @@ import chess
 import torch.nn.functional as F
 import random
 
-CONFIG = import_config('ablation_1')
+CONFIG = import_config('individual_model')
 CONFIG = CONFIG.CONFIG()
 app = Flask(__name__)
 

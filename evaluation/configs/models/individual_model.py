@@ -14,13 +14,15 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "pondering_time_model"
+        self.TARGET_PLAYER = "BlitzKing45"
+        self.NAME = f"{self.TARGET_PLAYER}_model"
         self.NUM_GPUS = torch.cuda.device_count()
+        
 
         ###############################
         ######### Dataloading #########
         ###############################
-        self.BATCH_SIZE = 512
+        self.BATCH_SIZE = 128
         if self.NUM_GPUS == 0:
             self.NUM_WORKERS = mp.cpu_count()
         else:
@@ -48,7 +50,7 @@ class CONFIG:
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
         self.D_INNER = 2048  # an intermediate size in the position-wise FC
         self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
-        self.DROPOUT = 0.1  # dropout probability
+        self.DROPOUT = 0.25#0.1  # dropout probability
         self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
         self.DISABLE_COMPILATION = False  # disable model compilation?
         self.COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
@@ -58,22 +60,23 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
+        self.TRAINING_DATA_PERCENT = 0.9 #percent of data to be used for training, remainnig data is used for validation
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
-        self.N_STEPS = None
+        self.N_STEPS = 20000
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
         self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
-        self.LR_SCHEDULE = "exp_decay"
+        self.LR_SCHEDULE = "cosine"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
             step=1,
             d_model=self.D_MODEL,
             warmup_steps=self.WARMUP_STEPS,
+            total_steps=self.N_STEPS,
             schedule=self.LR_SCHEDULE,
             decay=self.LR_DECAY,
-            total_steps=20000
         )
         self.START_EPOCH = 0
         self.BETAS = (0.9, 0.98)
@@ -82,19 +85,18 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../full_trained_model.pt'
+        self.USE_STRICT = True #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
         ########### Auxiliary Outputs ##########
         ###############################
-        self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
+        self.move_time_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = None 
-        """nn.Sequential(
+        self.categorical_game_result_head = nn.Sequential(
             nn.Linear(self.D_MODEL, 3)
-        )"""
+        )
         self.game_result_head = None
 
         ###############################
@@ -111,8 +113,8 @@ class CONFIG:
 
         
         
-        self.move_loss = None #self.CRITERION
-        self.move_time_loss = nn.L1Loss()
+        self.move_loss = self.CRITERION
+        self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = None #nn.CrossEntropyLoss
+        self.categorical_game_result_loss = nn.CrossEntropyLoss
 

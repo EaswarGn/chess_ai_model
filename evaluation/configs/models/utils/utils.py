@@ -6,51 +6,14 @@ import pathlib
 import torch.nn.functional as F
 
 
-def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06):
+def get_lr(step, d_model, warmup_steps, total_steps, schedule="cosine", decay=0.06, batch_size=512, min_lr=1e-5):
     """
-    The LR schedule.
-
-    Args:
-
-        step (int): Training step number.
-
-        d_model (int): Size of vectors throughout the transformer model.
-
-        warmup_steps (int): Number of warmup steps where learning rate
-        is increased linearly; twice the value in the paper, as in the
-        official T2T repo.
-
-    Returns:
-
-        float: Updated learning rate.
-
-    Args:
-
-        step (int): Training step number.
-
-        d_model (int): Size of vectors throughout the transformer model.
-
-        warmup_steps (int): Number of warmup steps where learning rate
-        is increased linearly.
-
-        schedule (str, optional): The learning rate schedule. Defaults
-        to "vaswani", in which case the schedule in "Attention Is All
-        You Need", by Vasvani et. al. is followed. This version below is
-        twice the definition in the paper, as used in the official T2T
-        repository. If the schedule is "exp_decay", the learning rate is
-        exponentially decayed after the warmup stage.
-
-        decay (float, optional): The decay rate per 10000 training steps
-        for the "exp_decay" schedule. Defaults to 0.06, i.e. 6%.
-
-    Raises:
-
-        NotImplementedError: If the schedule is not one of "vaswani" or
-        "exp_decay".
-
-    Returns:
-
-        float: Updated learning rate.
+    Enhanced learning rate schedule for fine-tuning.
+    
+    New features:
+    - Cosine annealing schedule
+    - Lower initial learning rate
+    - Minimum learning rate parameter
     """
     if schedule == "vaswani":
         lr = (
@@ -60,13 +23,23 @@ def get_lr(step, d_model, warmup_steps, schedule="vaswani", decay=0.06):
         )
     elif schedule == "exp_decay":
         if step <= warmup_steps:
-            lr = 1e-3 * step / warmup_steps
+            lr = 1e-4 * step / warmup_steps  # Lowered initial learning rate
         else:
-            lr = 1e-3 * ((1 - decay) ** ((step - warmup_steps) / 10000))
+            lr = 1e-4 * ((1 - decay) ** ((step - warmup_steps) / 10000))
+    elif schedule == "cosine":
+        # Cosine annealing with warm restart characteristics
+        if step <= warmup_steps:
+            lr = 1e-4 * step / warmup_steps
+        else:
+            progress = (step - warmup_steps) / (total_steps - warmup_steps)
+            lr = min_lr + 0.5 * (1e-4 - min_lr) * (1 + math.cos(math.pi * progress))
     else:
         raise NotImplementedError
 
-    return lr
+    # Batch size scaling remains the same
+    lr = lr * (batch_size // 512)
+    
+    return max(lr, min_lr)
 
 
 def save_checkpoint(epoch, model, optimizer, config_name, checkpoint_folder, prefix=""):

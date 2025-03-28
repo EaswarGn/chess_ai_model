@@ -1,3 +1,6 @@
+from .time_controls import time_controls_encoded
+
+TIME_CONTROLS = time_controls_encoded
 FILES = ["a", "b", "c", "d", "e", "f", "g", "h"]
 RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"]
 PIECES = {
