@@ -4,7 +4,7 @@ from torch import nn
 import multiprocessing as mp
 from .utils.levels import TURN, PIECES, UCI_MOVES, BOOL
 from .utils.utils import get_lr
-from .utils.criteria import LabelSmoothedCE, FocalLoss
+from .utils.criteria import LabelSmoothedCE
 from .utils.time_controls import time_controls_encoded
 
 
