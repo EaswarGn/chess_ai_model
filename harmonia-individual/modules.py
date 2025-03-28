@@ -507,6 +507,12 @@ class BoardEncoder(nn.Module):
         self.encoder_layers = nn.ModuleList(
             [self.make_encoder_layer() for _ in range(n_layers)]
         )
+        
+        n = 2
+        # Freeze the first n layers
+        for layer in self.encoder_layers[:n]:
+            for param in layer.parameters():
+                param.requires_grad = False
 
 
         # Dropout and Layer Norm
