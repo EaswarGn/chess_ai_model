@@ -49,17 +49,6 @@ def download_games(username, train_output_file, validation_output_file, train_ra
                         continue
                     else:
                         pass
-                        
-                    # Create a board and play out the moves
-                    board = curr_game.board()
-
-                    for move in curr_game.mainline_moves():
-                        if move in board.legal_moves:
-                            board.push(move)  # Play the move
-                        else:
-                            print(f"Illegal move detected: {move}")
-                            sys.exit()
-                            break  # Stop if an illegal move is found
                             
                     
                     if pbar.n <= total_train_games:
