@@ -257,13 +257,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
-    
-    def cycle(iterable):
-        while True:
-            for x in iterable:
-                yield x         
-    train_loader = iter(cycle(train_loader))
-    
 
     val_loader = DataLoader(
         dataset=val_dataset,
