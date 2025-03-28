@@ -510,7 +510,7 @@ def train_epoch(
                 epoch += 1
             
             
-            if CONFIG.N_STEPS is None:
+            """if CONFIG.N_STEPS is None:
                 if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP and rank==0:
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
@@ -520,7 +520,7 @@ def train_epoch(
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
                     sys.exit()
-
+            """
             start_step_time = time.time()
 
         start_data_time = time.time()
