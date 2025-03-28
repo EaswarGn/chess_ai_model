@@ -257,12 +257,6 @@ def train_model_ddp(rank, world_size, CONFIG):
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
     )
-    
-    def cycle(iterable):
-        while True:
-            for x in iterable:
-                yield x         
-    train_loader = iter(cycle(train_loader))
 
     val_loader = DataLoader(
         dataset=val_dataset,
@@ -456,9 +450,9 @@ def train_epoch(
                         epoch,
                         epochs,
                         i + 1,
-                        5,
+                        len(train_loader),
                         step,
-                        5,
+                        len(train_loader)//CONFIG.BATCHES_PER_STEP,
                         step_time=step_time,
                         data_time=data_time,
                         losses=losses,
@@ -510,7 +504,7 @@ def train_epoch(
                 epoch += 1
             
             
-            """if CONFIG.N_STEPS is None:
+            if CONFIG.N_STEPS is None:
                 if step >= len(train_loader)//CONFIG.BATCHES_PER_STEP and rank==0:
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
@@ -520,7 +514,7 @@ def train_epoch(
                     save_checkpoint(rating, step, model.module, optimizer, CONFIG.NAME, "checkpoints/models", CONFIG)
                     cleanup_ddp()
                     sys.exit()
-            """
+
             start_step_time = time.time()
 
         start_data_time = time.time()
