@@ -185,11 +185,38 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     use_low_time = False
     min_full_move_number = 5
+    max_full_move_number = 1e10
     if "time" in CONFIG.NAME:
         use_low_time = True
         min_full_move_number = -1
-    train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number, target_player=CONFIG.TARGET_PLAYER, loop_forever=True)
-    val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number, target_player=CONFIG.TARGET_PLAYER, loop_forever=False)
+    if "opening" in CONFIG.NAME:
+        use_low_time = False
+        min_full_move_number = -1
+        max_full_move_number = 5
+    train_dataset = ChunkLoader(
+        training_file_list,
+        record_dtype,
+        rank,
+        world_size,
+        include_low_time_moves=use_low_time,
+        min_full_move_number=min_full_move_number,
+        max_full_move_number=max_full_move_number,
+        target_player=CONFIG.TARGET_PLAYER,
+        loop_forever=True
+    )
+    val_dataset = ChunkLoader(
+        testing_file_list,
+        record_dtype,
+        rank,
+        world_size,
+        include_low_time_moves=use_low_time,
+        min_full_move_number=min_full_move_number,
+        max_full_move_number=max_full_move_number,
+        target_player=CONFIG.TARGET_PLAYER,
+        loop_forever=False
+    )
+    
+    
 
     train_loader = DataLoader(
         dataset=train_dataset,
