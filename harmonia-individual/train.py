@@ -290,13 +290,11 @@ def train_epoch(
     for i, batch in enumerate(train_loader):
         for key in batch:
             batch[key] = batch[key].to(device)
-        print("m")
 
         data_time.update(time.time() - start_data_time)
 
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=CONFIG.USE_AMP):
             predictions = model(batch)
-            print("asdf")
             
             loss, loss_details = criterion(predictions, batch)
             result_loss = loss_details['result_loss']
@@ -349,7 +347,6 @@ def train_epoch(
                 ),
                 batch["lengths"].shape[0]
             )
-        print("here")
 
         if (i + 1) % CONFIG.BATCHES_PER_STEP == 0:
             scaler.step(optimizer)
