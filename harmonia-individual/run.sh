@@ -12,7 +12,7 @@ pip install -r requirements.txt
 pip install -U "huggingface_hub[cli]"
 cd ~
 huggingface-cli login --token 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
-huggingface-cli download codingmonster1234/blitzking45-data --repo-type dataset --local-dir .
+huggingface-cli download codingmonster1234/Chess_Star1234-data --repo-type dataset --local-dir .
 cd ~
 wget -O ablation_1.pt https://huggingface.co/datasets/codingmonster1234/full_trained_model/resolve/main/checkpoints/models/1900_step_118000.pt
 wget https://chesstransformers.blob.core.windows.net/checkpoints/CT-EFT-20/averaged_CT-EFT-20.pt

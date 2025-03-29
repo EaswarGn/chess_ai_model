@@ -358,9 +358,9 @@ def load_model(CONFIG):
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
         if 'time' in CONFIG.NAME:
-            checkpoint_path = 'checkpoints/pondering_time_model_step_22000.pt'
+            checkpoint_path = 'checkpoints/1900_step_21000.pt'
         else:
-            checkpoint_path = 'checkpoints/1900_step_20000.pt'
+            checkpoint_path = 'checkpoints/1900_step_17000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
         

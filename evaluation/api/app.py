@@ -6,6 +6,7 @@ from configs import import_config
 import chess
 import torch.nn.functional as F
 import random
+import torch
 
 CONFIG = import_config('individual_model')
 CONFIG = CONFIG.CONFIG()
@@ -39,6 +40,7 @@ def predict():
         
         
         model_move = get_move(board, predictions)
+        predictions['categorical_game_result'] = torch.softmax(predictions['categorical_game_result'], dim=-1)
         predictions['move_time'] = abs(round(pondering_time_pred['move_time'][0].item(), 4))
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
