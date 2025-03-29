@@ -290,6 +290,7 @@ def train_epoch(
     for i, batch in enumerate(train_loader):
         for key in batch:
             batch[key] = batch[key].to(device)
+        print("m")
 
         data_time.update(time.time() - start_data_time)
 
