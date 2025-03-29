@@ -85,7 +85,7 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.WEIGHT_DECAY = 1e-1
+        self.WEIGHT_DECAY = 1e-2
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
         self.CHECKPOINT_PATH = '../../full_trained_model.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
