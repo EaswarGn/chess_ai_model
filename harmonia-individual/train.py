@@ -288,7 +288,6 @@ def train_epoch(
     
     print("no")
     for i, batch in enumerate(train_loader):
-        print("yes")
         for key in batch:
             batch[key] = batch[key].to(device)
 
