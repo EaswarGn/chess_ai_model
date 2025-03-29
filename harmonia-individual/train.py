@@ -349,6 +349,7 @@ def train_epoch(
                 ),
                 batch["lengths"].shape[0]
             )
+        print("here")
 
         if (i + 1) % CONFIG.BATCHES_PER_STEP == 0:
             scaler.step(optimizer)
