@@ -110,8 +110,14 @@ class ChunkLoader(IterableDataset):
 
         # Further shard among DataLoader workers
         files = files[worker_id::num_workers]
+        
+        file_iterator = None
+        if self.loop_forever:
+            file_iterator = itertools.cycle(files)  # Infinite loop over files
+        else:
+            file_iterator = iter(files)
 
-        for filename in itertools.cycle(files):
+        for filename in file_iterator:
             with open(filename, "rb") as f:
                 dctx = zstd.ZstdDecompressor()
                 decompressed = dctx.decompress(f.read())
