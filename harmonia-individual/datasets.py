@@ -15,6 +15,8 @@ import numpy as np
 import multiprocessing as mp
 import pickle
 import numpy as np
+import itertools
+from pathlib import Path
 
 # Define the record dtype
 record_dtype = np.dtype([
@@ -45,8 +47,7 @@ record_dtype = np.dtype([
     ("moves_until_end", np.float16)
 ])
     
-    
-from pathlib import Path
+
 def get_all_record_files(directory: str):
     return [str(file) for file in Path(directory).rglob("*") if file.is_file()]
 
@@ -110,137 +111,136 @@ class ChunkLoader(IterableDataset):
         # Further shard among DataLoader workers
         files = files[worker_id::num_workers]
 
-        while True:
-            for filename in files:
-                with open(filename, "rb") as f:
-                    dctx = zstd.ZstdDecompressor()
-                    decompressed = dctx.decompress(f.read())
-                    num_dicts = len(decompressed) // self.record_size
+        for filename in itertools.cycle(files):
+            with open(filename, "rb") as f:
+                dctx = zstd.ZstdDecompressor()
+                decompressed = dctx.decompress(f.read())
+                num_dicts = len(decompressed) // self.record_size
+                
+                for i in range(num_dicts):
+                    offset = i * self.record_size
+                    record_bytes = decompressed[offset: offset + self.record_size]
+                    unpacked = struct.unpack(self.fmt, record_bytes)
+                    record = {}
+                    idx = 0
+                    record["turn"] = unpacked[idx]; idx += 1
+                    record["white_kingside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["white_queenside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["black_kingside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["black_queenside_castling_rights"] = unpacked[idx]; idx += 1
+                    record["board_position"] = list(unpacked[idx: idx+64]); idx += 64
+                    record["from_square"] = unpacked[idx]; idx += 1
+                    record["to_square"] = unpacked[idx]; idx += 1
+                    record["length"] = unpacked[idx]; idx += 1
+                    record["phase"] = unpacked[idx]; idx += 1
+                    record["result"] = unpacked[idx]; idx += 1
+                    record["categorical_result"] = unpacked[idx]; idx += 1
+                    record["base_time"] = unpacked[idx]; idx += 1
+                    record["increment_time"] = unpacked[idx]; idx += 1
+                    record["white_remaining_time"] = unpacked[idx]; idx += 1
+                    record["black_remaining_time"] = unpacked[idx]; idx += 1
+                    record["white_rating"] = unpacked[idx]; idx += 1
+                    record["black_rating"] = unpacked[idx]; idx += 1
+                    record["time_spent_on_move"] = unpacked[idx]; idx += 1
+                    record["move_number"] = unpacked[idx]; idx += 1
+                    record["num_legal_moves"] = unpacked[idx]; idx += 1
+                    record["white_material_value"] = unpacked[idx]; idx += 1
+                    record["black_material_value"] = unpacked[idx]; idx += 1
+                    record["material_difference"] = unpacked[idx]; idx += 1
+                    record["moves_until_end"] = unpacked[idx]; idx += 1
                     
-                    for i in range(num_dicts):
-                        offset = i * self.record_size
-                        record_bytes = decompressed[offset: offset + self.record_size]
-                        unpacked = struct.unpack(self.fmt, record_bytes)
-                        record = {}
-                        idx = 0
-                        record["turn"] = unpacked[idx]; idx += 1
-                        record["white_kingside_castling_rights"] = unpacked[idx]; idx += 1
-                        record["white_queenside_castling_rights"] = unpacked[idx]; idx += 1
-                        record["black_kingside_castling_rights"] = unpacked[idx]; idx += 1
-                        record["black_queenside_castling_rights"] = unpacked[idx]; idx += 1
-                        record["board_position"] = list(unpacked[idx: idx+64]); idx += 64
-                        record["from_square"] = unpacked[idx]; idx += 1
-                        record["to_square"] = unpacked[idx]; idx += 1
-                        record["length"] = unpacked[idx]; idx += 1
-                        record["phase"] = unpacked[idx]; idx += 1
-                        record["result"] = unpacked[idx]; idx += 1
-                        record["categorical_result"] = unpacked[idx]; idx += 1
-                        record["base_time"] = unpacked[idx]; idx += 1
-                        record["increment_time"] = unpacked[idx]; idx += 1
-                        record["white_remaining_time"] = unpacked[idx]; idx += 1
-                        record["black_remaining_time"] = unpacked[idx]; idx += 1
-                        record["white_rating"] = unpacked[idx]; idx += 1
-                        record["black_rating"] = unpacked[idx]; idx += 1
-                        record["time_spent_on_move"] = unpacked[idx]; idx += 1
-                        record["move_number"] = unpacked[idx]; idx += 1
-                        record["num_legal_moves"] = unpacked[idx]; idx += 1
-                        record["white_material_value"] = unpacked[idx]; idx += 1
-                        record["black_material_value"] = unpacked[idx]; idx += 1
-                        record["material_difference"] = unpacked[idx]; idx += 1
-                        record["moves_until_end"] = unpacked[idx]; idx += 1
-                        
-                        # fen string (200 bytes)
-                        record["fen"] = unpacked[idx:idx+200]; idx += 1
-                        fen_string = self.convert_byte_str(record["fen"][0]).rstrip('\x00')
-                        
-                        record["white_player"] = unpacked[idx:idx+100]; idx += 1
-                        white_player = self.convert_byte_str(record["white_player"][0]).rstrip('\x00')
-                        record["black_player"] = unpacked[idx:idx+100]; idx += 1
-                        black_player = self.convert_byte_str(record["black_player"][0]).rstrip('\x00')
-                        
-                        if int(record["turn"]) == 0:
-                            record["turn"] = 1
-                        else:
-                            record["turn"] = 0
+                    # fen string (200 bytes)
+                    record["fen"] = unpacked[idx:idx+200]; idx += 1
+                    fen_string = self.convert_byte_str(record["fen"][0]).rstrip('\x00')
+                    
+                    record["white_player"] = unpacked[idx:idx+100]; idx += 1
+                    white_player = self.convert_byte_str(record["white_player"][0]).rstrip('\x00')
+                    record["black_player"] = unpacked[idx:idx+100]; idx += 1
+                    black_player = self.convert_byte_str(record["black_player"][0]).rstrip('\x00')
+                    
+                    if int(record["turn"]) == 0:
+                        record["turn"] = 1
+                    else:
+                        record["turn"] = 0
 
 
-                        if record['turn'] == 1:
-                            if white_player == self.target_player:
-                                pass
-                            else:
-                                continue
-                        if record['turn'] == 0:
-                            if black_player == self.target_player:
-                                pass
-                            else:
-                                continue
-
-                        
-                        if int(record['move_number']) <= 8:
-                            record["moves_until_end"] = 35
-
-        
-                        try:
-                            base_time = record["base_time"]
-                            increment_time = record["increment_time"]
-                            
-                            if int(increment_time)>0 and int(record["move_number"])!=0:
-                                record["time_spent_on_move"] = record["time_spent_on_move"] + int(increment_time)
-                            if int(record["time_spent_on_move"])<1:
-                                record["time_spent_on_move"] = 0
-                            
-                            time_control = f'{base_time}+{increment_time}'
-                            time_control = torch.FloatTensor([5.0])
-                        except KeyError:
-                            pass
-                            
-                        if self.include_low_time_moves is True:
-                            pass
-                        else:
-                            if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
-                                continue
-                                
-                                
-                        if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
+                    if record['turn'] == 1:
+                        if white_player == self.target_player:
                             pass
                         else:
                             continue
-                        
-                        
-                        #normalizing through log transformations
-                        #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
-                        
-                        yield {
-                            "turn": torch.tensor([record["turn"]]).float(), #make float
-                            "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).float(),
-                            "white_queenside_castling_rights": torch.tensor([record["white_queenside_castling_rights"]]).float(),
-                            "black_kingside_castling_rights": torch.tensor([record["black_kingside_castling_rights"]]).float(),
-                            "black_queenside_castling_rights": torch.tensor([record["black_queenside_castling_rights"]]).float(),
-                            "board_position": torch.tensor(np.array(record["board_position"])).float(),
-                            "from_squares": torch.tensor([record["from_square"]]).float(),
-                            "to_squares": torch.tensor([record["to_square"]]).float(),
-                            "lengths": torch.tensor([record["length"]]).float(),
-                            "phase": torch.tensor([record["phase"]]).float(),
-                            "game_result": torch.tensor([record["result"]]).float(),
-                            "categorical_result": torch.tensor([record["categorical_result"]]).float(),
-                            "time_control": time_control,
-                            "white_remaining_time": torch.tensor([record["white_remaining_time"]]).float(),
-                            "black_remaining_time": torch.tensor([record["black_remaining_time"]]).float(),
-                            "white_rating": torch.tensor([record["white_rating"]]).float(),
-                            "black_rating": torch.tensor([record["black_rating"]]).float(),
-                            "move_time": torch.tensor([record["time_spent_on_move"]]).float(),
-                            "move_number": torch.tensor([record["move_number"]]).float(),
-                            "num_legal_moves": torch.tensor([record["num_legal_moves"]]).float(),
-                            "white_material_value": torch.tensor([record["white_material_value"]]).float(),
-                            "black_material_value": torch.tensor([record["black_material_value"]]).float(),
-                            "material_difference": torch.tensor([record["material_difference"]]).float(),
-                            "moves_until_end": torch.tensor([record["moves_until_end"]]).float(),
-                            "base_time": torch.tensor([record["base_time"]]).float(),
-                            "increment_time": torch.tensor([record["increment_time"]]).float(),
-                        }
-            if not self.loop_forever:
-                break
+                    if record['turn'] == 0:
+                        if black_player == self.target_player:
+                            pass
+                        else:
+                            continue
 
+                    
+                    if int(record['move_number']) <= 8:
+                        record["moves_until_end"] = 35
+
+    
+                    try:
+                        base_time = record["base_time"]
+                        increment_time = record["increment_time"]
+                        
+                        if int(increment_time)>0 and int(record["move_number"])!=0:
+                            record["time_spent_on_move"] = record["time_spent_on_move"] + int(increment_time)
+                        if int(record["time_spent_on_move"])<1:
+                            record["time_spent_on_move"] = 0
+                        
+                        time_control = f'{base_time}+{increment_time}'
+                        time_control = torch.FloatTensor([5.0])
+                    except KeyError:
+                        pass
+                        
+                    if self.include_low_time_moves is True:
+                        pass
+                    else:
+                        if int(record["white_remaining_time"])<=30 or int(record["black_remaining_time"])<=30:
+                            continue
+                            
+                            
+                    if int(record["move_number"])>self.min_full_move_number and int(record["move_number"])<self.max_full_move_number:
+                        pass
+                    else:
+                        continue
+                    
+                    
+                    #normalizing through log transformations
+                    #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
+                    
+                    yield {
+                        "turn": torch.tensor([record["turn"]]).float(), #make float
+                        "white_kingside_castling_rights": torch.tensor([record["white_kingside_castling_rights"]]).float(),
+                        "white_queenside_castling_rights": torch.tensor([record["white_queenside_castling_rights"]]).float(),
+                        "black_kingside_castling_rights": torch.tensor([record["black_kingside_castling_rights"]]).float(),
+                        "black_queenside_castling_rights": torch.tensor([record["black_queenside_castling_rights"]]).float(),
+                        "board_position": torch.tensor(np.array(record["board_position"])).float(),
+                        "from_squares": torch.tensor([record["from_square"]]).float(),
+                        "to_squares": torch.tensor([record["to_square"]]).float(),
+                        "lengths": torch.tensor([record["length"]]).float(),
+                        "phase": torch.tensor([record["phase"]]).float(),
+                        "game_result": torch.tensor([record["result"]]).float(),
+                        "categorical_result": torch.tensor([record["categorical_result"]]).float(),
+                        "time_control": time_control,
+                        "white_remaining_time": torch.tensor([record["white_remaining_time"]]).float(),
+                        "black_remaining_time": torch.tensor([record["black_remaining_time"]]).float(),
+                        "white_rating": torch.tensor([record["white_rating"]]).float(),
+                        "black_rating": torch.tensor([record["black_rating"]]).float(),
+                        "move_time": torch.tensor([record["time_spent_on_move"]]).float(),
+                        "move_number": torch.tensor([record["move_number"]]).float(),
+                        "num_legal_moves": torch.tensor([record["num_legal_moves"]]).float(),
+                        "white_material_value": torch.tensor([record["white_material_value"]]).float(),
+                        "black_material_value": torch.tensor([record["black_material_value"]]).float(),
+                        "material_difference": torch.tensor([record["material_difference"]]).float(),
+                        "moves_until_end": torch.tensor([record["moves_until_end"]]).float(),
+                        "base_time": torch.tensor([record["base_time"]]).float(),
+                        "increment_time": torch.tensor([record["increment_time"]]).float(),
+                    }
+            """if not self.loop_forever:
+                break
+"""
 
     def __len__(self):
         return self.length // self.world_size

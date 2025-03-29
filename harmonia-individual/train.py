@@ -191,9 +191,6 @@ def train_model_ddp(rank, world_size, CONFIG):
     train_dataset = ChunkLoader(training_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number, target_player=CONFIG.TARGET_PLAYER, loop_forever=True)
     val_dataset = ChunkLoader(testing_file_list, record_dtype, rank, world_size, include_low_time_moves=use_low_time, min_full_move_number=min_full_move_number, target_player=CONFIG.TARGET_PLAYER, loop_forever=False)
 
-    if len(training_file_list) > CONFIG.NUM_WORKERS:
-        CONFIG.NUM_WORKERS = len(training_file_list)
-
     train_loader = DataLoader(
         dataset=train_dataset,
         batch_size=CONFIG.BATCH_SIZE // world_size,
