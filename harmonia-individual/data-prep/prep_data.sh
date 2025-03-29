@@ -37,8 +37,17 @@ cd "${username}_data"
 individual_pgn_parser --pgn_file="../processed_${username}_train.pgn" --chunks_per_file=25000 --max_files_per_dir=10 --outputdir="${username}_train_chunks"
 individual_pgn_parser --pgn_file="../processed_${username}_validation.pgn" --chunks_per_file=25000 --max_files_per_dir=10 --outputdir="${username}_validation_chunks"
 
+zip -r "${username}_train_chunks.zip" "${username}_train_chunks"
+zip -r "${username}_validation_chunks.zip" "${username}_validation_chunks"
+rm -r "${username}_train_chunks"
+rm -r "${username}_validation_chunks"
+
 rm "../${username}_train.pgn"
 rm "../${username}_validation.pgn"
 rm "../processed_${username}_train.pgn"
 rm "../processed_${username}_validation.pgn"
 rm ../log.txt
+
+cd ..
+
+huggingface-cli upload "codingmonster1234/${username}-data" "${username}_data" --repo-type=dataset
