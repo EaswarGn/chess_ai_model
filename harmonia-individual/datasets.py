@@ -206,6 +206,9 @@ class ChunkLoader(IterableDataset):
                         else:
                             continue
                         
+                        print(record)
+                        print('\n\n\n\n')
+                        
                         
                         #normalizing through log transformations
                         #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
