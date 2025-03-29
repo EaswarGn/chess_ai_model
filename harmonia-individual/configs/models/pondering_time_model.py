@@ -87,7 +87,7 @@ class CONFIG:
         self.OPTIMIZER = torch.optim.Adam
         self.WEIGHT_DECAY = 1e-2
         self.USE_STRICT = True #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = 'BlitzKing45_pondering_time_model/checkpoints/models/1900_step_15000.pt'#'../../1900_step_9000.pt'
+        self.CHECKPOINT_PATH = '../../1900_step_21000.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
