@@ -63,7 +63,7 @@ class CONFIG:
         self.TRAINING_DATA_PERCENT = 0.9 #percent of data to be used for training, remainnig data is used for validation
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
-        self.PRINT_FREQUENCY = 1
+        self.PRINT_FREQUENCY = 10
         self.N_STEPS = 40000
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
