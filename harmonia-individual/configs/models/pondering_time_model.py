@@ -14,7 +14,7 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.TARGET_PLAYER = "BlitzKing45"
+        self.TARGET_PLAYER = "Chess_Star1234"
         self.NAME = f"{self.TARGET_PLAYER}_pondering_time_model"
         self.NUM_GPUS = torch.cuda.device_count()
         

@@ -173,13 +173,13 @@ def train_model_ddp(rank, world_size, CONFIG):
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
     
-    training_file_list = get_all_record_files(f'../../{CONFIG.TARGET_PLAYER.lower()}_train_chunks') 
+    training_file_list = get_all_record_files(f'../../{CONFIG.TARGET_PLAYER}_train_chunks') 
     training_file_list = [file for file in training_file_list if file.endswith('.zst')]   
     training_file_list = [s for s in training_file_list if "._" not in s]
     random.shuffle(training_file_list)
     
     
-    testing_file_list = get_all_record_files(f'../../{CONFIG.TARGET_PLAYER.lower()}_validation_chunks')
+    testing_file_list = get_all_record_files(f'../../{CONFIG.TARGET_PLAYER}_validation_chunks')
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     
