@@ -67,7 +67,7 @@ class CONFIG:
         self.N_STEPS = 25000
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
-        self.STEP = 1 #the step to start training at, if None then step will start at 1 even after loading from checkpoint
+        self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
         self.LR_SCHEDULE = "cosine"
         self.LR_DECAY = 0.06
         self.LR = get_lr(
