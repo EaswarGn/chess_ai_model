@@ -188,7 +188,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     max_full_move_number = 1e10
     if "time" in CONFIG.NAME:
         use_low_time = True
-        min_full_move_number = -1
+        min_full_move_number = 5
     if "opening" in CONFIG.NAME:
         use_low_time = False
         min_full_move_number = -1
