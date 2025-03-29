@@ -95,10 +95,9 @@ class CONFIG:
         ###############################
         self.move_time_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = None
-        """nn.Sequential(
+        self.categorical_game_result_head = nn.Sequential(
             nn.Linear(self.D_MODEL, 3)
-        )"""
+        )
         self.game_result_head = None
 
         ###############################
@@ -118,5 +117,5 @@ class CONFIG:
         self.move_loss = self.CRITERION
         self.move_time_loss = None #nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = None#nn.CrossEntropyLoss
+        self.categorical_game_result_loss = nn.CrossEntropyLoss
 
