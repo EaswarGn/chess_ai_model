@@ -78,7 +78,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
         
-        if self.categorical_game_result_head is not None:
+        if self.categorical_game_result_head is not None and 'opening' not in CONFIG.NAME:
             for param in self.categorical_game_result_head.parameters():
                 param.requires_grad = False
 
