@@ -197,6 +197,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
+        drop_last=True
     )
 
     val_loader = DataLoader(
@@ -205,6 +206,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         num_workers=CONFIG.NUM_WORKERS,
         pin_memory=CONFIG.PIN_MEMORY,
         prefetch_factor=CONFIG.PREFETCH_FACTOR,
+        drop_last=True
     )
 
     train_epoch(
@@ -286,7 +288,6 @@ def train_epoch(
     move_loss_criterion = criterion
     criterion = MultiTaskChessLoss(CONFIG, device=device).to(device)
     
-    print("no")
     for i, batch in enumerate(train_loader):
         for key in batch:
             batch[key] = batch[key].to(device)
