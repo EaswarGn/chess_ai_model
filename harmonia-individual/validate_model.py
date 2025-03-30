@@ -14,6 +14,7 @@ from torch.amp import GradScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
+from configs.models.utils.levels import SQUARES
 
 record_dtype = np.dtype([
     ("turn", np.int8),
@@ -56,6 +57,8 @@ def calculate_accuracy(predictions, targets):
     correct = torch.eq(predicted_classes, targets).sum().item()
     accuracy = correct / targets.size(0)
     return accuracy
+
+range_values = [round(x, 2) for x in [i * 0.02 for i in range(51)]]
 
 def validate_model(rank, world_size, CONFIG):
     setup_ddp(rank, world_size)
@@ -154,95 +157,160 @@ def validate_model(rank, world_size, CONFIG):
         pbar = tqdm(total=total_steps, desc="Validating")
     
     total_batches_processed = 0
+    
+    s = 0
+    correct = 0
+    total = 0
+    
     with torch.no_grad():
         # Batches
-        for i, batch in enumerate(val_loader):
-            # Move to default device
-            for key in batch:
-                batch[key] = batch[key].to(DEVICE)
+        while s<len(range_values)-1:
+            for i, batch in enumerate(val_loader):
+                # Move to default device
+                for key in batch:
+                    batch[key] = batch[key].to(DEVICE)
 
-            with torch.autocast(
-                device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
-            ):
+                with torch.autocast(
+                    device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
+                ):
+                    
+                    predictions = model(
+                        batch
+                    )  # (N, 1, 64), (N, 1, 64)
+                    
+                    loss, loss_details = criterion(predictions, batch)
+                    result_loss = loss_details['result_loss']
+                    move_time_loss = loss_details['time_loss']
+                    move_loss = loss_details['move_loss']
+                    moves_until_end_loss = loss_details['moves_until_end_loss']
+                    categorical_game_result_loss = loss_details['categorical_game_result_loss']
                 
-                predictions = model(
-                    batch
-                )  # (N, 1, 64), (N, 1, 64)
-                
-                loss, loss_details = criterion(predictions, batch)
-                result_loss = loss_details['result_loss']
-                move_time_loss = loss_details['time_loss']
-                move_loss = loss_details['move_loss']
-                moves_until_end_loss = loss_details['moves_until_end_loss']
-                categorical_game_result_loss = loss_details['categorical_game_result_loss']
-            
-            losses.update(
-                loss.item(), batch["lengths"].sum().item()
-            )
-            result_losses.update(
-                result_loss.item(), batch["lengths"].sum().item()
-            )
-            move_time_losses.update(
-                move_time_loss.item(), batch["lengths"].sum().item()
-            )
-            move_losses.update(
-                move_loss.item(), batch["lengths"].sum().item()
-            )
-            moves_until_end_losses.update(
-                moves_until_end_loss.item(), batch["lengths"].sum().item()
-            )
-            categorical_game_result_losses.update(
-                categorical_game_result_loss.item(), batch["lengths"].sum().item()
-            )
+                losses.update(
+                    loss.item(), batch["lengths"].sum().item()
+                )
+                result_losses.update(
+                    result_loss.item(), batch["lengths"].sum().item()
+                )
+                move_time_losses.update(
+                    move_time_loss.item(), batch["lengths"].sum().item()
+                )
+                move_losses.update(
+                    move_loss.item(), batch["lengths"].sum().item()
+                )
+                moves_until_end_losses.update(
+                    moves_until_end_loss.item(), batch["lengths"].sum().item()
+                )
+                categorical_game_result_losses.update(
+                    categorical_game_result_loss.item(), batch["lengths"].sum().item()
+                )
 
-            if predictions['from_squares'] is None:
-                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
-            else:
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                        targets=batch["from_squares"].squeeze(1),  # (N)
-                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                        other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        k=[1, 3, 5],
-                    )
+                if predictions['from_squares'] is None:
+                    top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+                else:
+                    """top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            k=[1, 3, 5],
+                        )"""
+                        
+                        
+                    total += batch["lengths"].sum().item()
+                    
+                    SQUARE_NAMES = {v: k for k, v in SQUARES.items()}
+                        
+                    batch_size = next(iter(batch.values())).shape[0]
+
+                    # Iterate over individual samples in the batch
+                    for j in range(batch_size):
+                        sample = {key: batch[key][j] for key in batch}
+                    
+                        predicted_from_squares = predictions['from_squares']
+                        predicted_to_squares = predictions['to_squares']
+                        
+                        # Extract probabilities (assume batch size = 1, take first batch)
+                        predicted_from_squares = predicted_from_squares[j, 0, :].squeeze(0)  # Shape: (64,)
+                        predicted_to_squares = predicted_to_squares[j, 0, :].squeeze(0)  # Shape: (64,)
+
+                        # Apply softmax to get probabilities
+                        predicted_from_probs = torch.softmax(predicted_from_squares, dim=-1)  # (64,)
+                        predicted_to_probs = torch.softmax(predicted_to_squares, dim=-1)  # (64,)
+
+                        # Sort squares by probability (highest first)
+                        from_sorted_indices = torch.argsort(predicted_from_probs, descending=True)
+                        to_sorted_indices = torch.argsort(predicted_to_probs, descending=True)
+                        
+                        # Create a dictionary for all 64 × 64 moves
+                        move_probabilities = {}
+                        prob_sum = 0
+                        probs = []
+                        for i in range(64):
+                            from_square = SQUARE_NAMES[from_sorted_indices[i].item()]  # Get square name
+                            to_square = SQUARE_NAMES[to_sorted_indices[i].item()]  # Get square name
+                            move = from_square + to_square  # UCI move format
+                            prob = predicted_from_probs[from_sorted_indices[i]].item() * predicted_to_probs[to_sorted_indices[i]].item()
+                            move_probabilities[move] = prob
+                            prob_sum += prob
+                            probs.append(prob)
+
+                        # Sort the dictionary by probability in descending order
+                        sorted_move_probabilities = dict(sorted(move_probabilities.items(), key=lambda item: item[1], reverse=True))
+                        
+                        move = None
+                        if move_probabilities[0] - move_probabilities[5] < range_values[s]:
+                            sampled_index = torch.multinomial(torch.tensor(probs), 1).item()  # .item() to get the scalar value
+                            move = list(sorted_move_probabilities.keys())[sampled_index]
+                        else:
+                            move = list(sorted_move_probabilities.keys())[0]
+                            
+                        target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
+                        if target_move == move:
+                            correct += 1
+                        
+                                
+                
+                top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+                top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+                top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+                
+                if predictions['categorical_game_result'] is None:
+                    categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+                else:
+                    categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                                batch['categorical_result']), batch["lengths"].shape[0])
+                if rank==0:
+                    pbar.update(1)
+                
+                total_batches_processed += 1
+                if i+1>=total_steps and rank==0:
+                    print("validation finished")
+                    pbar.close()
+                    cleanup_ddp()
+                    break
             
-            top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
-            top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
-            top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-            
-            if predictions['categorical_game_result'] is None:
-                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-            else:
-                categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                            batch['categorical_result']), batch["lengths"].shape[0])
+            datapoints_skipped = (len(val_loader)-total_batches_processed)*CONFIG.BATCH_SIZE
+                
             if rank==0:
-                pbar.update(1)
-            
-            total_batches_processed += 1
-            if i+1>=total_steps and rank==0:
-                print("validation finished")
-                pbar.close()
+                
+                print(f"using range: {range_values[s]}")
+                print(f"Move prediction accuracy: {correct/total}")
+                print("Validation loss: %.3f" % losses.avg)
+                #print("Validation move loss: %.3f" % move_losses.avg)
+                print("Validation result loss: %.3f" % result_losses.avg)
+                print("Validation move time loss: %.3f" % move_time_losses.avg)
+                print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
+                print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
+                """print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
+                print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
+                print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
+                print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)"""
+                print(f"{datapoints_skipped} datapoints skipped from validation set.")
+                
+                s+=1
+                """pbar.close()
                 cleanup_ddp()
-                break
-        
-        datapoints_skipped = (len(val_loader)-total_batches_processed)*CONFIG.BATCH_SIZE
-            
-        if rank==0:
-            
-            print("Validation loss: %.3f" % losses.avg)
-            print("Validation move loss: %.3f" % move_losses.avg)
-            print("Validation result loss: %.3f" % result_losses.avg)
-            print("Validation move time loss: %.3f" % move_time_losses.avg)
-            print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
-            print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
-            print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
-            print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
-            print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
-            print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
-            print(f"{datapoints_skipped} datapoints skipped from validation set.")
-            pbar.close()
-            cleanup_ddp()
-            sys.exit()
+                sys.exit()"""
             
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

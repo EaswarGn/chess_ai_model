@@ -594,6 +594,15 @@ def get_move_probabilities(board, predictions):
 
     return sorted_move_probabilities
 
+def convert_uci_to_san(uci_moves, board):
+    san_moves = {}
+    for uci_move, probability in uci_moves.items():
+        move = chess.Move.from_uci(uci_move)  # Convert UCI to Move object
+        if move in board.legal_moves:
+            san_move = board.san(move)  # Convert Move object to SAN
+            san_moves[san_move] = probability  # Save the SAN move with its probability
+    return san_moves
+
 
 
 

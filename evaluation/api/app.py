@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import joblib
 import numpy as np
-from utils import load_model, get_model_inputs, get_move, get_move_probabilities, get_all_move_probabilities
+from utils import load_model, get_model_inputs, get_move, get_move_probabilities, get_all_move_probabilities, convert_uci_to_san
 from configs import import_config
 import chess
 import torch.nn.functional as F
@@ -49,6 +49,30 @@ def predict():
         predictions['categorical_game_result'] = torch.softmax(predictions['categorical_game_result'], dim=-1)
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
+        #legal_move_probabilities = convert_uci_to_san(legal_move_probabilities, board)
+        
+        """
+        probabilities = []
+        for key in legal_move_probabilities:
+            probabilities.append(legal_move_probabilities[key])
+        prob_range = max(probabilities) - min(probabilities)
+        if prob_range < 0.4:
+            # If the range is less than 0.4, perform sampling
+            sampled_index = torch.multinomial(torch.tensor(probabilities), 1).item()  # .item() to get the scalar value
+            sampled_move = list(legal_move_probabilities.keys())[sampled_index]
+        else:
+            # If the range is greater than or equal to 0.4, pick the move with the highest probability
+            sampled_move = max(legal_move_probabilities, key=legal_move_probabilities.get)
+        model_move = sampled_move"""
+        
+        
+        
+        total_sum = 0
+        for key in legal_move_probabilities:
+            total_sum += legal_move_probabilities[key]
+        for key in legal_move_probabilities:
+            legal_move_probabilities[key]/=total_sum
+            
         
         if predictions['move_time'] < 0.5:
             predictions['move_time'] = random.uniform(0.1, 0.5)
