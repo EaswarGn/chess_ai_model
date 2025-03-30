@@ -298,3 +298,52 @@ def softmax_sampling_accuracy(logits, targets, other_logits=None, other_targets=
         # Compute accuracy
         accuracy = correct_predictions.float().mean().item()
         return accuracy
+
+def topk_accuracy_single_sample(logits, targets, other_logits=None, other_targets=None, k=[1, 3, 5]):
+    """
+    Compute "top-k" accuracies for a single sample.
+
+    Args:
+        logits (torch.FloatTensor): Predicted logits, of size (vocab_size).
+        targets (torch.LongTensor): Actual targets, of size (1).
+        other_logits (torch.FloatTensor, optional): Predicted logits for a second predicted variable, size (other_vocab_size).
+        other_targets (torch.LongTensor, optional): Actual targets for a second predicted variable, size (1).
+        k (list, optional): Values of "k". Defaults to [1, 3, 5].
+
+    Returns:
+        list: "Top-k" accuracies.
+    """
+    with torch.no_grad():
+        # Ensure logits are of the correct shape
+        logits = logits.unsqueeze(0)  # Add batch dimension (1, vocab_size)
+        targets = targets.unsqueeze(0)  # Add batch dimension (1, )
+
+        if other_logits is not None:
+            other_logits = other_logits.unsqueeze(0)  # Add batch dimension (1, other_vocab_size)
+            other_targets = other_targets.unsqueeze(0)  # Add batch dimension (1, )
+
+            # Compute top-k indices
+            probabilities = F.softmax(logits, dim=-1)  # (1, vocab_size)
+            other_probabilities = F.softmax(other_logits, dim=-1)  # (1, other_vocab_size)
+
+            combined_probabilities = torch.bmm(probabilities.unsqueeze(2), other_probabilities.unsqueeze(1)).view(1, -1)  # (1, vocab_size * other_vocab_size)
+            _, flattened_indices = combined_probabilities.topk(k=max(k), dim=1)  # (1, max(k))
+            indices = flattened_indices // other_logits.shape[-1]  # (1, max(k))
+            other_indices = flattened_indices % other_logits.shape[-1]  # (1, max(k))
+
+            # Compare predictions with targets
+            correct_predictions = (indices == targets) & (other_indices == other_targets)  # (1, max(k))
+
+        else:
+            # Compute top-k indices for single logits
+            _, indices = logits.topk(k=max(k), dim=1)  # (1, max(k))
+
+            # Compare predictions with targets
+            correct_predictions = indices == targets  # (1, max(k))
+
+        # Calculate top-k accuracies
+        topk_accuracies = [
+            correct_predictions[:, :k_value].sum().item() / 1 for k_value in k  # For single sample
+        ]
+
+        return topk_accuracies

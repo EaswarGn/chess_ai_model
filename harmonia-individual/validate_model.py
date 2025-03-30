@@ -249,7 +249,7 @@ def validate_model(rank, world_size, CONFIG):
                     # Iterate over each sample in the batch
                     for i in range(from_probs.size(0)):
                         # Check if the difference is less than 0.4 for the current sample
-                        if prob_diff_from[i] < 0.4 and prob_diff_to[i] < 0.4:
+                        if prob_diff_from[i] * prob_diff_to[i] < range_values[s]:
                             # Use softmax sampling if condition is met
                             sampling_accuracy = softmax_sampling_accuracy(
                                 logits=predictions['from_squares'][i, 0, :],  # For current sample
@@ -260,7 +260,7 @@ def validate_model(rank, world_size, CONFIG):
                             )
                         else:
                             # Otherwise, use top-k sampling
-                            sampling_accuracy = topk_accuracy(
+                            sampling_accuracy = topk_accuracy_single_sample(
                                 logits=predictions['from_squares'][i, 0, :],  # For current sample
                                 targets=batch["from_squares"][i].squeeze(0),  # For current sample
                                 other_logits=predictions['to_squares'][i, 0, :],  # For current sample
