@@ -240,14 +240,10 @@ def validate_model(rank, world_size, CONFIG):
                     top1_to_prob, top1_to_index = to_probs.max(dim=-1)
 
                     # Compute the difference between the top-1 move and the fifth most likely move for each sample
-                    prob_diff_from = top1_from_prob - top5_from_probs[:, -1]  # Difference for 'from' square for each sample
-                    prob_diff_to = top1_to_prob - top5_to_probs[:, -1]  # Difference for 'to' square for each sample
+                    prob_diff = top1_from_prob*top1_to_prob - top5_from_probs[:, -1]*top5_to_probs[:, -1]
 
                     # Initialize list for sampling accuracy
                     sampling_accuracy_list = []
-                    
-                    print(top1_from_prob)
-                    print(top5_from_probs[:, -1])
 
                     # Iterate over each sample in the batch
                     for i in range(from_probs.size(0)):
