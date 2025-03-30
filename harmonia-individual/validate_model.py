@@ -281,7 +281,8 @@ def validate_model(rank, world_size, CONFIG):
                             correct += 1
                 if rank==0:
                     pbar.update(1)
-                if i+1>=total_steps and rank==0:
+                if pbar.n>=total_steps and rank==0:
+                    print("yes")
                     break
                             
                             
