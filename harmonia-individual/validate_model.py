@@ -241,7 +241,6 @@ def validate_model(rank, world_size, CONFIG):
 
                     # Compute the difference between the top-1 move and the fifth most likely move for each sample
                     prob_diff = top1_from_prob*top1_to_prob - top5_from_probs[:, -1]*top5_to_probs[:, -1]
-                    print(prob_diff)
 
                     # Initialize list for sampling accuracy
                     sampling_accuracy_list = []
@@ -249,7 +248,7 @@ def validate_model(rank, world_size, CONFIG):
                     # Iterate over each sample in the batch
                     for i in range(from_probs.size(0)):
                         # Check if the difference is less than 0.4 for the current sample
-                        if top1_from_prob*top1_to_prob - top5_from_probs[:, -1]*top5_to_probs[:, -1] < range_values[s]:
+                        if prob_diff[i] < range_values[s]:
                             # Use softmax sampling if condition is met
                             sampling_accuracy = softmax_sampling_accuracy(
                                 logits=predictions['from_squares'][i, 0, :],  # For current sample
