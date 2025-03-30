@@ -267,9 +267,10 @@ def validate_model(rank, world_size, CONFIG):
 
                         # Sort the dictionary by probability in descending order
                         sorted_move_probabilities = dict(sorted(move_probabilities.items(), key=lambda item: item[1], reverse=True))
+                        probs.sort(reverse=True)
                         
                         move = None
-                        if move_probabilities[0] - move_probabilities[5] < range_values[s]:
+                        if probs[0] - probs[5] < range_values[s]:
                             sampled_index = torch.multinomial(torch.tensor(probs), 1).item()  # .item() to get the scalar value
                             move = list(sorted_move_probabilities.keys())[sampled_index]
                         else:
