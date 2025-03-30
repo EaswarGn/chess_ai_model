@@ -278,6 +278,7 @@ def softmax_sampling_accuracy(logits, targets, other_logits=None, other_targets=
         else:
             # Compute softmax probabilities for both logits (from and to squares for example)
             probabilities = F.softmax(logits, dim=-1)  # shape (vocab_size,)
+            print(probabilities)
             other_probabilities = F.softmax(other_logits, dim=-1)  # shape (other_vocab_size,)
 
             # Compute joint probabilities
