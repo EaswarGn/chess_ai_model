@@ -283,6 +283,7 @@ def validate_model(rank, world_size, CONFIG):
                     pbar.update(1)
                 if pbar.n>=total_steps and rank==0:
                     print("yes")
+                    pbar.close()
                     break
                             
                             
@@ -303,7 +304,6 @@ def validate_model(rank, world_size, CONFIG):
                 #print(f"{datapoints_skipped} datapoints skipped from validation set.")
                 
                 s+=1
-                pbar.close()
                 print("\n\n")
                 pbar = tqdm(total=total_steps, desc="Validating")
                 """pbar.close()
