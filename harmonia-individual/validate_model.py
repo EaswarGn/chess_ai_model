@@ -279,6 +279,10 @@ def validate_model(rank, world_size, CONFIG):
                         target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
                         if target_move == move:
                             correct += 1
+                            
+                        if rank==0:
+                            print("target:",target_move)
+                            print("pred:",move)
                 
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
                 top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
@@ -297,7 +301,7 @@ def validate_model(rank, world_size, CONFIG):
                 print(f"using range: {range_values[s]}")
                 print(f"Move prediction accuracy: {correct/total}")
                 print("Validation loss: %.3f" % losses.avg)
-                #print("Validation move loss: %.3f" % move_losses.avg)
+                print("Validation move loss: %.3f" % move_losses.avg)
                 print("Validation result loss: %.3f" % result_losses.avg)
                 print("Validation move time loss: %.3f" % move_time_losses.avg)
                 print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
@@ -311,6 +315,18 @@ def validate_model(rank, world_size, CONFIG):
                 s+=1
                 print("\n\n")
                 pbar = tqdm(total=total_steps, desc="Validating")
+                correct = 0
+                total = 0
+                losses.reset()
+                result_losses.reset()
+                move_time_losses.reset()
+                moves_until_end_losses.reset()
+                categorical_game_result_accuracies.reset()
+                categorical_game_result_losses.reset()
+                top1_accuracies.reset()
+                top3_accuracies.reset()
+                top5_accuracies.reset()
+                move_losses.reset()
                 """pbar.close()
                 cleanup_ddp()
                 sys.exit()"""
