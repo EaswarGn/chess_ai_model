@@ -16,7 +16,7 @@ class CONFIG:
         ###############################
         self.TARGET_PLAYER = "Chess_Star1234"
         self.NAME = f"{self.TARGET_PLAYER}_model"
-        self.NUM_GPUS = 1#torch.cuda.device_count()
+        self.NUM_GPUS = torch.cuda.device_count()
         
 
         ###############################
