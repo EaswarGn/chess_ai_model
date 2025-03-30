@@ -270,9 +270,11 @@ def validate_model(rank, world_size, CONFIG):
                         # Append the sampling accuracy for this sample
                         sampling_accuracy_list.append(sampling_accuracy)
 
+                    try:
                     # Optionally, you can aggregate the results if needed
-                    softmaxsampling_accuracy = torch.mean(torch.tensor(sampling_accuracy_list))
-
+                        softmaxsampling_accuracy = torch.mean(torch.tensor(sampling_accuracy_list))
+                    except:
+                        print(sampling_accuracy_list)
 
                             
                             
