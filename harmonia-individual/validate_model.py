@@ -249,6 +249,7 @@ def validate_model(rank, world_size, CONFIG):
                     for i in range(from_probs.size(0)):
                         # Check if the difference is less than 0.4 for the current sample
                         if prob_diff[i] < range_values[s]:
+                            print("yes")
                             # Use softmax sampling if condition is met
                             sampling_accuracy = softmax_sampling_accuracy(
                                 logits=predictions['from_squares'][i, 0, :],  # For current sample
