@@ -232,7 +232,7 @@ def validate_model(rank, world_size, CONFIG):
                         targets=batch["from_squares"].squeeze(1),  # (N)
                         other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
                         other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        num_samples=5,
+                        num_samples=1,
                     )
                         
                             
