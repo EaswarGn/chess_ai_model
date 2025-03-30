@@ -227,25 +227,54 @@ def validate_model(rank, world_size, CONFIG):
                             k=[1, 3, 5],
                         )
                     
-                    
-                    move_probs = get_all_move_probabilities(predictions)
-                    if move_probs[0] - move_probs[5] < range_values:
-                        softmaxsampling_accuracy = softmax_sampling_accuracy(
-                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                            targets=batch["from_squares"].squeeze(1),  # (N)
-                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                            other_targets=batch["to_squares"].squeeze(1),  # (N)
-                            num_samples=1,
-                        )
-                    else:
-                        softmaxsampling_accuracy = topk_accuracy(
-                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                            targets=batch["from_squares"].squeeze(1),  # (N)
-                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                            other_targets=batch["to_squares"].squeeze(1),  # (N)
-                            k=[1],
-                        )
-                        
+                    # Get the probabilities from logits
+                    from_probs = torch.nn.functional.softmax(predictions['from_squares'][:, 0, :], dim=-1)
+                    to_probs = torch.nn.functional.softmax(predictions['to_squares'][:, 0, :], dim=-1)
+
+                    # Get the top 5 probabilities and their indices for each sample
+                    top5_from_probs, top5_from_indices = torch.topk(from_probs, k=5, dim=-1)
+                    top5_to_probs, top5_to_indices = torch.topk(to_probs, k=5, dim=-1)
+
+                    # Get the top-1 move (the move with the highest probability) for each sample
+                    top1_from_prob, top1_from_index = from_probs.max(dim=-1)
+                    top1_to_prob, top1_to_index = to_probs.max(dim=-1)
+
+                    # Compute the difference between the top-1 move and the fifth most likely move for each sample
+                    prob_diff_from = top1_from_prob - top5_from_probs[:, -1]  # Difference for 'from' square for each sample
+                    prob_diff_to = top1_to_prob - top5_to_probs[:, -1]  # Difference for 'to' square for each sample
+
+                    # Initialize list for sampling accuracy
+                    sampling_accuracy_list = []
+
+                    # Iterate over each sample in the batch
+                    for i in range(from_probs.size(0)):
+                        # Check if the difference is less than 0.4 for the current sample
+                        if prob_diff_from[i] < 0.4 and prob_diff_to[i] < 0.4:
+                            # Use softmax sampling if condition is met
+                            sampling_accuracy = softmax_sampling_accuracy(
+                                logits=predictions['from_squares'][i, 0, :],  # For current sample
+                                targets=batch["from_squares"][i].squeeze(0),  # For current sample
+                                other_logits=predictions['to_squares'][i, 0, :],  # For current sample
+                                other_targets=batch["to_squares"][i].squeeze(0),  # For current sample
+                                num_samples=1,
+                            )
+                        else:
+                            # Otherwise, use top-k sampling
+                            sampling_accuracy = topk_accuracy(
+                                logits=predictions['from_squares'][i, 0, :],  # For current sample
+                                targets=batch["from_squares"][i].squeeze(0),  # For current sample
+                                other_logits=predictions['to_squares'][i, 0, :],  # For current sample
+                                other_targets=batch["to_squares"][i].squeeze(0),  # For current sample
+                                k=[1, 3, 5],
+                            )
+
+                        # Append the sampling accuracy for this sample
+                        sampling_accuracy_list.append(sampling_accuracy)
+
+                    # Optionally, you can aggregate the results if needed
+                    softmaxsampling_accuracy = torch.mean(torch.tensor(sampling_accuracy_list))
+
+
                             
                             
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
