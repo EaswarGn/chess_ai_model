@@ -172,6 +172,7 @@ def validate_model(rank, world_size, CONFIG):
     s = 0
     correct = 0
     total = 0
+    softmaxsampling_accuracies = AverageMeter()
     
     with torch.no_grad():
         # Batches
@@ -279,14 +280,13 @@ def validate_model(rank, world_size, CONFIG):
                         target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
                         if target_move == move:
                             correct += 1
+                        
                             
-                        if rank==0:
-                            print("target:",target_move)
-                            print("pred:",move)
-                
+                            
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
                 top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
                 top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+                softmaxsampling_accuracies.update(correct/total, batch["lengths"].shape[0])
                 
                 if rank==0:
                     pbar.update(1)
