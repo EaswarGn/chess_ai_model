@@ -279,6 +279,8 @@ def validate_model(rank, world_size, CONFIG):
                         target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
                         if target_move == move:
                             correct += 1
+                if rank==0:
+                    pbar.update(1)
                             
                             
             if rank==0:
