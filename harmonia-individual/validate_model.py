@@ -301,6 +301,7 @@ def validate_model(rank, world_size, CONFIG):
                 
                 s+=1
                 pbar.close()
+                print("\n\n")
                 pbar = tqdm(total=total_steps, desc="Validating")
                 """pbar.close()
                 cleanup_ddp()
