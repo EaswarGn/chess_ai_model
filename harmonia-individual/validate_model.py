@@ -218,13 +218,13 @@ def validate_model(rank, world_size, CONFIG):
                 if predictions['from_squares'] is None:
                     top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
                 else:
-                    """top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                    top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
                             logits=predictions['from_squares'][:, 0, :],  # (N, 64)
                             targets=batch["from_squares"].squeeze(1),  # (N)
                             other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
                             other_targets=batch["to_squares"].squeeze(1),  # (N)
                             k=[1, 3, 5],
-                        )"""
+                        )
                         
                         
                     total += batch["lengths"].sum().item()
@@ -279,6 +279,11 @@ def validate_model(rank, world_size, CONFIG):
                         target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
                         if target_move == move:
                             correct += 1
+                
+                top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+                top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+                top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+                
                 if rank==0:
                     pbar.update(1)
                 if rank==0 and pbar.n>=total_steps:
@@ -297,10 +302,10 @@ def validate_model(rank, world_size, CONFIG):
                 print("Validation move time loss: %.3f" % move_time_losses.avg)
                 print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
                 print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
-                """print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
+                print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
                 print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
                 print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
-                print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)"""
+                print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
                 #print(f"{datapoints_skipped} datapoints skipped from validation set.")
                 
                 s+=1
