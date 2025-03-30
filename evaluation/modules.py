@@ -338,7 +338,7 @@ class PositionWiseFCNetwork(nn.Module):
         )  # (N, pad_length, d_model)
 
         return sequences
-    
+
 
 #seeing if adding batch normalization affects predictive performance
 class BoardEncoder(nn.Module):
@@ -357,7 +357,8 @@ class BoardEncoder(nn.Module):
         d_inner,
         n_layers,
         dropout,
-        num_cls_tokens
+        num_cls_tokens,
+        freeze_board=False
     ):
         """
         Initialize the Enhanced Board Encoder.
@@ -403,14 +404,30 @@ class BoardEncoder(nn.Module):
         self.board_position_embeddings = nn.Embedding(
             vocab_sizes["board_position"], d_model, dtype=torch.float
         )
+
+        
         self.seq_length = 78 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
-        """# New Temporal and Contextual Embeddings
-        self.time_control_embeddings = nn.Embedding(
-            vocab_sizes.get("time_control", 458), d_model, dtype=torch.float
-        )"""
-        
+        if freeze_board is True:
+            for param in self.board_position_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.turn_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.white_kingside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.black_kingside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.white_queenside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            for param in self.black_queenside_castling_rights_embeddings.parameters():
+                param.requires_grad = False
+            weight = self.positional_embeddings.weight.detach()
+            for i in range(self.seq_length - 69, self.seq_length):
+                weight[i].requires_grad = False
+
+            self.positional_embeddings.weight = torch.nn.Parameter(weight)
+
         
         
         # Continuous Feature Projections (ensure output remains float)
@@ -491,6 +508,7 @@ class BoardEncoder(nn.Module):
             [self.make_encoder_layer() for _ in range(n_layers)]
         )
 
+
         # Dropout and Layer Norm
         self.apply_dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(d_model)
@@ -532,7 +550,6 @@ class BoardEncoder(nn.Module):
         black_queenside_castling_rights,
         board_positions,
         # New input parameters for temporal features
-        #categorical_time_control,
         move_number,
         num_legal_moves,
         white_remaining_time,

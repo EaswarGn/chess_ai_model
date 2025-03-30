@@ -14,7 +14,8 @@ app = Flask(__name__)
 
 # Load the model
 model = load_model(CONFIG)
-pondering_time_model = load_model(import_config('pondering_time_model').CONFIG())
+pondering_time_model = load_model(import_config('individual_pondering_time_model').CONFIG())
+opening_model = load_model(import_config('opening_model').CONFIG())
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -26,7 +27,7 @@ def predict():
         white_rating = int(request.json['white_rating'])
         black_rating = int(request.json['black_rating'])
 
-        inputs = get_model_inputs(board,
+        inputs, fullmove_count = get_model_inputs(board,
                 time_control=time_control,
                 white_remaining_time=white_remaining_time,
                 black_remaining_time=black_remaining_time,
@@ -34,14 +35,18 @@ def predict():
                 black_rating=black_rating
         )
         
-        
-        predictions = model(inputs)
-        pondering_time_pred = pondering_time_model(inputs)
+        if fullmove_count<=5:
+            predictions = opening_model(inputs)
+            pondering_time_pred = predictions['move_time']
+            predictions['move_time'] = abs(round(pondering_time_pred[0].item(), 4))
+        else:
+            predictions = model(inputs)
+            pondering_time_pred = pondering_time_model(inputs)
+            predictions['move_time'] = abs(round(pondering_time_pred['move_time'][0].item(), 4))
         
         
         model_move = get_move(board, predictions)
         predictions['categorical_game_result'] = torch.softmax(predictions['categorical_game_result'], dim=-1)
-        predictions['move_time'] = abs(round(pondering_time_pred['move_time'][0].item(), 4))
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
         

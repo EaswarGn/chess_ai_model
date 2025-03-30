@@ -358,12 +358,13 @@ def load_model(CONFIG):
     checkpoint_path = ''
     if DEVICE.type == 'cpu':
         if 'time' in CONFIG.NAME:
-            checkpoint_path = 'checkpoints/1900_step_21000.pt'
+            checkpoint_path = 'checkpoints/1900_step_10000.pt'
+        elif 'opening' in CONFIG.NAME:
+            checkpoint_path = 'checkpoints/1900_step_16000.pt'
         else:
-            checkpoint_path = 'checkpoints/1900_step_17000.pt'
+            checkpoint_path = 'checkpoints/1900_step_30000.pt'
     else:
         checkpoint_path = '../../drive/My Drive/CT-EFT-85.pt'
-        
     
 
     # Load checkpoint
@@ -505,7 +506,7 @@ def get_model_inputs(board,
             [int(time_control.split("+")[1])]
         ).unsqueeze(0)
     
-    return model_inputs
+    return model_inputs, fullmove_count
 
 #SQUARES = {chess.square_name(i): i for i in range(64)}  # Map square names to indices
 SQUARE_NAMES = {v: k for k, v in SQUARES.items()}

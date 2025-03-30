@@ -15,7 +15,7 @@ class CONFIG:
         ############ Name #############
         ###############################
         self.TARGET_PLAYER = "Chess_Star1234"
-        self.NAME = f"{self.TARGET_PLAYER}_opening_model"
+        self.NAME = f"{self.TARGET_PLAYER}_pondering_time_model"
         self.NUM_GPUS = torch.cuda.device_count()
         
 
@@ -50,7 +50,7 @@ class CONFIG:
         self.D_VALUES = 64  # size of value vectors in the multi-head attention
         self.D_INNER = 2048  # an intermediate size in the position-wise FC
         self.N_LAYERS = 6  # number of layers in the Encoder and Decoder
-        self.DROPOUT = 0.0  # dropout probability
+        self.DROPOUT = 0.4#0.1  # dropout probability
         self.N_MOVES = 1  # expected maximum length of move sequences in the model, <= MAX_MOVE_SEQUENCE_LENGTH
         self.DISABLE_COMPILATION = False  # disable model compilation?
         self.COMPILATION_MODE = "default"  # mode of model compilation (see torch.compile())
@@ -64,7 +64,7 @@ class CONFIG:
         self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
-        self.N_STEPS = 40000
+        self.N_STEPS = 25000
         self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
         self.STEP = None #the step to start training at, if None then step will start at 1 even after loading from checkpoint
@@ -85,9 +85,9 @@ class CONFIG:
         self.BOARD_STATUS_LENGTH = 70
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
-        self.WEIGHT_DECAY = 0
-        self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../full_trained_model.pt'
+        self.WEIGHT_DECAY = 1e-2
+        self.USE_STRICT = True #use strict loading when loading a checkpoint?
+        self.CHECKPOINT_PATH = '../../1900_step_21000.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
@@ -95,9 +95,10 @@ class CONFIG:
         ###############################
         self.move_time_head = nn.Sequential(nn.Linear(self.D_MODEL, 1))
         self.game_length_head = None#nn.Sequential(nn.Linear(self.D_MODEL, 1))
-        self.categorical_game_result_head = nn.Sequential(
+        self.categorical_game_result_head = None
+        """nn.Sequential(
             nn.Linear(self.D_MODEL, 3)
-        )
+        )"""
         self.game_result_head = None
 
         ###############################
@@ -114,8 +115,8 @@ class CONFIG:
 
         
         
-        self.move_loss = self.CRITERION
+        self.move_loss = None#self.CRITERION
         self.move_time_loss = nn.L1Loss()
         self.moves_until_end_loss = None #nn.L1Loss()
-        self.categorical_game_result_loss = nn.CrossEntropyLoss
+        self.categorical_game_result_loss = None#nn.CrossEntropyLoss
 
