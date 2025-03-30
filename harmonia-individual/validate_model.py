@@ -299,7 +299,7 @@ def validate_model(rank, world_size, CONFIG):
             if rank==0:
                 
                 print(f"using range: {range_values[s]}")
-                print(f"Move prediction accuracy: {correct/total}")
+                print(f"Move prediction accuracy: {softmaxsampling_accuracies.avg}")
                 print("Validation loss: %.3f" % losses.avg)
                 print("Validation move loss: %.3f" % move_losses.avg)
                 print("Validation result loss: %.3f" % result_losses.avg)
