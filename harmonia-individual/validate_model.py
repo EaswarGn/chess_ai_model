@@ -272,8 +272,6 @@ def validate_model(rank, world_size, CONFIG):
 
                     # Optionally, you can aggregate the results if needed
                     softmaxsampling_accuracy = torch.mean(torch.tensor(sampling_accuracy_list))
-                    print(softmaxsampling_accuracy)
-                    print(top1_accuracy)
 
 
                             
