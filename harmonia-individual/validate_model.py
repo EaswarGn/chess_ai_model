@@ -226,67 +226,21 @@ def validate_model(rank, world_size, CONFIG):
                             other_targets=batch["to_squares"].squeeze(1),  # (N)
                             k=[1, 3, 5],
                         )
-                        
-                        
-                    total += batch["lengths"].sum().item()
                     
-                    SQUARE_NAMES = {v: k for k, v in SQUARES.items()}
-                        
-                    batch_size = next(iter(batch.values())).shape[0]
-
-                    # Iterate over individual samples in the batch
-                    for j in range(batch_size):
-                        sample = {key: batch[key][j] for key in batch}
-                    
-                        predicted_from_squares = predictions['from_squares']
-                        predicted_to_squares = predictions['to_squares']
-                        
-                        # Extract probabilities (assume batch size = 1, take first batch)
-                        predicted_from_squares = predicted_from_squares[j, 0, :].squeeze(0)  # Shape: (64,)
-                        predicted_to_squares = predicted_to_squares[j, 0, :].squeeze(0)  # Shape: (64,)
-
-                        # Apply softmax to get probabilities
-                        predicted_from_probs = torch.softmax(predicted_from_squares, dim=-1)  # (64,)
-                        predicted_to_probs = torch.softmax(predicted_to_squares, dim=-1)  # (64,)
-
-                        # Sort squares by probability (highest first)
-                        from_sorted_indices = torch.argsort(predicted_from_probs, descending=True)
-                        to_sorted_indices = torch.argsort(predicted_to_probs, descending=True)
-                        
-                        # Create a dictionary for all 64 × 64 moves
-                        move_probabilities = {}
-                        prob_sum = 0
-                        probs = []
-                        for i in range(64):
-                            from_square = SQUARE_NAMES[from_sorted_indices[i].item()]  # Get square name
-                            to_square = SQUARE_NAMES[to_sorted_indices[i].item()]  # Get square name
-                            move = from_square + to_square  # UCI move format
-                            prob = predicted_from_probs[from_sorted_indices[i]].item() * predicted_to_probs[to_sorted_indices[i]].item()
-                            move_probabilities[move] = prob
-                            prob_sum += prob
-                            probs.append(prob)
-
-                        # Sort the dictionary by probability in descending order
-                        sorted_move_probabilities = dict(sorted(move_probabilities.items(), key=lambda item: item[1], reverse=True))
-                        probs.sort(reverse=True)
-                        
-                        move = None
-                        if probs[0] - probs[5] < range_values[s]:
-                            sampled_index = torch.multinomial(torch.tensor(probs), 1).item()  # .item() to get the scalar value
-                            move = list(sorted_move_probabilities.keys())[sampled_index]
-                        else:
-                            move = list(sorted_move_probabilities.keys())[0]
-                            
-                        target_move = SQUARE_NAMES[sample['from_squares'][0].item()] + SQUARE_NAMES[sample['to_squares'][0].item()]
-                        if target_move == move:
-                            correct += 1
+                    softmaxsampling_accuracy = softmax_sampling_accuracy(
+                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                        targets=batch["from_squares"].squeeze(1),  # (N)
+                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                        other_targets=batch["to_squares"].squeeze(1),  # (N)
+                        num_samples=5,
+                    )
                         
                             
                             
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
                 top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
                 top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-                softmaxsampling_accuracies.update(correct/total, batch["lengths"].shape[0])
+                softmaxsampling_accuracies.update(softmaxsampling_accuracy, batch["lengths"].shape[0])
                 
                 if rank==0:
                     pbar.update(1)
@@ -310,15 +264,11 @@ def validate_model(rank, world_size, CONFIG):
                 print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
                 print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
                 print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
-                #print(f"{datapoints_skipped} datapoints skipped from validation set.")
-                print(correct)
-                print(total)
                 
                 s+=1
                 print("\n\n")
                 pbar = tqdm(total=total_steps, desc="Validating")
-                correct = 0
-                total = 0
+                softmaxsampling_accuracies.reset()
                 losses.reset()
                 result_losses.reset()
                 move_time_losses.reset()

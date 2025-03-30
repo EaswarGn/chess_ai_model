@@ -244,3 +244,57 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
         ]
 
         return topk_accuracies
+
+def softmax_sampling_accuracy(logits, targets, other_logits=None, other_targets=None, num_samples=5):
+    """
+    Compute accuracy using softmax sampling with multinomial selection.
+
+    Optionally, a second set of logits and targets, for a second
+    predicted variable, can be provided. In this case, probabilities
+    associated with both sets of logits are combined to arrive at the
+    best sampled predictions.
+
+    Args:
+        logits (torch.FloatTensor): Predicted logits, shape (N, vocab_size).
+        targets (torch.LongTensor): Actual targets, shape (N).
+        other_logits (torch.FloatTensor, optional): Predicted logits for a second variable, shape (N, other_vocab_size).
+        other_targets (torch.LongTensor, optional): Actual targets for a second variable, shape (N).
+        num_samples (int, optional): Number of samples to draw from the probability distribution. Defaults to 5.
+
+    Returns:
+        float: Accuracy based on softmax sampling.
+    """
+    with torch.no_grad():
+        batch_size = logits.shape[0]
+
+        if other_logits is not None:
+            # Compute softmax probabilities
+            probabilities = F.softmax(logits, dim=-1).unsqueeze(2)  # (N, vocab_size, 1)
+            other_probabilities = F.softmax(other_logits, dim=-1).unsqueeze(1)  # (N, 1, other_vocab_size)
+
+            # Compute joint probabilities
+            combined_probabilities = torch.bmm(probabilities, other_probabilities).view(batch_size, -1)  # (N, vocab_size * other_vocab_size)
+
+            # Sample from the probability distribution
+            sampled_indices = torch.multinomial(combined_probabilities, num_samples, replacement=True)  # (N, num_samples)
+
+            # Convert sampled indices back to separate predictions
+            indices = sampled_indices // other_logits.shape[-1]  # (N, num_samples)
+            other_indices = sampled_indices % other_logits.shape[-1]  # (N, num_samples)
+
+            # Compare sampled values with ground truth
+            correct_predictions = ((indices == targets.unsqueeze(1)) & (other_indices == other_targets.unsqueeze(1))).any(dim=1)
+
+        else:
+            # Compute softmax probabilities
+            probabilities = F.softmax(logits, dim=-1)  # (N, vocab_size)
+
+            # Sample from the probability distribution
+            sampled_indices = torch.multinomial(probabilities, num_samples, replacement=True)  # (N, num_samples)
+
+            # Compare sampled values with ground truth
+            correct_predictions = (sampled_indices == targets.unsqueeze(1)).any(dim=1)
+
+        # Compute accuracy
+        accuracy = correct_predictions.float().mean().item()
+        return accuracy
