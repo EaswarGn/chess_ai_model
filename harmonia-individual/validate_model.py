@@ -245,6 +245,9 @@ def validate_model(rank, world_size, CONFIG):
 
                     # Initialize list for sampling accuracy
                     sampling_accuracy_list = []
+                    
+                    print(top1_from_prob)
+                    print(top5_from_probs[:, -1])
 
                     # Iterate over each sample in the batch
                     for i in range(from_probs.size(0)):
