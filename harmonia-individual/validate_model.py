@@ -227,13 +227,24 @@ def validate_model(rank, world_size, CONFIG):
                             k=[1, 3, 5],
                         )
                     
-                    softmaxsampling_accuracy = softmax_sampling_accuracy(
-                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                        targets=batch["from_squares"].squeeze(1),  # (N)
-                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                        other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        num_samples=1,
-                    )
+                    
+                    move_probs = get_all_move_probabilities(predictions)
+                    if move_probs[0] - move_probs[5] < range_values:
+                        softmaxsampling_accuracy = softmax_sampling_accuracy(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            num_samples=1,
+                        )
+                    else:
+                        softmaxsampling_accuracy = topk_accuracy(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            k=[1],
+                        )
                         
                             
                             
