@@ -311,6 +311,8 @@ def validate_model(rank, world_size, CONFIG):
                 print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
                 print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
                 #print(f"{datapoints_skipped} datapoints skipped from validation set.")
+                print(correct)
+                print(total)
                 
                 s+=1
                 print("\n\n")
