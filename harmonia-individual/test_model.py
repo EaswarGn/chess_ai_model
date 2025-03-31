@@ -220,6 +220,8 @@ def validate_model(rank, world_size, CONFIG):
                             k=[1],
                             range_value=range_value
                         )
+
+                    print(acc)
                 
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
                 top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
