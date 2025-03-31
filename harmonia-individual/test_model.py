@@ -266,6 +266,7 @@ def validate_model(rank, world_size, CONFIG):
                 top3_accuracies.reset()
                 top5_accuracies.reset()
                 dual_accuracy.reset()
+                total_batches_processed = 0
                 
                 testing_file_list = get_all_record_files(f'../../Chess_Star1234_validation_chunks')
                 testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
