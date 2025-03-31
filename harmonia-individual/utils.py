@@ -266,6 +266,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
         top5_probs, flattened_indices = combined_probabilities.topk(k=5, dim=0)  # (5)
         indices = flattened_indices // other_logits.shape[-1]  # (5)
         other_indices = flattened_indices % other_logits.shape[-1]  # (5)
+        print(top5_probs)
 
         # Check if softmax sampling is needed
         prob_diff = top5_probs[0] - top5_probs[4]  # Difference between top-1 and top-5 probabilities
@@ -284,7 +285,6 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
             
             # Check if sampled move is correct
             is_correct = (chosen_index == target) and (chosen_other_index == other_target)
-            print(is_correct)
             for kk in k:
                 per_sample_accuracies[kk].append(is_correct)
 
