@@ -268,7 +268,6 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
         other_indices = flattened_indices % other_logits.shape[-1]  # (5)
         top5_sum = top5_probs.sum()  # Sum of top 5 probabilities
         top5_probs = top5_probs / top5_sum  # Normalize each element
-        print(top5_probs)
 
 
         # Check if softmax sampling is needed
