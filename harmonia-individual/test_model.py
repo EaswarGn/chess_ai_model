@@ -226,7 +226,7 @@ def validate_model(rank, world_size, CONFIG):
                 top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
                 top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
                 top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-                dual_accuracy.update(acc['1'], batch["lengths"].shape[0])
+                dual_accuracy.update(acc[1], batch["lengths"].shape[0])
                 
                 if predictions['categorical_game_result'] is None:
                     categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
