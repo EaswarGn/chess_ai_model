@@ -154,105 +154,122 @@ def validate_model(rank, world_size, CONFIG):
         pbar = tqdm(total=total_steps, desc="Validating")
     
     total_batches_processed = 0
-    with torch.no_grad():
-        # Batches
-        for i, batch in enumerate(val_loader):
-            # Move to default device
-            for key in batch:
-                batch[key] = batch[key].to(DEVICE)
+    
+    arr = np.arange(0, 1.02, 0.02) 
+    
+    dual_accuracy = AverageMeter()
+    
+    for range_value in arr:
+        with torch.no_grad():
+            # Batches
+            for i, batch in enumerate(val_loader):
+                # Move to default device
+                for key in batch:
+                    batch[key] = batch[key].to(DEVICE)
 
-            with torch.autocast(
-                device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
-            ):
+                with torch.autocast(
+                    device_type=DEVICE.type, dtype=torch.float16, enabled=CONFIG.USE_AMP
+                ):
+                    
+                    predictions = model(
+                        batch
+                    )  # (N, 1, 64), (N, 1, 64)
+                    
+                    loss, loss_details = criterion(predictions, batch)
+                    result_loss = loss_details['result_loss']
+                    move_time_loss = loss_details['time_loss']
+                    move_loss = loss_details['move_loss']
+                    moves_until_end_loss = loss_details['moves_until_end_loss']
+                    categorical_game_result_loss = loss_details['categorical_game_result_loss']
                 
-                predictions = model(
-                    batch
-                )  # (N, 1, 64), (N, 1, 64)
-                
-                loss, loss_details = criterion(predictions, batch)
-                result_loss = loss_details['result_loss']
-                move_time_loss = loss_details['time_loss']
-                move_loss = loss_details['move_loss']
-                moves_until_end_loss = loss_details['moves_until_end_loss']
-                categorical_game_result_loss = loss_details['categorical_game_result_loss']
-            
-            losses.update(
-                loss.item(), batch["lengths"].sum().item()
-            )
-            result_losses.update(
-                result_loss.item(), batch["lengths"].sum().item()
-            )
-            move_time_losses.update(
-                move_time_loss.item(), batch["lengths"].sum().item()
-            )
-            move_losses.update(
-                move_loss.item(), batch["lengths"].sum().item()
-            )
-            moves_until_end_losses.update(
-                moves_until_end_loss.item(), batch["lengths"].sum().item()
-            )
-            categorical_game_result_losses.update(
-                categorical_game_result_loss.item(), batch["lengths"].sum().item()
-            )
+                losses.update(
+                    loss.item(), batch["lengths"].sum().item()
+                )
+                result_losses.update(
+                    result_loss.item(), batch["lengths"].sum().item()
+                )
+                move_time_losses.update(
+                    move_time_loss.item(), batch["lengths"].sum().item()
+                )
+                move_losses.update(
+                    move_loss.item(), batch["lengths"].sum().item()
+                )
+                moves_until_end_losses.update(
+                    moves_until_end_loss.item(), batch["lengths"].sum().item()
+                )
+                categorical_game_result_losses.update(
+                    categorical_game_result_loss.item(), batch["lengths"].sum().item()
+                )
 
-            if predictions['from_squares'] is None:
-                top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
-            else:
-                top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
-                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                        targets=batch["from_squares"].squeeze(1),  # (N)
-                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                        other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        k=[1, 3, 5],
-                    )
+                if predictions['from_squares'] is None:
+                    top1_accuracy, top3_accuracy, top5_accuracy = 0.0, 0.0, 0.0
+                else:
+                    top1_accuracy, top3_accuracy, top5_accuracy = topk_accuracy(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            k=[1, 3, 5],
+                        )
+                    
+                    acc = topk_accuracy_per_sample(
+                            logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                            targets=batch["from_squares"].squeeze(1),  # (N)
+                            other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                            other_targets=batch["to_squares"].squeeze(1),  # (N)
+                            k=[1],
+                            range_value=range_value
+                        )
                 
-                topk_acc = topk_accuracy_per_sample(
-                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
-                        targets=batch["from_squares"].squeeze(1),  # (N)
-                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
-                        other_targets=batch["to_squares"].squeeze(1),  # (N)
-                        k=[1],
-                    )
-                print(topk_acc)
-                print(top1_accuracy)
+                top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
+                top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
+                top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
+                dual_accuracy.update(acc['1'], batch["lengths"].shape[0])
+                
+                if predictions['categorical_game_result'] is None:
+                    categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
+                else:
+                    categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
+                                batch['categorical_result']), batch["lengths"].shape[0])
+                if rank==0:
+                    pbar.update(1)
+                
+                total_batches_processed += 1
+                if i+1>=total_steps and rank==0:
+                    break
             
-            top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
-            top3_accuracies.update(top3_accuracy, batch["lengths"].shape[0])
-            top5_accuracies.update(top5_accuracy, batch["lengths"].shape[0])
-            
-            if predictions['categorical_game_result'] is None:
-                categorical_game_result_accuracies.update(0.0, batch['lengths'].shape[0])
-            else:
-                categorical_game_result_accuracies.update(calculate_accuracy(predictions['categorical_game_result'].float(),
-                            batch['categorical_result']), batch["lengths"].shape[0])
+            datapoints_skipped = (len(val_loader)-total_batches_processed)*CONFIG.BATCH_SIZE
+                
             if rank==0:
-                pbar.update(1)
-            
-            total_batches_processed += 1
-            if i+1>=total_steps and rank==0:
-                print("validation finished")
+                
+                print(f"Got a dual accuracy of {dual_accuracy.avg} on a range value of {range_value}")
+                print("Validation loss: %.3f" % losses.avg)
+                print("Validation move loss: %.3f" % move_losses.avg)
+                print("Validation result loss: %.3f" % result_losses.avg)
+                print("Validation move time loss: %.3f" % move_time_losses.avg)
+                print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
+                print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
+                print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
+                print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
+                print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
+                print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
+                print(f"{datapoints_skipped} datapoints skipped from validation set. \n\n\n")
+                
                 pbar.close()
-                cleanup_ddp()
-                break
-        
-        datapoints_skipped = (len(val_loader)-total_batches_processed)*CONFIG.BATCH_SIZE
-            
-        if rank==0:
-            
-            print("Validation loss: %.3f" % losses.avg)
-            print("Validation move loss: %.3f" % move_losses.avg)
-            print("Validation result loss: %.3f" % result_losses.avg)
-            print("Validation move time loss: %.3f" % move_time_losses.avg)
-            print("Validation moves until end loss: %.3f" % moves_until_end_losses.avg)
-            print("Validation Categorical game result loss: %.3f" % categorical_game_result_losses.avg)
-            print("Validation Categorical game result accuracy: %.3f" % categorical_game_result_accuracies.avg)
-            print("Validation top-1 accuracy: %.3f" % top1_accuracies.avg)
-            print("Validation top-3 accuracy: %.3f" % top3_accuracies.avg)
-            print("Validation top-5 accuracy: %.3f" % top5_accuracies.avg)
-            print(f"{datapoints_skipped} datapoints skipped from validation set.")
-            pbar.close()
-            cleanup_ddp()
-            sys.exit()
+                pbar = tqdm(total=total_steps, desc="Validating")
+                losses.reset()
+                move_losses.reset()
+                result_losses.reset()
+                categorical_game_result_accuracies.reset()
+                categorical_game_result_losses.reset()
+                top1_accuracies.reset()
+                top3_accuracies.reset()
+                top5_accuracies.reset()
+                
+                
+                #pbar.close()
+                #cleanup_ddp()
+                #sys.exit()
             
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
