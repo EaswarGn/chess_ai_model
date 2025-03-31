@@ -245,103 +245,54 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
 
         return topk_accuracies
 
-def softmax_sampling_accuracy(logits, targets, other_logits=None, other_targets=None, num_samples=5):
-    """
-    Compute accuracy using softmax sampling with multinomial selection for a single sample.
 
-    Optionally, a second set of logits and targets, for a second predicted variable, can be provided.
-    In this case, probabilities associated with both sets of logits are combined to arrive at the
-    best sampled predictions.
+
+def topk_accuracy_single_sample(logits, target, k=[1, 3, 5]):
+    """
+    Compute top-k accuracy for a single sample.
 
     Args:
-        logits (torch.FloatTensor): Predicted logits for a single sample, shape (vocab_size).
-        targets (torch.LongTensor): Actual target for the single sample, shape ().
-        other_logits (torch.FloatTensor, optional): Predicted logits for a second variable for the single sample, shape (other_vocab_size).
-        other_targets (torch.LongTensor, optional): Actual target for a second variable for the single sample, shape ().
-        num_samples (int, optional): Number of samples to draw from the probability distribution. Defaults to 5.
+        logits (torch.FloatTensor): Predicted logits, of shape (vocab_size,).
+        target (int): The correct class index.
+        k (list): List of k values for top-k accuracy.
 
     Returns:
-        float: Accuracy based on softmax sampling for the single sample.
+        dict: Dictionary containing top-k accuracy for each k value.
     """
     with torch.no_grad():
-        # Handle the case without second logits
-        if other_logits is None:
-            # Compute softmax probabilities for a single sample
-            probabilities = F.softmax(logits, dim=-1)  # shape (vocab_size,)
+        # Get top-k indices for the sample
+        _, topk_indices = logits.topk(k=max(k), dim=0)
 
-            # Sample from the probability distribution
-            sampled_indices = torch.multinomial(probabilities, num_samples, replacement=True)  # shape (num_samples,)
+        # Check if the target is in the top-k indices
+        correct_predictions = (topk_indices == target).tolist()
 
-            # Compare sampled indices with target
-            correct_predictions = (sampled_indices == targets).any()  # True if the target is among the sampled indices
+        # Compute accuracy for each k value
+        topk_acc = {k_val: int(any(correct_predictions[:k_val])) for k_val in k}
 
-        else:
-            # Compute softmax probabilities for both logits (from and to squares for example)
-            probabilities = F.softmax(logits, dim=-1)  # shape (vocab_size,)
-            other_probabilities = F.softmax(other_logits, dim=-1)  # shape (other_vocab_size,)
+    return topk_acc
 
-            # Compute joint probabilities
-            combined_probabilities = probabilities.view(1, -1) * other_probabilities.view(1, -1)  # shape (1, vocab_size * other_vocab_size)
-            print(combined_probabilities)
-            # Sample from the combined probability distribution
-            sampled_indices = torch.multinomial(combined_probabilities, num_samples, replacement=True)  # shape (num_samples,)
-            
-            # Convert sampled indices back to separate predictions
-            indices = sampled_indices // other_logits.shape[-1]  # (num_samples,)
-            other_indices = sampled_indices % other_logits.shape[-1]  # (num_samples,)
-
-            # Compare sampled values with ground truth
-            correct_predictions = ((indices == targets) & (other_indices == other_targets)).any()  # True if the target is among the sampled indices
-
-        # Compute accuracy
-        accuracy = correct_predictions.float().item()
-        return accuracy
-
-def topk_accuracy_single_sample(logits, targets, other_logits=None, other_targets=None, k=[1, 3, 5]):
+def topk_accuracy_batch_loop(logits, targets, k=[1, 3, 5]):
     """
-    Compute "top-k" accuracies for a single sample.
+    Compute top-k accuracy for an entire batch by iterating through each sample.
 
     Args:
-        logits (torch.FloatTensor): Predicted logits, of size (vocab_size).
-        targets (torch.LongTensor): Actual targets, of size (1).
-        other_logits (torch.FloatTensor, optional): Predicted logits for a second predicted variable, size (other_vocab_size).
-        other_targets (torch.LongTensor, optional): Actual targets for a second predicted variable, size (1).
-        k (list, optional): Values of "k". Defaults to [1, 3, 5].
+        logits (torch.FloatTensor): Predicted logits, of shape (N, vocab_size).
+        targets (torch.LongTensor): Actual targets, of shape (N,).
+        k (list): List of k values for top-k accuracy.
 
     Returns:
-        list: "Top-k" accuracies.
+        dict: Dictionary containing top-k accuracy for each k value.
     """
-    with torch.no_grad():
-        # Ensure logits are of the correct shape
-        logits = logits.unsqueeze(0)  # Add batch dimension (1, vocab_size)
-        targets = targets.unsqueeze(0)  # Add batch dimension (1, )
+    batch_size = logits.shape[0]
+    topk_acc_totals = {k_val: 0 for k_val in k}
 
-        if other_logits is not None:
-            other_logits = other_logits.unsqueeze(0)  # Add batch dimension (1, other_vocab_size)
-            other_targets = other_targets.unsqueeze(0)  # Add batch dimension (1, )
+    # Loop through each sample in the batch
+    for i in range(batch_size):
+        sample_acc = topk_accuracy_single_sample(logits[i], targets[i], k)
+        for k_val in k:
+            topk_acc_totals[k_val] += sample_acc[k_val]
 
-            # Compute top-k indices
-            probabilities = F.softmax(logits, dim=-1)  # (1, vocab_size)
-            other_probabilities = F.softmax(other_logits, dim=-1)  # (1, other_vocab_size)
+    # Compute final accuracy as the mean over the batch
+    topk_acc_final = {k_val: topk_acc_totals[k_val] / batch_size for k_val in k}
 
-            combined_probabilities = torch.bmm(probabilities.unsqueeze(2), other_probabilities.unsqueeze(1)).view(1, -1)  # (1, vocab_size * other_vocab_size)
-            _, flattened_indices = combined_probabilities.topk(k=max(k), dim=1)  # (1, max(k))
-            indices = flattened_indices // other_logits.shape[-1]  # (1, max(k))
-            other_indices = flattened_indices % other_logits.shape[-1]  # (1, max(k))
-
-            # Compare predictions with targets
-            correct_predictions = (indices == targets) & (other_indices == other_targets)  # (1, max(k))
-
-        else:
-            # Compute top-k indices for single logits
-            _, indices = logits.topk(k=max(k), dim=1)  # (1, max(k))
-
-            # Compare predictions with targets
-            correct_predictions = indices == targets  # (1, max(k))
-
-        # Calculate top-k accuracies
-        topk_accuracies = [
-            correct_predictions[:, :k_value].sum().item() / 1 for k_value in k  # For single sample
-        ]
-
-        return topk_accuracies
+    return topk_acc_final

@@ -7,6 +7,9 @@ import chess
 import torch.nn.functional as F
 import random
 import torch
+import time
+import chess.engine
+import os
 
 CONFIG = import_config('individual_model')
 CONFIG = CONFIG.CONFIG()
@@ -16,6 +19,8 @@ app = Flask(__name__)
 model = load_model(CONFIG)
 pondering_time_model = load_model(import_config('individual_pondering_time_model').CONFIG())
 opening_model = load_model(import_config('opening_model').CONFIG())
+engine = chess.engine.SimpleEngine.popen_uci('stockfish')
+print("stockfish loaded")
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -49,29 +54,45 @@ def predict():
         predictions['categorical_game_result'] = torch.softmax(predictions['categorical_game_result'], dim=-1)
         all_move_probabilites = get_all_move_probabilities(board, predictions)
         legal_move_probabilities = get_move_probabilities(board, predictions)
+        
         #legal_move_probabilities = convert_uci_to_san(legal_move_probabilities, board)
-        
-        """
-        probabilities = []
-        for key in legal_move_probabilities:
-            probabilities.append(legal_move_probabilities[key])
-        prob_range = max(probabilities) - min(probabilities)
-        if prob_range < 0.4:
-            # If the range is less than 0.4, perform sampling
-            sampled_index = torch.multinomial(torch.tensor(probabilities), 1).item()  # .item() to get the scalar value
-            sampled_move = list(legal_move_probabilities.keys())[sampled_index]
-        else:
-            # If the range is greater than or equal to 0.4, pick the move with the highest probability
-            sampled_move = max(legal_move_probabilities, key=legal_move_probabilities.get)
-        model_move = sampled_move"""
-        
-        
-        
         total_sum = 0
         for key in legal_move_probabilities:
             total_sum += legal_move_probabilities[key]
         for key in legal_move_probabilities:
             legal_move_probabilities[key]/=total_sum
+        
+            
+        
+        
+        """probabilities = []
+        for key in legal_move_probabilities:
+            probabilities.append(legal_move_probabilities[key])
+        probabilities = sorted(probabilities, reverse=True)
+        prob_range = probabilities[0] - probabilities[5]
+        
+        if prob_range < 0.4:
+            # If the range is less than 0.4, perform sampling
+            sampled_index = torch.multinomial(torch.tensor(probabilities[:5]), 1).item()  # .item() to get the scalar value
+            sampled_move = list(legal_move_probabilities.keys())[sampled_index]
+            
+            print(f"In this position: {board.fen()}")
+            print(f"the original move was: {model_move}")
+            print(f"But the move changed due to softmax sampling: {sampled_move}\n\n\n")
+        else:
+            # If the range is greater than or equal to 0.4, pick the move with the highest probability
+            sampled_move = max(legal_move_probabilities, key=legal_move_probabilities.get)
+        
+        model_move = sampled_move"""
+
+        """print("analysing")
+        start = time.time()
+        info = engine.analyse(board, chess.engine.Limit(time=2))  # Set the time limit for the evaluation
+        evaluation = info["score"]
+        print("Evaluation:", evaluation)
+        print(f"time taken to analyze: {time.time()-start}")
+        print(info)"""
+
             
         
         if predictions['move_time'] < 0.5:
