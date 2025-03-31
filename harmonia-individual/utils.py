@@ -282,7 +282,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
         if use_sampling:
             # Normalize top-5 probabilities for sampling
             temperature = 1.0  # Adjust this value (lower = more deterministic, higher = more random)
-            sampled_index = torch.multinomial(F.softmax(top5_probs / temperature, dim=0), num_samples=1).item()
+            sampled_index = torch.multinomial(top5_probs, num_samples=1).item()
             chosen_index = indices[sampled_index]
             chosen_other_index = other_indices[sampled_index]
             
