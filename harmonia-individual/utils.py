@@ -269,7 +269,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
 
         # Check if softmax sampling is needed
         prob_diff = top5_probs[0] - top5_probs[4]  # Difference between top-1 and top-5 probabilities
-        use_sampling = prob_diff < 0.0
+        use_sampling = prob_diff < 0.1
 
         # Get targets for this sample
         target = targets[i].item()
