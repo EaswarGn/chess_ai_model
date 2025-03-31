@@ -244,8 +244,9 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
         ]
 
         return topk_accuracies
-
-import torch.nn.functional as F
+    
+    
+    
 
 def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1, 3, 5]):
     batch_size = logits.shape[0]
@@ -261,21 +262,40 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
         # Compute joint probabilities
         combined_probabilities = torch.mm(probabilities, other_probabilities).view(-1)  # (vocab_size * other_vocab_size)
 
-        # Get top-k predictions
-        _, flattened_indices = combined_probabilities.topk(k=max_k, dim=0)  # (max_k)
-        indices = flattened_indices // other_logits.shape[-1]  # (max_k)
-        other_indices = flattened_indices % other_logits.shape[-1]  # (max_k)
+        # Get top-5 predictions
+        top5_probs, flattened_indices = combined_probabilities.topk(k=5, dim=0)  # (5)
+        indices = flattened_indices // other_logits.shape[-1]  # (5)
+        other_indices = flattened_indices % other_logits.shape[-1]  # (5)
+
+        # Check if softmax sampling is needed
+        prob_diff = top5_probs[0] - top5_probs[4]  # Difference between top-1 and top-5 probabilities
+        use_sampling = prob_diff < 0.0
 
         # Get targets for this sample
         target = targets[i].item()
         other_target = other_targets[i].item()
 
-        # Compute accuracy for each k
-        for kk in k:
-            correct = (indices[:kk] == target).any().item() and (other_indices[:kk] == other_target).any().item()
-            per_sample_accuracies[kk].append(correct)
+        # Use softmax sampling if needed
+        if use_sampling:
+            # Normalize top-5 probabilities for sampling
+            sampled_index = torch.multinomial(F.softmax(top5_probs, dim=0), num_samples=1).item()
+            chosen_index = indices[sampled_index]
+            chosen_other_index = other_indices[sampled_index]
+            
+            # Check if sampled move is correct
+            is_correct = (chosen_index == target) and (chosen_other_index == other_target)
+            
+            for kk in k:
+                per_sample_accuracies[kk].append(is_correct)
+
+        else:
+            # Standard top-k accuracy
+            for kk in k:
+                correct = (indices[:kk] == target).any().item() and (other_indices[:kk] == other_target).any().item()
+                per_sample_accuracies[kk].append(correct)
 
     # Aggregate over the batch (mean accuracy for each k)
     aggregated_accuracy = {kk: sum(per_sample_accuracies[kk]) / batch_size for kk in k}
     
     return aggregated_accuracy
+
