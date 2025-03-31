@@ -287,7 +287,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
             chosen_other_index = other_indices[sampled_index]
             
             # Check if sampled move is correct
-            is_correct = (chosen_index == target) and (chosen_other_index == other_target)
+            is_correct = (chosen_index == target).any().item() and (chosen_other_index == other_target).any().item()
             for kk in k:
                 per_sample_accuracies[kk].append(is_correct)
 
