@@ -245,54 +245,37 @@ def topk_accuracy(logits, targets, other_logits=None, other_targets=None, k=[1, 
 
         return topk_accuracies
 
+import torch.nn.functional as F
 
-
-def topk_accuracy_single_sample(logits, target, k=[1, 3, 5]):
-    """
-    Compute top-k accuracy for a single sample.
-
-    Args:
-        logits (torch.FloatTensor): Predicted logits, of shape (vocab_size,).
-        target (int): The correct class index.
-        k (list): List of k values for top-k accuracy.
-
-    Returns:
-        dict: Dictionary containing top-k accuracy for each k value.
-    """
-    with torch.no_grad():
-        # Get top-k indices for the sample
-        _, topk_indices = logits.topk(k=max(k), dim=0)
-
-        # Check if the target is in the top-k indices
-        correct_predictions = (topk_indices == target).tolist()
-
-        # Compute accuracy for each k value
-        topk_acc = {k_val: int(any(correct_predictions[:k_val])) for k_val in k}
-
-    return topk_acc
-
-def topk_accuracy_batch_loop(logits, targets, k=[1, 3, 5]):
-    """
-    Compute top-k accuracy for an entire batch by iterating through each sample.
-
-    Args:
-        logits (torch.FloatTensor): Predicted logits, of shape (N, vocab_size).
-        targets (torch.LongTensor): Actual targets, of shape (N,).
-        k (list): List of k values for top-k accuracy.
-
-    Returns:
-        dict: Dictionary containing top-k accuracy for each k value.
-    """
+def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1, 3, 5]):
     batch_size = logits.shape[0]
-    topk_acc_totals = {k_val: 0 for k_val in k}
+    max_k = max(k)
 
-    # Loop through each sample in the batch
+    per_sample_accuracies = {kk: [] for kk in k}  # Store accuracy for each sample
+
     for i in range(batch_size):
-        sample_acc = topk_accuracy_single_sample(logits[i], targets[i], k)
-        for k_val in k:
-            topk_acc_totals[k_val] += sample_acc[k_val]
+        # Get softmax probabilities for a single sample
+        probabilities = F.softmax(logits[i], dim=-1).unsqueeze(1)  # (vocab_size, 1)
+        other_probabilities = F.softmax(other_logits[i], dim=-1).unsqueeze(0)  # (1, other_vocab_size)
 
-    # Compute final accuracy as the mean over the batch
-    topk_acc_final = {k_val: topk_acc_totals[k_val] / batch_size for k_val in k}
+        # Compute joint probabilities
+        combined_probabilities = torch.mm(probabilities, other_probabilities).view(-1)  # (vocab_size * other_vocab_size)
 
-    return topk_acc_final
+        # Get top-k predictions
+        _, flattened_indices = combined_probabilities.topk(k=max_k, dim=0)  # (max_k)
+        indices = flattened_indices // other_logits.shape[-1]  # (max_k)
+        other_indices = flattened_indices % other_logits.shape[-1]  # (max_k)
+
+        # Get targets for this sample
+        target = targets[i].item()
+        other_target = other_targets[i].item()
+
+        # Compute accuracy for each k
+        for kk in k:
+            correct = (indices[:kk] == target).any().item() and (other_indices[:kk] == other_target).any().item()
+            per_sample_accuracies[kk].append(correct)
+
+    # Aggregate over the batch (mean accuracy for each k)
+    aggregated_accuracy = {kk: sum(per_sample_accuracies[kk]) / batch_size for kk in k}
+    
+    return aggregated_accuracy

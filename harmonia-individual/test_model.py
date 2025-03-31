@@ -206,10 +206,14 @@ def validate_model(rank, world_size, CONFIG):
                         k=[1, 3, 5],
                     )
                 
-                topk_from_acc = topk_accuracy_batch_loop(logits=predictions['from_squares'][:, 0, :], targets=batch["from_squares"].squeeze(1), k=[1, 3, 5])
-                topk_to_acc = topk_accuracy_batch_loop(logits=predictions['to_squares'][:, 0, :], targets=batch["to_squares"].squeeze(1), k=[1, 3, 5])
-                acc = {key: topk_from_acc[key] * topk_to_acc[key] for key in topk_from_acc}
-                print(acc)
+                topk_acc = topk_accuracy_per_sample(
+                        logits=predictions['from_squares'][:, 0, :],  # (N, 64)
+                        targets=batch["from_squares"].squeeze(1),  # (N)
+                        other_logits=predictions['to_squares'][:, 0, :],  # (N, 64)
+                        other_targets=batch["to_squares"].squeeze(1),  # (N)
+                        k=[1, 3, 5],
+                    )
+                print(topk_acc)
                 print(top1_accuracy)
             
             top1_accuracies.update(top1_accuracy, batch["lengths"].shape[0])
