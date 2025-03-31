@@ -265,6 +265,7 @@ def validate_model(rank, world_size, CONFIG):
                 top1_accuracies.reset()
                 top3_accuracies.reset()
                 top5_accuracies.reset()
+                dual_accuracy.reset()
                 
                 
                 #pbar.close()
