@@ -267,6 +267,29 @@ def validate_model(rank, world_size, CONFIG):
                 top5_accuracies.reset()
                 dual_accuracy.reset()
                 
+                testing_file_list = get_all_record_files(f'../../Chess_Star1234_validation_chunks')
+                testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
+                testing_file_list = [s for s in testing_file_list if "._" not in s]
+                #testing_file_list = random.sample(testing_file_list, min(2, len(testing_file_list)))
+                val_dataset = ChunkLoader(testing_file_list,
+                                        record_dtype,
+                                        rank,
+                                        world_size,
+                                        include_low_time_moves=False,
+                                        min_full_move_number=5,
+                                        target_player=CONFIG.TARGET_PLAYER,
+                                        loop_forever=False
+                                        #max_full_move_number=10
+                                        )
+    
+                val_loader = DataLoader(
+                    dataset=val_dataset,
+                    batch_size=CONFIG.BATCH_SIZE // world_size,
+                    num_workers=CONFIG.NUM_WORKERS, 
+                    pin_memory=CONFIG.PIN_MEMORY,
+                    prefetch_factor=CONFIG.PREFETCH_FACTOR,
+                )
+                
                 
                 #pbar.close()
                 #cleanup_ddp()
