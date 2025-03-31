@@ -263,7 +263,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
         combined_probabilities = torch.mm(probabilities, other_probabilities).view(-1)  # (vocab_size * other_vocab_size)
 
         # Get top-5 predictions
-        top5_probs, flattened_indices = combined_probabilities.topk(k=3, dim=0)  # (5)
+        top5_probs, flattened_indices = combined_probabilities.topk(k=2, dim=0)  # (5)
         indices = flattened_indices // other_logits.shape[-1]  # (5)
         other_indices = flattened_indices % other_logits.shape[-1]  # (5)
         top5_sum = top5_probs.sum()  # Sum of top 5 probabilities
@@ -271,7 +271,7 @@ def topk_accuracy_per_sample(logits, targets, other_logits, other_targets, k=[1,
 
 
         # Check if softmax sampling is needed
-        prob_diff = top5_probs[0] - top5_probs[2]  # Difference between top-1 and top-5 probabilities
+        prob_diff = top5_probs[0] - top5_probs[1]  # Difference between top-1 and top-5 probabilities
         use_sampling = prob_diff < range_value
 
         # Get targets for this sample
