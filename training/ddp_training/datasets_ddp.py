@@ -138,6 +138,11 @@ class ChunkLoader(IterableDataset):
                     
                     if int(record['move_number']) <= 8:
                         record["moves_until_end"] = 35
+                        
+                    if int(record["turn"]) == 0:
+                        record["turn"] = 1
+                    else:
+                        record["turn"] = 0
 
     
                     try:
