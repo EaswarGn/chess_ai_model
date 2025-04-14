@@ -138,12 +138,12 @@ def train_model_ddp(rank, world_size, CONFIG):
             step = 1
         start_epoch = step//CONFIG.STEPS_PER_EPOCH + 1
         
-        state_dict = checkpoint['model_state_dict']
+        """state_dict = checkpoint['model_state_dict']
         new_state_dict = {}
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '').replace('module.', '')
             new_state_dict[new_key] = value  # Copy all other weights normally
-        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)
+        model.load_state_dict(new_state_dict, strict=CONFIG.USE_STRICT)"""
         
         
         """state_dict = checkpoint['model_state_dict']
@@ -170,7 +170,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         
         
-        """model_state_dict = model.state_dict()
+        model_state_dict = model.state_dict()
         # Iterate through checkpoint params
         for name, param in checkpoint['model_state_dict'].items():
             name = name.replace("_orig_mod.", "")
@@ -179,23 +179,24 @@ def train_model_ddp(rank, world_size, CONFIG):
                     # Shapes match, directly load
                     model_state_dict[name] = param
                 else:
+                    extra_features = 7
                     # Shapes mismatch, manually adjust
                     print(f"Resizing parameter: {name}")
                     new_param = model_state_dict[name]  # Get the current param shape
 
                     # Ensure the parameter has at least 12 values
-                    if new_param.shape[0] >= 12:
-                        new_param[:12] = torch.zeros_like(new_param[:12])  # Initialize first 12 values to zeros
+                    if new_param.shape[0] >= extra_features:
+                        new_param[:extra_features] = torch.zeros_like(new_param[:extra_features])  # Initialize first 12 values to zeros
 
                     # Find the common dimension
-                    min_shape = min(new_param.shape[0] - 12, param.shape[0])  
+                    min_shape = min(new_param.shape[0] - extra_features, param.shape[0])  
 
                     # Copy existing values after the first 12 zeros
-                    new_param[12:12 + min_shape] = param[:min_shape]
+                    new_param[extra_features:extra_features + min_shape] = param[:min_shape]
 
                     # Fill remaining values with zeros if new_param is larger
-                    if new_param.shape[0] > 12 + min_shape:
-                        new_param[12 + min_shape:] = torch.zeros_like(new_param[12 + min_shape:])
+                    if new_param.shape[0] > extra_features + min_shape:
+                        new_param[extra_features + min_shape:] = torch.zeros_like(new_param[extra_features + min_shape:])
 
                     # Assign the updated param
                     model_state_dict[name] = new_param
@@ -203,7 +204,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                 print(f"Skipping unknown parameter: {name}")
 
         # Load the modified state_dict into the model
-        model.load_state_dict(model_state_dict)"""
+        model.load_state_dict(model_state_dict)
         
         
         try:
