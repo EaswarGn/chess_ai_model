@@ -242,7 +242,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     testing_file_list = [file for file in testing_file_list if file.endswith('.zst')]
     testing_file_list = [s for s in testing_file_list if "._" not in s]
     
-    use_low_time = False
+    use_low_time = True
     min_full_move_number = 5
     if "time" in CONFIG.NAME:
         use_low_time = True
