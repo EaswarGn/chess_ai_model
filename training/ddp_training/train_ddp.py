@@ -196,6 +196,7 @@ def train_model_ddp(rank, world_size, CONFIG):
 
                     # Fill remaining values with zeros if new_param is larger
                     if new_param.shape[0] > extra_features + min_shape:
+                        print("yes")
                         new_param[extra_features + min_shape:] = torch.zeros_like(new_param[extra_features + min_shape:])
 
                     # Assign the updated param
