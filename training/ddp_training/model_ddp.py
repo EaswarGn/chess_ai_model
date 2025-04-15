@@ -39,7 +39,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
         self.num_cls_tokens = 3
 
-        self.board_encoder = BoardEncoder(
+        self.board_encoder = OGBoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
@@ -49,7 +49,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
             d_inner=self.d_inner,
             n_layers=self.n_layers,
             dropout=self.dropout,
-            num_cls_tokens=self.num_cls_tokens,
+            #num_cls_tokens=self.num_cls_tokens,
         )
         
         self.from_squares = nn.Linear(CONFIG.D_MODEL, 1)
