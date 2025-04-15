@@ -191,7 +191,8 @@ def train_model_ddp(rank, world_size, CONFIG):
 
                     # Find the common dimension
                     min_shape = min(new_param.shape[0] - extra_features, param.shape[0]) 
-                    print(param.shape) 
+                    row_averages = param.mean(dim=1)
+                    print(row_averages)
 
                     # Copy existing values after the first 12 zeros
                     new_param[extra_features:extra_features + min_shape] = param[:min_shape]
