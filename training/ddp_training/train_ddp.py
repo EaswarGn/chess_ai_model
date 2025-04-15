@@ -190,7 +190,8 @@ def train_model_ddp(rank, world_size, CONFIG):
                         new_param[:extra_features] = torch.zeros_like(new_param[:extra_features])  # Initialize first 12 values to zeros
 
                     # Find the common dimension
-                    min_shape = min(new_param.shape[0] - extra_features, param.shape[0])  
+                    min_shape = min(new_param.shape[0] - extra_features, param.shape[0]) 
+                    print(param.shape) 
 
                     # Copy existing values after the first 12 zeros
                     new_param[extra_features:extra_features + min_shape] = param[:min_shape]
