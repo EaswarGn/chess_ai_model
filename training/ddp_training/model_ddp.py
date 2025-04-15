@@ -82,35 +82,36 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
     def init_weights(self):
         """
-        Initializes weights for all layers in the model.
+        Initializes all weights and biases in the model to zeros.
         """
         def _init_layer(layer):
             if isinstance(layer, nn.Linear):
-                nn.init.xavier_uniform_(layer.weight)
+                nn.init.constant_(layer.weight, 0)
                 if layer.bias is not None:
                     nn.init.constant_(layer.bias, 0)
             elif isinstance(layer, nn.Embedding):
-                nn.init.normal_(layer.weight, mean=0, std=0.01)
+                nn.init.constant_(layer.weight, 0)
             elif isinstance(layer, nn.LayerNorm):
                 nn.init.constant_(layer.bias, 0)
-                nn.init.constant_(layer.weight, 1.0)
+                nn.init.constant_(layer.weight, 0)
 
-        # Apply initialization to all submodules
+        # Apply zero initialization to all submodules
         self.apply(_init_layer)
 
-        # Specific initialization for heads
+        # Also zero initialize the special prediction heads
         for head in [self.from_squares, self.to_squares]:
-            if head is not None:  # Ensure the head is not None before initializing
-                nn.init.xavier_uniform_(head.weight)
+            if head is not None:
+                nn.init.constant_(head.weight, 0)
                 nn.init.constant_(head.bias, 0)
 
         for head in [self.game_result_head, self.move_time_head, self.game_length_head]:
-            if head is not None:  # Ensure the head is not None before iterating over its layers
+            if head is not None:
                 for layer in head:
                     if isinstance(layer, nn.Linear):
-                        nn.init.xavier_uniform_(layer.weight)
+                        nn.init.constant_(layer.weight, 0)
                         if layer.bias is not None:
                             nn.init.constant_(layer.bias, 0)
+
 
 
     def forward(self, batch):
