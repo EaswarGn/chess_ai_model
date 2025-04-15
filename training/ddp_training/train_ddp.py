@@ -199,7 +199,9 @@ def train_model_ddp(rank, world_size, CONFIG):
                     if new_param.shape[0] > extra_features + min_shape:
                         new_param[extra_features + min_shape:] = torch.zeros_like(new_param[extra_features + min_shape:])
 
-                    print(new_param.shape)
+                    row_averages = new_param.mean(dim=1)
+                    print(row_averages)  # This will print a tensor of shape [74] with the average of each row
+
                     # Assign the updated param
                     model_state_dict[name] = new_param
             else:
