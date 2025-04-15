@@ -206,14 +206,6 @@ def train_model_ddp(rank, world_size, CONFIG):
                     model_state_dict[name] = new_param
             else:
                 print(f"Skipping unknown parameter: {name}")
-                
-        with torch.no_grad():
-            for name, param in model.named_parameters():
-                if param.ndim == 2:
-                    row_means = param.mean(dim=1)
-                    print(f"{name} row-wise means:\n{row_means}\n")
-                else:
-                    print(f"{name} is not 2D (shape: {param.shape}), skipped.\n")
 
 
 
