@@ -39,7 +39,7 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
         self.num_cls_tokens = 3
 
-        self.board_encoder = OGBoardEncoder(
+        self.board_encoder = BoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
             d_model=self.d_model,
@@ -127,6 +127,18 @@ class ChessTemporalTransformerEncoder(nn.Module):
             batch["black_kingside_castling_rights"],
             batch["black_queenside_castling_rights"],
             batch["board_position"],
+            batch["move_number"],
+            batch["num_legal_moves"],
+            batch["white_remaining_time"],
+            batch["black_remaining_time"],
+            batch["phase"],
+            #batch["white_rating"],
+            #batch["black_rating"],
+            batch["white_material_value"],
+            batch["black_material_value"],
+            batch["material_difference"],
+            time_control,
+            cls_tokens,
         )  # (N, BOARD_STATUS_LENGTH, d_model)
         
         from_squares = (self.from_squares(boards[:, 5:, :]).squeeze(2).unsqueeze(1)) if self.from_squares is not None else None
