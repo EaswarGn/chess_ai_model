@@ -220,7 +220,7 @@ def train_model_ddp(rank, world_size, CONFIG):
     if CONFIG.STEP is None:
         step = 1
     
-    print(model.state_dict())
+    
     
     # Compile model
     compiled_model = torch.compile(
@@ -232,6 +232,8 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
+    
+    print(model.state_dict())
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
