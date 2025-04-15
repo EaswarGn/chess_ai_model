@@ -73,9 +73,10 @@ class ChessTemporalTransformerEncoder(nn.Module):
         self.categorical_game_result_head = CONFIG.categorical_game_result_head
         
         # Create task-specific CLS tokens
-        self.moves_remaining_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
-        self.game_result_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
-        self.time_suggestion_cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        self.moves_remaining_cls_token = nn.Parameter(torch.zeros(1, 1, self.d_model))
+        self.game_result_cls_token = nn.Parameter(torch.zeros(1, 1, self.d_model))
+        self.time_suggestion_cls_token = nn.Parameter(torch.zeros(1, 1, self.d_model))
+
 
         # Initialize weights
         self.init_weights()
