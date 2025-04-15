@@ -179,7 +179,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                     # Shapes match, directly load
                     model_state_dict[name] = param
                 else:
-                    num_cls_tokens = 3
+                    num_cls_tokens = 0
                     extra_features = 0+num_cls_tokens
                     # Shapes mismatch, manually adjust
                     print(f"Resizing parameter: {name}")
