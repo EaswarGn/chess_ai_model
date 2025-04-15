@@ -338,6 +338,212 @@ class PositionWiseFCNetwork(nn.Module):
         )  # (N, pad_length, d_model)
 
         return sequences
+    
+class OGBoardEncoder(nn.Module):
+    """
+    The Board Encoder.
+
+    Adapted from https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Machine-Translation.
+    """
+
+    def __init__(
+        self,
+        DEVICE,
+        vocab_sizes,
+        d_model,
+        n_heads,
+        d_queries,
+        d_values,
+        d_inner,
+        n_layers,
+        dropout,
+    ):
+        """
+        Init.
+
+        Args:
+
+            vocab_sizes (dict): The vocabulary sizes of input sequence
+            components.
+
+            d_model (int): The size of vectors throughout the
+            transformer model, i.e. input and output sizes for the
+            Encoder.
+
+            n_heads (int): The number of heads in the multi-head
+            attention.
+
+            d_queries (int): The size of query vectors (and also the
+            size of the key vectors) in the multi-head attention.
+
+            d_values (int): The size of value vectors in the multi-head
+            attention.
+
+            d_inner (int): An intermediate size in the position-wise FC.
+
+            n_layers (int): The number of [multi-head attention +
+            position-wise FC] layers in the Encoder.
+
+            dropout (float): The dropout probability.
+        """
+        super(OGBoardEncoder, self).__init__()
+
+        self.vocab_sizes = vocab_sizes
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_queries = d_queries
+        self.d_values = d_values
+        self.d_inner = d_inner
+        self.n_layers = n_layers
+        self.dropout = dropout
+        self.DEVICE = DEVICE
+
+        # Embedding layers
+        self.turn_embeddings = nn.Embedding(vocab_sizes["turn"], d_model)
+        self.white_kingside_castling_rights_embeddings = nn.Embedding(
+            vocab_sizes["white_kingside_castling_rights"], d_model
+        )
+        self.white_queenside_castling_rights_embeddings = nn.Embedding(
+            vocab_sizes["white_queenside_castling_rights"], d_model
+        )
+        self.black_kingside_castling_rights_embeddings = nn.Embedding(
+            vocab_sizes["black_kingside_castling_rights"], d_model
+        )
+        self.black_queenside_castling_rights_embeddings = nn.Embedding(
+            vocab_sizes["black_queenside_castling_rights"], d_model
+        )
+        self.board_position_embeddings = nn.Embedding(
+            vocab_sizes["board_position"], d_model
+        )
+
+        # Positional embedding layer
+        self.positional_embeddings = nn.Embedding(
+            69,
+            d_model,
+        )
+
+        # Encoder layers
+        self.encoder_layers = nn.ModuleList(
+            [self.make_encoder_layer() for i in range(n_layers)]
+        )
+
+        # Dropout layer
+        self.apply_dropout = nn.Dropout(dropout)
+
+        # Layer-norm layer
+        self.layer_norm = nn.LayerNorm(d_model)
+
+    def make_encoder_layer(self):
+        """
+        Creates a single layer in the Encoder by combining a multi-head
+        attention sublayer and a position-wise FC sublayer.
+        """
+        # A ModuleList of sublayers
+        encoder_layer = nn.ModuleList(
+            [
+                MultiHeadAttention(
+                    d_model=self.d_model,
+                    n_heads=self.n_heads,
+                    d_queries=self.d_queries,
+                    d_values=self.d_values,
+                    dropout=self.dropout,
+                    in_decoder=False,
+                ),
+                PositionWiseFCNetwork(
+                    d_model=self.d_model, d_inner=self.d_inner, dropout=self.dropout
+                ),
+            ]
+        )
+
+        return encoder_layer
+
+    def forward(
+        self,
+        turns,
+        white_kingside_castling_rights,
+        white_queenside_castling_rights,
+        black_kingside_castling_rights,
+        black_queenside_castling_rights,
+        board_positions,
+    ):
+        """
+        Forward prop.
+
+        Args:
+
+            turns (torch.LongTensor): The current turn (w/b), of size
+            (N, 1).
+
+            white_kingside_castling_rights (torch.LongTensor): Whether
+            white can castle kingside, of size (N, 1).
+
+            white_queenside_castling_rights (torch.LongTensor): Whether
+            white can castle queenside, of size (N, 1).
+
+            black_kingside_castling_rights (torch.LongTensor): Whether
+            black can castle kingside, of size (N, 1).
+
+            black_queenside_castling_rights (torch.LongTensor): Whether
+            black can castle queenside, of size (N, 1).
+
+            board_positions (torch.LongTensor): The current board
+            positions, of size (N, 64).
+
+        Returns:
+
+            torch.FloatTensor: The encoded board, of size (N,
+            BOARD_STATUS_LENGTH, d_model).
+        """
+        batch_size = turns.size(0)  # N
+
+        # Embeddings
+        embeddings = torch.cat(
+            [
+                self.turn_embeddings(turns),
+                self.white_kingside_castling_rights_embeddings(
+                    white_kingside_castling_rights
+                ),
+                self.white_queenside_castling_rights_embeddings(
+                    white_queenside_castling_rights
+                ),
+                self.black_kingside_castling_rights_embeddings(
+                    black_kingside_castling_rights
+                ),
+                self.black_queenside_castling_rights_embeddings(
+                    black_queenside_castling_rights
+                ),
+                self.board_position_embeddings(board_positions),
+            ],
+            dim=1,
+        )  # (N, BOARD_STATUS_LENGTH, d_model)
+
+        # Add positional embeddings
+        boards = embeddings + self.positional_embeddings.weight.unsqueeze(
+            0
+        )  # (N, BOARD_STATUS_LENGTH, d_model)
+        boards = boards * math.sqrt(self.d_model)  # (N, BOARD_STATUS_LENGTH, d_model)
+
+        # Dropout
+        boards = self.apply_dropout(boards)  # (N, BOARD_STATUS_LENGTH, d_model)
+
+        # Encoder layers
+        for encoder_layer in self.encoder_layers:
+            # Sublayers
+            boards = encoder_layer[0](
+                query_sequences=boards,
+                key_value_sequences=boards,
+                key_value_sequence_lengths=torch.LongTensor([69] * batch_size).to(
+                    boards.device
+                ),
+            )  # (N, BOARD_STATUS_LENGTH, d_model)
+            boards = encoder_layer[1](
+                sequences=boards
+            )  # (N, BOARD_STATUS_LENGTH, d_model)
+
+        # Apply layer-norm
+        boards = self.layer_norm(boards)  # (N, BOARD_STATUS_LENGTH, d_model)
+
+        return boards
 
 
 #seeing if adding batch normalization affects predictive performance
