@@ -206,6 +206,11 @@ def train_model_ddp(rank, world_size, CONFIG):
                     model_state_dict[name] = new_param
             else:
                 print(f"Skipping unknown parameter: {name}")
+                
+        with torch.no_grad():
+            for name, param in model.named_parameters():
+                print(f"{name}: mean = {param.mean().item():.6f}")
+
 
         # Load the modified state_dict into the model
         model.load_state_dict(model_state_dict)
