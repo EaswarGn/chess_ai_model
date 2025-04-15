@@ -406,7 +406,7 @@ class BoardEncoder(nn.Module):
         )
 
         
-        self.seq_length = 69 + num_cls_tokens
+        self.seq_length = 69 #+ num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
         if freeze_board is True:
@@ -621,7 +621,7 @@ class BoardEncoder(nn.Module):
         )
         
         # Prepend CLS tokens
-        embeddings = torch.cat([cls_tokens, embeddings], dim=1)
+        #embeddings = torch.cat([cls_tokens, embeddings], dim=1)
 
         # Positional embeddings and scaling
         boards = embeddings + self.positional_embeddings.weight.unsqueeze(0)
