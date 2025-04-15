@@ -207,6 +207,8 @@ def train_model_ddp(rank, world_size, CONFIG):
         # Load the modified state_dict into the model
         model.load_state_dict(model_state_dict)
         
+        print(model.state_dict() == model_state_dict)
+        
         
         try:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -219,6 +221,8 @@ def train_model_ddp(rank, world_size, CONFIG):
     
     if CONFIG.STEP is None:
         step = 1
+    
+    print(model.state_dict())
     
     # Compile model
     compiled_model = torch.compile(
