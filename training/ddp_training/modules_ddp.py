@@ -448,6 +448,7 @@ class OGBoardEncoder(nn.Module):
                     d_values=self.d_values,
                     dropout=self.dropout,
                     in_decoder=False,
+                    DEVICE=self.DEVICE
                 ),
                 PositionWiseFCNetwork(
                     d_model=self.d_model, d_inner=self.d_inner, dropout=self.dropout
