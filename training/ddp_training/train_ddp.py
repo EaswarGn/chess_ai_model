@@ -199,6 +199,9 @@ def train_model_ddp(rank, world_size, CONFIG):
                     if new_param.shape[0] > extra_features + min_shape:
                         new_param[extra_features + min_shape:] = torch.zeros_like(new_param[extra_features + min_shape:])
 
+                    row_averages = new_param.mean(dim=1)
+                    print(row_averages)
+                    
                     # Assign the updated param
                     model_state_dict[name] = new_param
             else:
@@ -232,8 +235,6 @@ def train_model_ddp(rank, world_size, CONFIG):
 
         
     model = DDP(compiled_model, device_ids=[rank], find_unused_parameters=True)
-    
-    print(model.state_dict())
 
     criterion = LabelSmoothedCE(DEVICE=DEVICE, eps=CONFIG.LABEL_SMOOTHING, n_predictions=CONFIG.N_MOVES).to(DEVICE)
     scaler = GradScaler(enabled=CONFIG.USE_AMP)
