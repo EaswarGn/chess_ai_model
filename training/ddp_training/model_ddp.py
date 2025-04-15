@@ -39,19 +39,6 @@ class ChessTemporalTransformerEncoder(nn.Module):
         
         self.num_cls_tokens = 3
 
-        # Encoder remains the same
-        """self.board_encoder = BoardEncoder(
-            DEVICE=DEVICE,
-            vocab_sizes=self.vocab_sizes,
-            d_model=self.d_model,
-            n_heads=self.n_heads,
-            d_queries=self.d_queries,
-            d_values=self.d_values,
-            d_inner=self.d_inner,
-            n_layers=self.n_layers,
-            dropout=self.dropout,
-            num_cls_tokens=self.num_cls_tokens
-        )"""
         self.board_encoder = BoardEncoder(
             DEVICE=DEVICE,
             vocab_sizes=self.vocab_sizes,
