@@ -180,7 +180,7 @@ def train_model_ddp(rank, world_size, CONFIG):
                     model_state_dict[name] = param
                 else:
                     num_cls_tokens = 3
-                    extra_features = 3+num_cls_tokens
+                    extra_features = 2+num_cls_tokens
                     # Shapes mismatch, manually adjust
                     print(f"Resizing parameter: {name}")
                     new_param = model_state_dict[name]  # Get the current param shape

@@ -23,6 +23,6 @@ wget -O ablation_1.pt https://huggingface.co/datasets/codingmonster1234/full_tra
 wget https://chesstransformers.blob.core.windows.net/checkpoints/CT-EFT-20/averaged_CT-EFT-20.pt
 wget -O pondering_time_step_15000.pt https://huggingface.co/datasets/codingmonster1234/pondering_time_model/resolve/main/checkpoints/models/1900_step_14000.pt
 cd ~/chess_ai_model/training/ddp_training
-python train_ddp.py pondering_time_model
-#python train_ddp.py ablation_1
+#python train_ddp.py pondering_time_model
+python train_ddp.py ablation_1
 #python validate_model.py ablation_1
