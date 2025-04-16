@@ -799,8 +799,8 @@ class BoardEncoder(nn.Module):
                 #Input to linear layers must be float dtype
                 #self.move_number_projection(move_number.unsqueeze(-1).to(torch.float32)),
                 #self.num_legal_moves_projection(num_legal_moves.unsqueeze(-1).to(torch.float32)),
-                #self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
-                #self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
+                self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
+                self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 #self.time_control_projection(time_control.to(torch.float32)).unsqueeze(1).to(torch.float32),
                 #self.phase_embeddings(phase.to(torch.int64)),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
