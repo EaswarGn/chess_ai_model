@@ -605,7 +605,7 @@ class BoardEncoder(nn.Module):
         )
 
         
-        self.seq_length = 69 + num_cls_tokens
+        self.seq_length = 71 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
         if freeze_board is True:
