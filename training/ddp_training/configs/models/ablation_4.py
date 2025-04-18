@@ -14,7 +14,7 @@ class CONFIG:
         ###############################
         ############ Name #############
         ###############################
-        self.NAME = "ablation_4"
+        self.NAME = "ablation_4_publish_model"
         self.NUM_GPUS = torch.cuda.device_count()
 
         ###############################
@@ -58,9 +58,9 @@ class CONFIG:
         ########### Training ##########
         ###############################
         self.BATCHES_PER_STEP = 4
-        self.PRINT_FREQUENCY = 1
-        self.N_STEPS = 10000
-        self.STEPS_PER_EPOCH = 500
+        self.PRINT_FREQUENCY = 10
+        self.N_STEPS = None
+        self.STEPS_PER_EPOCH = 1000
         self.WARMUP_STEPS = 3000
         self.STEP = 1
         self.LR_SCHEDULE = "exp_decay"
@@ -80,7 +80,7 @@ class CONFIG:
         self.USE_AMP = True
         self.OPTIMIZER = torch.optim.Adam
         self.USE_STRICT = False #use strict loading when loading a checkpoint?
-        self.CHECKPOINT_PATH = '../../../1900_step_9000.pt'
+        self.CHECKPOINT_PATH = None#'../../../1900_step_9000.pt'
         self.VALIDATION_STEPS = 100 #number of validation steps (each step has BATCH_SIZE samples)
 
         ###############################
