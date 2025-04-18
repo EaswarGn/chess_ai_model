@@ -57,6 +57,7 @@ class CONFIG:
         ###############################
         ########### Training ##########
         ###############################
+        self.USE_UPLOAD = True #upload checkpoints to huggingface?
         self.BATCHES_PER_STEP = 4
         self.PRINT_FREQUENCY = 10
         self.N_STEPS = None
@@ -107,7 +108,7 @@ class CONFIG:
         }
 
         self.move_loss = self.CRITERION
-        self.move_time_loss = nn.L1Loss
+        self.move_time_loss = nn.L1Loss()
         self.moves_until_end_loss = None#nn.L1Loss()
         self.categorical_game_result_loss = nn.CrossEntropyLoss
 
