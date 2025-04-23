@@ -180,8 +180,8 @@ class ChunkLoader(IterableDataset):
                     #record["white_remaining_time"] = 0.0
                     #record["black_remaining_time"] = 0.0
                     
-                    record["phase"] = 0
-                    #record["move_number"] = -1
+                    #record["phase"] = 0
+                    record["move_number"] = -1
                     #record["num_legal_moves"] = -1
                     #record["white_material_value"] = -1
                     #record["black_material_value"] = -1 
