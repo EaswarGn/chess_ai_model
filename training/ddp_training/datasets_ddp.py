@@ -154,10 +154,10 @@ class ChunkLoader(IterableDataset):
                     except KeyError:
                         pass
 
-                    """if int(record["turn"]) == 0:
+                    if int(record["turn"]) == 0:
                         record["turn"] = 1 #white
                     else:
-                        record["turn"] = 0 #black"""
+                        record["turn"] = 0 #black
                         
                     
                         
