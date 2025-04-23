@@ -155,9 +155,9 @@ class ChunkLoader(IterableDataset):
                         pass
 
                     if int(record["turn"]) == 0:
-                        record["turn"] = 1 #white
+                        record["turn"] = 1 #black
                     else:
-                        record["turn"] = 0 #black
+                        record["turn"] = 0 #white
                         
                     
                         
@@ -177,7 +177,7 @@ class ChunkLoader(IterableDataset):
                     #normalizing through log transformations
                     #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
                     
-                    if record["turn"] == 1:
+                    if record["turn"] == 0:
                         record["white_remaining_time"] = 0.0
                     #record["white_remaining_time"] = 0.0
                     #record["black_remaining_time"] = 0.0
