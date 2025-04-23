@@ -605,7 +605,7 @@ class BoardEncoder(nn.Module):
         )
 
         
-        self.seq_length = 78 + num_cls_tokens
+        self.seq_length = 75 + num_cls_tokens
         self.positional_embeddings = nn.Embedding(self.seq_length, d_model, dtype=torch.float)
 
         if freeze_board is True:
@@ -802,11 +802,11 @@ class BoardEncoder(nn.Module):
                 self.white_remaining_time_projection(white_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.black_remaining_time_projection(black_remaining_time.unsqueeze(-1).to(torch.float32)),
                 self.time_control_projection(time_control.to(torch.float32)).unsqueeze(1).to(torch.float32),
-                self.phase_embeddings(phase.to(torch.int64)),
+                #self.phase_embeddings(phase.to(torch.int64)),
                 #self.white_rating_embeddings(white_rating.unsqueeze(-1).to(torch.float32)),
                 #self.black_rating_embeddings(black_rating.unsqueeze(-1).to(torch.float32)),
-                self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
-                self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
+                #self.white_material_value_embeddings(white_material_value.unsqueeze(-1).to(torch.float32)),
+                #self.black_material_value_embeddings(black_material_value.unsqueeze(-1).to(torch.float32)),
                 self.material_difference_embeddings(material_difference.unsqueeze(-1).to(torch.float32)),
 
                 self.turn_embeddings(turns.to(torch.int64)).to(torch.float32),  # Ensure embeddings are float
