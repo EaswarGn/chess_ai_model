@@ -177,13 +177,18 @@ class ChunkLoader(IterableDataset):
                     #normalizing through log transformations
                     #record['time_spent_on_move'] = np.log1p(record['time_spent_on_move'])
                     
-                    if record["turn"] == 1:  # White's turn
+                    """if record["turn"] == 1:  # White's turn
                         record["white_remaining_time"] = abs(record["white_remaining_time"])  # Ensure it's positive
                         record["black_remaining_time"] = -abs(record["black_remaining_time"])  # Make black's time negative
                     else:  # Black's turn
                         record["black_remaining_time"] = abs(record["black_remaining_time"])  # Ensure it's positive
-                        record["white_remaining_time"] = -abs(record["white_remaining_time"])  # Make white's time negative
+                        record["white_remaining_time"] = -abs(record["white_remaining_time"])  # Make white's time negative"""
                     
+                    if record["turn"] == 1:
+                        record["white_remaining_time"] = record["white_remaining_time"]
+                    else:
+                        record["white_remaining_time"] = record["black_remaining_time"]
+                    record["black_remaining_time"] = 0.0
                         
                     
                     #record["white_remaining_time"] = 0.0
