@@ -181,11 +181,11 @@ class ChunkLoader(IterableDataset):
                     #record["black_remaining_time"] = 0.0
                     
                     record["phase"] = 0
-                    record["move_number"] = -1
-                    record["num_legal_moves"] = -1
-                    record["white_material_value"] = -1
-                    record["black_material_value"] = -1 
-                    record["material_difference"] = -1
+                    #record["move_number"] = -1
+                    #record["num_legal_moves"] = -1
+                    #record["white_material_value"] = -1
+                    #record["black_material_value"] = -1 
+                    #record["material_difference"] = -1
                     
                     yield {
                         "turn": torch.tensor([record["turn"]]).float(), #make float
