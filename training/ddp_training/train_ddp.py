@@ -147,7 +147,7 @@ def train_model_ddp(rank, world_size, CONFIG):
         
         
         state_dict = checkpoint['model_state_dict']
-        new_state_dict = {}
+        new_state_dict = model.state_dict()
 
         for key, value in state_dict.items():
             new_key = key.replace('_orig_mod.', '').replace('module.', '')
