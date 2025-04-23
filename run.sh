@@ -5,7 +5,7 @@ export CUBLAS_WORKSPACE_CONFIG=:4096:8
 git config --global credential.helper store
 curl ifconfig.me
 #TODO: remove secret
-git clone https://EaswarGn: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@github.com/EaswarGn/chess_ai_model.git
+git clone https://EaswarGn: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@github.com/EaswarGn/chess_ai_model.git
 cd ~/chess_ai_model
 ls
 pip install -r requirements.txt
