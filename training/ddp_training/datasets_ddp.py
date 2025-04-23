@@ -184,6 +184,12 @@ class ChunkLoader(IterableDataset):
                         record["black_remaining_time"] = abs(record["black_remaining_time"])  # Ensure it's positive
                         record["white_remaining_time"] = -abs(record["white_remaining_time"])  # Make white's time negative"""
                         
+                    if record["turn"] == 1:
+                        record["white_remaining_time"] = record["white_remaining_time"]
+                    else:
+                        record["white_remaining_time"] = record["black_remaining_time"]
+                    record["black_remaining_time"] = 0.0
+                    
                     #record["black_remaining_time"] = 0.0
                     #record["phase"] = 0
                     #record["move_number"] = -1
